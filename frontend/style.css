@@ -1,0 +1,146 @@
+/* style.css */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+:root {
+    --primary-color: #4f46e5;
+    --primary-hover: #4338ca;
+    --dark-bg: #111827;
+    --sidebar-bg: #1f2937;
+    --content-bg: #f9fafb;
+    --text-light: #f3f4f6;
+    --text-dark: #374151;
+    --border-color: #e5e7eb;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--content-bg);
+}
+
+/* --- TELA DE LOGIN --- */
+#login-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: var(--dark-bg);
+}
+.login-box {
+    background: #ffffff;
+    padding: 2.5rem;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* --- LAYOUT PRINCIPAL --- */
+#app-container {
+    display: flex;
+}
+.sidebar {
+    width: 260px;
+    background-color: var(--sidebar-bg);
+    color: var(--text-light);
+    height: 100vh;
+    position: fixed;
+    padding: 1.5rem 1rem;
+}
+.sidebar-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #fff;
+}
+.sidebar .nav-link {
+    color: #d1d5db;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    transition: background-color 0.2s, color 0.2s;
+}
+.sidebar .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+.sidebar .nav-link.active {
+    background-color: var(--primary-color);
+    color: #fff;
+    font-weight: 500;
+}
+
+.main-content {
+    margin-left: 260px;
+    width: calc(100% - 260px);
+    display: flex;
+    flex-direction: column;
+}
+
+.topbar {
+    background-color: #fff;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+}
+.topbar #usuarioLogado {
+    color: var(--text-dark);
+}
+
+.content-wrapper {
+    padding: 2rem;
+    background-color: var(--content-bg);
+    flex-grow: 1;
+}
+
+/* --- COMPONENTES --- */
+.card-metric {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+.card-metric .card-body {
+    padding: 1.5rem;
+}
+.card-metric .metric-icon {
+    font-size: 2rem;
+    padding: 1rem;
+    border-radius: 50%;
+    color: #fff;
+}
+.card-metric .metric-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.table {
+    border-collapse: separate;
+    border-spacing: 0 0.5rem;
+}
+.table thead th {
+    border: none;
+    font-weight: 600;
+    color: #6b7280;
+}
+.table tbody tr {
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+.table tbody td {
+    vertical-align: middle;
+    padding: 1rem;
+}
+.table tbody tr:first-child td:first-child { border-top-left-radius: 8px; }
+.table tbody tr:first-child td:last-child { border-top-right-radius: 8px; }
+.table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+.table tbody tr:last-child td:last-child { border-bottom-right-radius: 8px; }
+
+.action-icon {
+    color: #6b7280;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.action-icon:hover {
+    color: var(--primary-color);
+}

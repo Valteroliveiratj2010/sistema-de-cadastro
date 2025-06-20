@@ -1,0 +1,12 @@
+# Ignora a pasta de dependências do Node.js
+node_modules/
+
+# Ignora arquivos de ambiente (bom para o futuro)
+.env
+
+# Ignora o arquivo do banco de dados SQLite
+# Importante: Garanta que o caminho esteja correto
+backend/database/dev.sqlite
+
+# Ignora arquivos de log do npm
+npm-debug.log*
