@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Gestor PRO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #111827; /* Fundo escuro que combina com o sidebar */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            color: #495057; /* Cor padrão para texto dentro do container branco */
+        }
+        .login-container {
+            width: 100%;
+            max-width: 420px; /* Levemente mais largo */
+            padding: 40px; /* Mais padding para mais "respiro" */
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4); /* Sombra mais forte e profunda */
+            border-radius: 12px; /* Mais arredondado */
+            background-color: #ffffff; /* Fundo branco do card */
+            border: 1px solid rgba(0, 0, 0, 0.1); /* Borda um pouco mais visível */
+            text-align: center; /* Centraliza o conteúdo do formulário */
+        }
+        .login-header {
+            margin-bottom: 35px; /* Mais espaço abaixo do cabeçalho */
+        }
+        .login-header .logo-text {
+            display: flex; /* Usar flexbox para alinhar ícone e texto */
+            align-items: center;
+            justify-content: center; /* Centralizar horizontalmente */
+            margin-bottom: 10px;
+        }
+        .login-header .logo-text i {
+            font-size: 2.8rem; /* Ícone maior e mais impactante */
+            color: #007bff; /* Usando a cor primária azul para o ícone */
+            margin-right: 10px;
+        }
+        .login-header .logo-text h1 {
+            font-size: 2.2rem; /* Título principal maior */
+            font-weight: 700;
+            color: #212529; /* Cor do texto do Gestor PRO */
+            margin: 0; /* Remove margem padrão do h1 */
+        }
+        .login-header h2 {
+            font-size: 1.3rem; /* Subtítulo 'Acesse sua conta' */
+            color: #6c757d; /* Cinza médio */
+            margin-top: 5px;
+        }
+
+        .form-label {
+            font-weight: 600; /* Labels mais fortes */
+            color: #343a40; /* Cor mais escura para os labels */
+            text-align: left; /* Alinha o texto do label à esquerda */
+            display: block; /* Garante que o label ocupe sua própria linha */
+            margin-bottom: 6px;
+        }
+        .form-control {
+            border-radius: 6px; /* Arredondamento suave */
+            padding: 12px 18px; /* Mais padding interno */
+            font-size: 1.05rem; /* Fonte ligeiramente maior */
+            border: 1px solid #ced4da; /* Borda padrão do Bootstrap */
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .form-control:focus {
+            border-color: #80bdff; /* Cor de foco do Bootstrap azul */
+            box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25); /* Sombra de foco azul */
+        }
+        .btn-primary {
+            background-color: #007bff; /* Azul primário */
+            border-color: #007bff;
+            padding: 12px 25px; /* Mais padding para o botão */
+            font-size: 1.15rem; /* Botão maior */
+            font-weight: 700; /* Negrito */
+            border-radius: 6px;
+            transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+            margin-top: 20px; /* Mais espaço acima do botão */
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+            transform: translateY(-1px); /* Pequeno efeito de elevação no hover */
+        }
+        .btn-primary:active {
+            transform: translateY(0); /* Efeito de click */
+        }
+        #loginMessage {
+            margin-top: 25px; /* Mais espaço para a mensagem */
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="logo-text">
+                <i class="bi bi-shield-check"></i> 
+                <h1>Gestor PRO</h1>
+            </div>
+            <h2>Acesse sua conta</h2>
+        </div>
+        
+        <form id="loginForm">
+            <div class="mb-3">
+                <label for="username" class="form-label">Usuário</label>
+                <input type="text" class="form-control" id="username" required autocomplete="username">
+            </div>
+            <div class="mb-4">
+                <label for="password" class="form-label">Senha</label>
+                <input type="password" class="form-control" id="password" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Entrar</button>
+            <div id="loginMessage" class="text-center text-danger d-none"></div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/login.js"></script>
+</body>
+</html>

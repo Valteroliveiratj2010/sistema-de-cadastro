@@ -1,54 +1,52 @@
+// backend/server.js
 const express = require('express');
 const cors = require('cors');
-const sequelize = require('./database.js'); // Importa a instância do Sequelize
-const apiRoutes = require('./routes/api.js');
 
-// Importa todos os modelos no início
-const Client = require('./models/Client.js');
-const Sale = require('./models/Sale.js');
-const Payment = require('./models/Payment.js');
+// Importe o objeto sequelize E as funções syncDatabase e seedData do database.js
+const sequelize = require('./database'); // A instância do Sequelize para testConnection
+const { syncDatabase, seedData } = require('./database'); // Importa as funções para usar aqui!
 
+// Importe as rotas
+const apiRoutes = require('./routes/api');
+const authRoutes = require('./routes/auth'); // Importe authRoutes
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000; // Use a porta 5000 ou o que estiver definido no ambiente
 
 // Middlewares
-app.use(cors());
-app.use(express.json());
+app.use(express.json()); // Para parsear JSON no corpo da requisição
+app.use(cors());         // Para permitir requisições do frontend
+
+// NOVO: Log de todas as requisições que chegam ao servidor
+app.use((req, res, next) => {
+    // console.log(`[Server Log] ${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
+});
 
 // Servir arquivos estáticos do frontend
 app.use(express.static('../frontend')); 
 
-// Rotas da API
-app.use('/api', apiRoutes);
+// Conecte as rotas
+// A rota de autenticação DEVE VIR ANTES da rota de API protegida
+app.use('/auth', authRoutes); // Rotas de autenticação (não protegidas por JWT para o login)
+app.use('/api', apiRoutes);   // Rotas da API (AGORA PROTEGIDAS POR JWT via authMiddleware em api.js)
 
 // Sincroniza o banco de dados e inicia o servidor
 async function startServer() {
     try {
-        // Agora a variável 'sequelize' é reconhecida aqui
-        await sequelize.sync({ force: true });
-        console.log('🗃️ Tabelas do banco de dados sincronizadas.');
-
-        // Criando dados de teste
-        const client1 = await Client.create({ nome: 'Ana Silva', email: 'ana@teste.com', telefone: '1199998888' });
-        const client2 = await Client.create({ nome: 'Bruno Costa', email: 'bruno@teste.com', telefone: '2198887777' });
+        // Chame a função de sincronização do banco de dados do database.js
+        await syncDatabase();
         
-        const sale1 = await Sale.create({ valorTotal: 150, clientId: client1.id, dataVencimento: '2025-07-20' });
-        await Payment.create({ valor: 50, saleId: sale1.id });
-        await sale1.update({ valorPago: 50 }); // Atualiza o total pago na venda
-
-        const sale2 = await Sale.create({ valorTotal: 300, valorPago: 300, status: 'Paga', clientId: client2.id });
-        await Payment.create({ valor: 300, saleId: sale2.id });
-
-        console.log('📝 Dados de teste inseridos.');
-
+        // Chame a função de seed de dados do database.js
+        await seedData();
 
         app.listen(PORT, () => {
             console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
         });
     } catch (error) {
-        console.error('❌ Erro ao iniciar o servidor:', error);
+        console.error('❌ Erro fatal ao iniciar o servidor:', error);
     }
 }
 
+// Inicia o servidor
 startServer();
