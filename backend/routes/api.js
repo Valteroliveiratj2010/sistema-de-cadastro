@@ -3,7 +3,7 @@ const express = require('express');
 const { Op, fn, col, where } = require('sequelize');
 
 // Importar os modelos que serão usados nestas rotas.
-const { Client, Sale, Payment, User, Product } = require('../database'); // NOVO: Importa o modelo Product
+const { Client, Sale, Payment, User, Product, SaleProduct } = require('../database'); 
 
 // Importe o middleware de autenticação
 const authMiddleware = require('../middleware/authMiddleware'); 
@@ -264,32 +264,104 @@ router.get('/sales', async (req, res) => {
     }
 });
 
+// Rota para obter detalhes de uma venda específica (ATUALIZADA para incluir produtos e detalhes de pagamento)
 router.get('/sales/:id', async (req, res) => {
     try {
         const sale = await Sale.findByPk(req.params.id, {
             include: [
                 { model: Client, as: 'client' },
-                { model: Payment, as: 'payments', order: [['dataPagamento', 'DESC']] }
+                // NOVO: Inclui os detalhes dos pagamentos
+                { 
+                    model: Payment, 
+                    as: 'payments', 
+                    order: [['dataPagamento', 'DESC']],
+                    attributes: ['valor', 'dataPagamento', 'formaPagamento', 'parcelas', 'bandeiraCartao', 'bancoCrediario'] // Adiciona novos atributos
+                },
+                { 
+                    model: Product, 
+                    as: 'products',
+                    through: {
+                        attributes: ['quantidade', 'precoUnitario'] 
+                    }
+                }
             ]
         });
         if (sale) res.json(sale);
         else res.status(404).json({ message: 'Venda não encontrada' });
     } catch (error) {
+        console.error('❌ ERRO AO OBTER DETALHES DA VENDA:', error);
         res.status(500).json({ message: error.message });
     }
 });
 
+// Rota para criar uma nova venda (ATUALIZADA para aceitar produtos)
 router.post('/sales', async (req, res) => {
+    console.log('[API Route Log] POST /sales - Request Body:', JSON.stringify(req.body, null, 2));
+
+    const { clientId, dataVenda, dataVencimento, products: saleProductsData } = req.body;
+
+    if (!clientId || !saleProductsData || saleProductsData.length === 0) {
+        return res.status(400).json({ message: 'Cliente e produtos da venda são obrigatórios.' });
+    }
+
+    let transaction;
     try {
-        const sale = await Sale.create(req.body);
+        transaction = await Sale.sequelize.transaction();
+
+        let valorTotalCalculado = 0;
+        for (const item of saleProductsData) {
+            const product = await Product.findByPk(item.productId, { transaction });
+            if (!product) {
+                throw new Error(`Produto com ID ${item.productId} não encontrado.`);
+            }
+            if (product.estoque < item.quantidade) {
+                throw new Error(`Estoque insuficiente para o produto: ${product.nome}. Disponível: ${product.estoque}, Solicitado: ${item.quantidade}`);
+            }
+            const precoUnitario = item.precoUnitario !== undefined ? parseFloat(item.precoUnitario) : product.precoVenda;
+            valorTotalCalculado += precoUnitario * item.quantidade;
+        }
+
+        const sale = await Sale.create({
+            clientId,
+            dataVenda: dataVenda || new Date(),
+            dataVencimento: dataVencimento || null,
+            valorTotal: valorTotalCalculado,
+            valorPago: 0,
+            status: 'Pendente'
+        }, { transaction });
+
+        for (const item of saleProductsData) {
+            const product = await Product.findByPk(item.productId, { transaction });
+            const precoUnitario = item.precoUnitario !== undefined ? parseFloat(item.precoUnitario) : product.precoVenda;
+
+            await SaleProduct.create({
+                saleId: sale.id,
+                productId: item.productId,
+                quantidade: item.quantidade,
+                precoUnitario: precoUnitario
+            }, { transaction });
+
+            product.estoque -= item.quantidade;
+            await product.save({ transaction });
+        }
+
+        await transaction.commit();
+
         res.status(201).json(sale);
+
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        if (transaction) await transaction.rollback();
+        console.error('❌ ERRO AO CRIAR VENDA COM PRODUTOS:', error);
+        res.status(400).json({ message: error.message || 'Erro ao criar venda.' });
     }
 });
 
+
+// Rota para atualizar uma venda existente (ainda não totalmente atualizada para produtos e pagamentos)
 router.put('/sales/:id', async (req, res) => {
     try {
+        // Por enquanto, esta rota não lida com atualização de SaleProducts ou estoque.
+        // Foca apenas nos campos diretos da venda.
         const [updated] = await Sale.update(req.body, { where: { id: req.params.id } });
         if (updated) {
             const updatedSale = await Sale.findByPk(req.params.id);
@@ -302,25 +374,96 @@ router.put('/sales/:id', async (req, res) => {
     }
 });
 
+// Rota para deletar uma venda (ATUALIZADA para reverter estoque e deletar SaleProducts)
 router.delete('/sales/:id', async (req, res) => {
     try {
-        const deleted = await Sale.destroy({ where: { id: req.params.id } }); // Corrected to Sale.destroy
-        if (deleted) res.status(204).send();
-        else res.status(404).json({ message: 'Venda não encontrada' });
-    } catch (error) { res.status(500).json({ message: error.message }); }
+        const sale = await Sale.findByPk(req.params.id, {
+            include: [{ model: SaleProduct, as: 'saleProducts' }]
+        });
+
+        if (!sale) {
+            return res.status(404).json({ message: 'Venda não encontrada' });
+        }
+
+        let transaction;
+        try {
+            transaction = await Sale.sequelize.transaction();
+
+            // Reverter estoque dos produtos associados
+            for (const item of sale.saleProducts) {
+                const product = await Product.findByPk(item.productId, { transaction });
+                if (product) {
+                    product.estoque += item.quantidade;
+                    await product.save({ transaction });
+                }
+            }
+
+            // Deletar os SaleProducts e Payments associados (cascade delete)
+            // Associações Sale.hasMany(Payment) e Sale.hasMany(SaleProduct)
+            // Se você configurou CASCADE DELETE nas associações no modelo,
+            // deletar a Sale já deletaria os Payments e SaleProducts automaticamente.
+            // Mas é mais seguro fazer explicitamente ou garantir que CASCADE esteja lá.
+            await Payment.destroy({ where: { saleId: sale.id }, transaction });
+            await SaleProduct.destroy({ where: { saleId: sale.id }, transaction });
+
+            // Deletar a venda
+            const deleted = await Sale.destroy({ where: { id: req.params.id }, transaction });
+
+            await transaction.commit();
+
+            if (deleted) res.status(204).send();
+            else res.status(404).json({ message: 'Venda não encontrada' });
+
+        } catch (error) {
+            if (transaction) await transaction.rollback();
+            console.error('❌ ERRO AO DELETAR VENDA COM PRODUTOS:', error);
+            res.status(500).json({ message: error.message || 'Erro ao deletar venda.' });
+        }
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 });
 
-// --- ROTA DE PAGAMENTOS ---
+// --- ROTA DE PAGAMENTOS (ATUALIZADA para aceitar detalhes de pagamento) ---
 router.post('/sales/:saleId/payments', async (req, res) => {
+    console.log('[API Route Log] POST /sales/:saleId/payments - Request Body:', JSON.stringify(req.body, null, 2));
+
+    const { saleId } = req.params;
+    const { valor, formaPagamento, parcelas, bandeiraCartao, bancoCrediario } = req.body; // NOVO: Campos de detalhe de pagamento
+
+    // Validação básica
+    if (!valor || valor <= 0) {
+        return res.status(400).json({ message: 'Valor do pagamento inválido.' });
+    }
+    if (!formaPagamento) {
+        return res.status(400).json({ message: 'Forma de pagamento é obrigatória.' });
+    }
+    if (['Cartão de Crédito', 'Crediário'].includes(formaPagamento) && (!parcelas || parcelas < 1)) {
+        return res.status(400).json({ message: `Número de parcelas inválido para ${formaPagamento}.` });
+    }
+
+    let transaction;
     try {
-        const { saleId } = req.params;
-        const { valor } = req.body;
+        transaction = await Sale.sequelize.transaction();
 
-        const sale = await Sale.findByPk(saleId);
-        if (!sale) return res.status(404).json({ message: 'Venda não encontrada' });
+        const sale = await Sale.findByPk(saleId, { transaction });
+        if (!sale) {
+            await transaction.rollback();
+            return res.status(404).json({ message: 'Venda não encontrada' });
+        }
 
-        await Payment.create({ valor: parseFloat(valor), saleId: sale.id });
-        const totalPaid = await Payment.sum('valor', { where: { saleId: sale.id } });
+        await Payment.create({
+            valor: parseFloat(valor),
+            dataPagamento: new Date(), // Ou req.body.dataPagamento se vier do frontend
+            saleId: sale.id,
+            formaPagamento: formaPagamento,
+            parcelas: parcelas || 1, // Garante 1 parcela se não especificado
+            bandeiraCartao: bandeiraCartao || null,
+            bancoCrediario: bancoCrediario || null
+        }, { transaction });
+
+        const totalPaid = await Payment.sum('valor', { where: { saleId: sale.id }, transaction });
         sale.valorPago = totalPaid;
         
         if (sale.valorPago >= sale.valorTotal) {
@@ -328,10 +471,15 @@ router.post('/sales/:saleId/payments', async (req, res) => {
         } else {
             sale.status = 'Pendente';
         }
-        await sale.save();
-        res.status(201).json(sale);
+        await sale.save({ transaction });
+
+        await transaction.commit();
+        res.status(201).json(sale); // Retorna a venda atualizada
+
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        if (transaction) await transaction.rollback();
+        console.error('❌ ERRO AO REGISTRAR PAGAMENTO:', error);
+        res.status(400).json({ message: error.message || 'Erro ao registrar pagamento.' });
     }
 });
 
