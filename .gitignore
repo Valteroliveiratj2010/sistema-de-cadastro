@@ -1,12 +1,12 @@
 # Ignora a pasta de dependências do Node.js
 node_modules/
 
-# Ignora arquivos de ambiente (bom para o futuro)
+# Ignora arquivos de ambiente
 .env
 
-# Ignora o arquivo do banco de dados SQLite
-# Importante: Garanta que o caminho esteja correto
-backend/database/dev.sqlite
+# Ignora o diretório de dados do backend, que contém o arquivo SQLite
+# O caminho é relativo à raiz do projeto onde este .gitignore está.
+backend/data/
 
 # Ignora arquivos de log do npm
 npm-debug.log*
