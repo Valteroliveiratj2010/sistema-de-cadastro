@@ -60,6 +60,7 @@ router.get('/dashboard/stats', async (req, res) => {
 
 // Rota para exportar clientes para CSV
 router.get('/clients/export-csv', async (req, res) => {
+    // CORREÇÃO: String de log formatada corretamente
     console.log(`[API Route Log] ${new Date().toISOString()} - Export clients CSV route accessed.`);
     try {
         const clients = await Client.findAll({ order: [['nome', 'ASC']] });
@@ -71,6 +72,7 @@ router.get('/clients/export-csv', async (req, res) => {
                 if (value === null || value === undefined) return '';
                 const stringValue = String(value).replace(/"/g, '""');
                 if (stringValue.includes(',') || stringValue.includes('\n') || stringValue.includes('"')) {
+                    // CORREÇÃO: Interpolação de string correta
                     return `"${stringValue}"`;
                 }
                 return stringValue;
@@ -91,6 +93,7 @@ router.get('/clients/export-csv', async (req, res) => {
         ].join('\n');
 
         res.setHeader('Content-Type', 'text/csv; charset=UTF-8');
+        // CORREÇÃO: String do nome do arquivo formatada corretamente
         res.setHeader('Content-Disposition', `attachment; filename="clientes_gestor_pro_${new Date().toISOString().slice(0,10)}.csv"`);
         
         res.status(200).send(csvContent);
@@ -105,6 +108,7 @@ router.get('/clients/export-csv', async (req, res) => {
 router.get('/clients', async (req, res) => {
     const { page = 1, limit = 10, q = '' } = req.query;
     const offset = (page - 1) * limit;
+    // CORREÇÃO: Uso correto de template literal para o Op.like
     const whereClause = q ? { nome: { [Op.like]: `%${q}%` } } : {};
     try {
         const { count, rows } = await Client.findAndCountAll({ where: whereClause, limit: parseInt(limit), offset: parseInt(offset), order: [['nome', 'ASC']] });
@@ -150,6 +154,7 @@ router.delete('/clients/:id', async (req, res) => {
 // --- ROTAS DE VENDAS ---
 // Rota para exportar vendas para CSV
 router.get('/sales/export-csv', async (req, res) => {
+    // CORREÇÃO: String de log formatada corretamente
     console.log(`[API Route Log] ${new Date().toISOString()} - Export sales CSV route accessed.`);
     try {
         const sales = await Sale.findAll({
@@ -164,6 +169,7 @@ router.get('/sales/export-csv', async (req, res) => {
                 if (value === null || value === undefined) return '';
                 const stringValue = String(value).replace(/"/g, '""');
                 if (stringValue.includes(',') || stringValue.includes('\n') || stringValue.includes('"')) {
+                    // CORREÇÃO: Interpolação de string correta
                     return `"${stringValue}"`;
                 }
                 return stringValue;
@@ -188,6 +194,7 @@ router.get('/sales/export-csv', async (req, res) => {
         ].join('\n');
 
         res.setHeader('Content-Type', 'text/csv; charset=UTF-8');
+        // CORREÇÃO: String do nome do arquivo formatada corretamente
         res.setHeader('Content-Disposition', `attachment; filename="vendas_gestor_pro_${new Date().toISOString().slice(0,10)}.csv"`);
         
         res.status(200).send(csvContent);
@@ -200,6 +207,7 @@ router.get('/sales/export-csv', async (req, res) => {
 
 // Rota para relatório de vendas por período
 router.get('/sales/report-by-period', async (req, res) => {
+    // CORREÇÃO: String de log formatada corretamente
     console.log(`[API Route Log] ${new Date().toISOString()} - Sales report by period route accessed.`);
     try {
         let { startDate, endDate } = req.query;
@@ -249,6 +257,7 @@ router.get('/sales/report-by-period', async (req, res) => {
 router.get('/sales', async (req, res) => {
     const { page = 1, limit = 5, q = '' } = req.query;
     const offset = (page - 1) * limit;
+    // CORREÇÃO: Uso correto de template literal para o Op.like
     const whereClause = q ? { '$client.nome$': { [Op.like]: `%${q}%` } } : {};
     try {
         const { count, rows } = await Sale.findAndCountAll({
@@ -270,16 +279,15 @@ router.get('/sales/:id', async (req, res) => {
         const sale = await Sale.findByPk(req.params.id, {
             include: [
                 { model: Client, as: 'client' },
-                // NOVO: Inclui os detalhes dos pagamentos
                 { 
                     model: Payment, 
                     as: 'payments', 
                     order: [['dataPagamento', 'DESC']],
-                    attributes: ['valor', 'dataPagamento', 'formaPagamento', 'parcelas', 'bandeiraCartao', 'bancoCrediario'] // Adiciona novos atributos
+                    attributes: ['valor', 'dataPagamento', 'formaPagamento', 'parcelas', 'bandeiraCartao', 'bancoCrediario'] 
                 },
                 { 
                     model: Product, 
-                    as: 'products',
+                    as: 'products', 
                     through: {
                         attributes: ['quantidade', 'precoUnitario'] 
                     }
@@ -294,11 +302,11 @@ router.get('/sales/:id', async (req, res) => {
     }
 });
 
-// Rota para criar uma nova venda (ATUALIZADA para aceitar produtos)
+// Rota para criar uma nova venda (ATUALIZADA para aceitar produtos e pagamento inicial)
 router.post('/sales', async (req, res) => {
     console.log('[API Route Log] POST /sales - Request Body:', JSON.stringify(req.body, null, 2));
 
-    const { clientId, dataVenda, dataVencimento, products: saleProductsData } = req.body;
+    const { clientId, dataVenda, dataVencimento, products: saleProductsData, initialPayment } = req.body; // initialPayment agora é recebido
 
     if (!clientId || !saleProductsData || saleProductsData.length === 0) {
         return res.status(400).json({ message: 'Cliente e produtos da venda são obrigatórios.' });
@@ -306,30 +314,51 @@ router.post('/sales', async (req, res) => {
 
     let transaction;
     try {
-        transaction = await Sale.sequelize.transaction();
+        transaction = await Sale.sequelize.transaction(); // Inicia uma transação
 
+        // 1. Calcular valorTotal da venda e verificar estoque
         let valorTotalCalculado = 0;
         for (const item of saleProductsData) {
             const product = await Product.findByPk(item.productId, { transaction });
             if (!product) {
+                // CORREÇÃO: String formatada corretamente
                 throw new Error(`Produto com ID ${item.productId} não encontrado.`);
             }
             if (product.estoque < item.quantidade) {
+                // CORREÇÃO: String formatada corretamente
                 throw new Error(`Estoque insuficiente para o produto: ${product.nome}. Disponível: ${product.estoque}, Solicitado: ${item.quantidade}`);
             }
+            // Usa o precoUnitario enviado pelo frontend, ou o precoVenda atual do produto como fallback
             const precoUnitario = item.precoUnitario !== undefined ? parseFloat(item.precoUnitario) : product.precoVenda;
             valorTotalCalculado += precoUnitario * item.quantidade;
         }
 
+        // 2. Criar a venda principal
         const sale = await Sale.create({
             clientId,
             dataVenda: dataVenda || new Date(),
             dataVencimento: dataVencimento || null,
             valorTotal: valorTotalCalculado,
-            valorPago: 0,
-            status: 'Pendente'
+            // NOVO: Usar o valor do initialPayment para valorPago se existir
+            valorPago: (initialPayment && initialPayment.valor) ? parseFloat(initialPayment.valor) : 0, 
+            status: (initialPayment && initialPayment.valor >= valorTotalCalculado) ? 'Paga' : 'Pendente' // Define status com base no pagamento inicial
         }, { transaction });
 
+        // NOVO: Se houver pagamento inicial E um valor > 0, crie um registro em Payment
+        if (initialPayment && parseFloat(initialPayment.valor) > 0) {
+            await Payment.create({
+                valor: parseFloat(initialPayment.valor),
+                dataPagamento: new Date(), // Data do pagamento inicial (pode ser ajustada se vier do frontend)
+                saleId: sale.id,
+                formaPagamento: initialPayment.formaPagamento || 'Dinheiro',
+                parcelas: initialPayment.parcelas || 1,
+                bandeiraCartao: initialPayment.bandeiraCartao || null,
+                bancoCrediario: initialPayment.bancoCrediario || null
+            }, { transaction });
+        }
+
+
+        // 3. Adicionar os itens de produto à venda e atualizar estoque
         for (const item of saleProductsData) {
             const product = await Product.findByPk(item.productId, { transaction });
             const precoUnitario = item.precoUnitario !== undefined ? parseFloat(item.precoUnitario) : product.precoVenda;
@@ -341,16 +370,17 @@ router.post('/sales', async (req, res) => {
                 precoUnitario: precoUnitario
             }, { transaction });
 
+            // Reduzir o estoque do produto
             product.estoque -= item.quantidade;
             await product.save({ transaction });
         }
 
-        await transaction.commit();
+        await transaction.commit(); // Confirma a transação
 
         res.status(201).json(sale);
 
     } catch (error) {
-        if (transaction) await transaction.rollback();
+        if (transaction) await transaction.rollback(); // Desfaz a transação em caso de erro
         console.error('❌ ERRO AO CRIAR VENDA COM PRODUTOS:', error);
         res.status(400).json({ message: error.message || 'Erro ao criar venda.' });
     }
@@ -359,9 +389,9 @@ router.post('/sales', async (req, res) => {
 
 // Rota para atualizar uma venda existente (ainda não totalmente atualizada para produtos e pagamentos)
 router.put('/sales/:id', async (req, res) => {
+    // Para esta fase, o PUT de venda não atualiza itens de produto ou pagamentos.
+    // Isso será uma funcionalidade mais avançada (Fase 9.2).
     try {
-        // Por enquanto, esta rota não lida com atualização de SaleProducts ou estoque.
-        // Foca apenas nos campos diretos da venda.
         const [updated] = await Sale.update(req.body, { where: { id: req.params.id } });
         if (updated) {
             const updatedSale = await Sale.findByPk(req.params.id);
@@ -374,7 +404,7 @@ router.put('/sales/:id', async (req, res) => {
     }
 });
 
-// Rota para deletar uma venda (ATUALIZADA para reverter estoque e deletar SaleProducts)
+// Rota para deletar uma venda (ATUALIZADA para reverter estoque e deletar SaleProducts e Payments)
 router.delete('/sales/:id', async (req, res) => {
     try {
         const sale = await Sale.findByPk(req.params.id, {
@@ -398,12 +428,9 @@ router.delete('/sales/:id', async (req, res) => {
                 }
             }
 
-            // Deletar os SaleProducts e Payments associados (cascade delete)
-            // Associações Sale.hasMany(Payment) e Sale.hasMany(SaleProduct)
-            // Se você configurou CASCADE DELETE nas associações no modelo,
-            // deletar a Sale já deletaria os Payments e SaleProducts automaticamente.
-            // Mas é mais seguro fazer explicitamente ou garantir que CASCADE esteja lá.
+            // Deletar os Payments associados
             await Payment.destroy({ where: { saleId: sale.id }, transaction });
+            // Deletar os SaleProducts associados
             await SaleProduct.destroy({ where: { saleId: sale.id }, transaction });
 
             // Deletar a venda
@@ -430,9 +457,8 @@ router.post('/sales/:saleId/payments', async (req, res) => {
     console.log('[API Route Log] POST /sales/:saleId/payments - Request Body:', JSON.stringify(req.body, null, 2));
 
     const { saleId } = req.params;
-    const { valor, formaPagamento, parcelas, bandeiraCartao, bancoCrediario } = req.body; // NOVO: Campos de detalhe de pagamento
+    const { valor, formaPagamento, parcelas, bandeiraCartao, bancoCrediario } = req.body;
 
-    // Validação básica
     if (!valor || valor <= 0) {
         return res.status(400).json({ message: 'Valor do pagamento inválido.' });
     }
@@ -440,6 +466,7 @@ router.post('/sales/:saleId/payments', async (req, res) => {
         return res.status(400).json({ message: 'Forma de pagamento é obrigatória.' });
     }
     if (['Cartão de Crédito', 'Crediário'].includes(formaPagamento) && (!parcelas || parcelas < 1)) {
+        // CORREÇÃO: String formatada corretamente
         return res.status(400).json({ message: `Número de parcelas inválido para ${formaPagamento}.` });
     }
 
@@ -455,10 +482,10 @@ router.post('/sales/:saleId/payments', async (req, res) => {
 
         await Payment.create({
             valor: parseFloat(valor),
-            dataPagamento: new Date(), // Ou req.body.dataPagamento se vier do frontend
+            dataPagamento: new Date(),
             saleId: sale.id,
             formaPagamento: formaPagamento,
-            parcelas: parcelas || 1, // Garante 1 parcela se não especificado
+            parcelas: parcelas || 1,
             bandeiraCartao: bandeiraCartao || null,
             bancoCrediario: bancoCrediario || null
         }, { transaction });
@@ -474,7 +501,7 @@ router.post('/sales/:saleId/payments', async (req, res) => {
         await sale.save({ transaction });
 
         await transaction.commit();
-        res.status(201).json(sale); // Retorna a venda atualizada
+        res.status(201).json(sale);
 
     } catch (error) {
         if (transaction) await transaction.rollback();
@@ -484,10 +511,32 @@ router.post('/sales/:saleId/payments', async (req, res) => {
 });
 
 // --- ROTAS DE PRODUTOS ---
-// Rota para listar todos os produtos
+
+// ==========> NOVA ROTA <==========
+// Rota para listar produtos com estoque baixo.
+router.get('/products/low-stock', async (req, res) => {
+    // No futuro, este valor pode vir de uma configuração do sistema.
+    const LOW_STOCK_THRESHOLD = 10; 
+    try {
+        const products = await Product.findAll({
+            where: {
+                estoque: {
+                    [Op.lte]: LOW_STOCK_THRESHOLD
+                }
+            },
+            order: [['estoque', 'ASC']] // Ordena para mostrar os mais críticos primeiro
+        });
+        res.json(products);
+    } catch (error) {
+        console.error('❌ ERRO AO BUSCAR PRODUTOS COM ESTOQUE BAIXO:', error);
+        res.status(500).json({ message: 'Erro ao buscar produtos com estoque baixo.' });
+    }
+});
+
 router.get('/products', async (req, res) => {
     const { page = 1, limit = 10, q = '' } = req.query;
     const offset = (page - 1) * limit;
+    // CORREÇÃO: Uso correto de template literal para o Op.like
     const whereClause = q ? { nome: { [Op.like]: `%${q}%` } } : {};
     try {
         const { count, rows } = await Product.findAndCountAll({ where: whereClause, limit: parseInt(limit), offset: parseInt(offset), order: [['nome', 'ASC']] });
@@ -495,7 +544,6 @@ router.get('/products', async (req, res) => {
     } catch (error) { res.status(500).json({ message: error.message }); }
 });
 
-// Rota para obter produto por ID
 router.get('/products/:id', async (req, res) => {
     try {
         const product = await Product.findByPk(req.params.id);
@@ -504,7 +552,6 @@ router.get('/products/:id', async (req, res) => {
     } catch (error) { res.status(500).json({ message: error.message }); }
 });
 
-// Rota para criar um novo produto
 router.post('/products', async (req, res) => {
     try {
         const product = await Product.create(req.body);
@@ -512,7 +559,6 @@ router.post('/products', async (req, res) => {
     } catch (error) { res.status(400).json({ message: error.message }); }
 });
 
-// Rota para atualizar um produto existente
 router.put('/products/:id', async (req, res) => {
     try {
         const [updated] = await Product.update(req.body, { where: { id: req.params.id } });
@@ -523,7 +569,6 @@ router.put('/products/:id', async (req, res) => {
     } catch (error) { res.status(400).json({ message: error.message }); }
 });
 
-// Rota para deletar um produto
 router.delete('/products/:id', async (req, res) => {
     try {
         const deleted = await Product.destroy({ where: { id: req.params.id } });

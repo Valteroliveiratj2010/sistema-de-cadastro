@@ -2,7 +2,6 @@
 const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
 
-// Exporta uma função que define o modelo
 module.exports = (sequelize) => {
     const User = sequelize.define('User', {
         id: {
@@ -18,7 +17,14 @@ module.exports = (sequelize) => {
         password: {
             type: DataTypes.STRING,
             allowNull: false
+        },
+        // --- NOVO CAMPO ADICIONADO ---
+        role: {
+            type: DataTypes.ENUM('admin', 'gerente', 'vendedor'),
+            allowNull: false,
+            defaultValue: 'vendedor' // Garante que novos usuários sejam vendedores por padrão
         }
+        // -----------------------------
     }, {
         hooks: {
             beforeCreate: async (user) => {
@@ -38,5 +44,5 @@ module.exports = (sequelize) => {
         return await bcrypt.compare(candidatePassword, this.password);
     };
 
-    return User; // Retorna o modelo definido
+    return User;
 };

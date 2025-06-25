@@ -40,8 +40,9 @@ async function startServer() {
         // Chame a função de seed de dados do database.js
         await seedData();
 
+        // CORREÇÃO: A string inteira, incluindo o emoji, deve estar dentro de backticks `` ou aspas ""/''.
         app.listen(PORT, () => {
-            console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
+            console.log(` Servidor rodando em http://localhost:${PORT}`);
         });
     } catch (error) {
         console.error('❌ Erro fatal ao iniciar o servidor:', error);

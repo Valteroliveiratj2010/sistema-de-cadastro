@@ -42,9 +42,10 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         selectedSaleProducts: [],
         availableProducts: [],
+        currentSelectedProduct: null,
     };
 
-    // --- SELETORES DOM ---
+    // --- DOM SELECTORS ---
     const dom = {
         navLinks: document.querySelectorAll('.sidebar .nav-link'),
         clientForm: document.getElementById('clientForm'),
@@ -57,12 +58,16 @@ document.addEventListener('DOMContentLoaded', () => {
         startDateInput: document.getElementById('startDate'),
         endDateInput: document.getElementById('endDate'),
         productForm: document.getElementById('productForm'),
-        productSelect: document.getElementById('productSelect'),
+        
+        productSelect: $('#productSelect'),
         productQuantityInput: document.getElementById('productQuantity'),
+        productUnitPriceInput: document.getElementById('productUnitPrice'),
         btnAddProduct: document.getElementById('btnAddProduct'),
         saleProductsList: document.getElementById('saleProductsList'),
         saleTotalValueDisplay: document.getElementById('saleTotalValueDisplay'),
         saleTotalValueHidden: document.getElementById('saleTotalValue'),
+        productDetailsDisplay: document.getElementById('productDetailsDisplay'),
+
         paymentFormaSelect: document.getElementById('paymentForma'),
         paymentParcelasField: document.getElementById('parcelasField'),
         paymentParcelasInput: document.getElementById('paymentParcelas'),
@@ -71,20 +76,14 @@ document.addEventListener('DOMContentLoaded', () => {
         paymentBancoCrediarioField: document.getElementById('bancoCrediarioField'),
         paymentBancoCrediarioInput: document.getElementById('paymentBancoCrediario'),
         salePaidValueInitialInput: document.getElementById('salePaidValueInitial'),
-        newPaymentFormaSelect: document.getElementById('paymentFormaNew'),
-        newPaymentParcelasField: document.getElementById('newParcelasField'),
-        newPaymentParcelasInput: document.getElementById('newPaymentParcelas'),
-        newPaymentBandeiraCartaoField: document.getElementById('newBandeiraCartaoField'),
-        newPaymentBandeiraCartaoInput: document.getElementById('newPaymentBandeiraCartao'),
-        newPaymentBancoCrediarioField: document.getElementById('newBancoCrediarioField'),
-        newPaymentBancoCrediarioInput: document.getElementById('newBancoCrediarioInput'),
-        // Seletores para responsividade
+        
         sidebar: document.querySelector('.sidebar'),
         sidebarToggle: document.getElementById('sidebarToggle'),
         sidebarOverlay: document.getElementById('sidebar-overlay'),
+        mainContent: document.getElementById('mainContent'),
     };
 
-    // --- FUNÇÕES DE UTILIDADE ---
+    // --- UTILITY FUNCTIONS ---
     const utils = {
         formatCurrency: (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0),
         formatDate: (dateString) => dateString ? new Date(dateString).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'N/A',
@@ -122,6 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
             });
         },
         calculateSaleTotal: () => {
@@ -163,7 +163,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (parcelasField) parcelasField.style.display = 'none';
             if (bandeiraCartaoField) bandeiraCartaoField.style.display = 'none';
             if (bancoCrediarioField) bancoCrediarioField.style.display = 'none';
-
             if (parcelasInput) parcelasInput.value = '1';
             if (bandeiraCartaoInput) bandeiraCartaoInput.value = '';
             if (bancoCrediarioInput) bancoCrediarioInput.value = '';
@@ -228,7 +227,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const paidValue = utils.formatCurrency(sale.valorPago);
             const valorDevidoCalculado = sale.valorTotal - sale.valorPago;
             const dueValue = utils.formatCurrency(valorDevidoCalculado);
-
 
             let productsHtml = '';
             if (sale.products && sale.products.length > 0) {
@@ -360,8 +358,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- LÓGICA DE API ---
-    const api = { /* ... código existente sem mudanças ... */
+    // --- API LOGIC ---
+    const api = {
         async request(endpoint, options = {}) {
             const token = utils.getToken();
             const headers = {
@@ -396,6 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return response.status === 204 ? null : response.json();
         },
         getDashboardStats: () => api.request('/dashboard/stats'),
+        getLowStockProducts: () => api.request('/products/low-stock'),
         getClients: (page = 1, q = '', limit = 10) => api.request(`/clients?page=${page}&q=${q}&limit=${limit}`),
         getClientById: (id) => api.request(`/clients/${id}`),
         createClient: (data) => api.request('/clients', { method: 'POST', body: JSON.stringify(data) }),
@@ -416,9 +415,11 @@ document.addEventListener('DOMContentLoaded', () => {
         createProduct: (data) => api.request('/products', { method: 'POST', body: JSON.stringify(data) }),
         updateProduct: (id, data) => api.request(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
         deleteProduct: (id) => api.request(`/products/${id}`, { method: 'DELETE' }),
+        getRankingsProdutos: () => api.request('/rankings/produtos'),
+        getRankingsClientes: () => api.request('/rankings/clientes'),
     };
 
-    // --- LÓGICA DE UI E RENDERIZAÇÃO (ATUALIZADA) ---
+    // --- UI AND RENDERING LOGIC ---
     const ui = {
         showSection: (sectionId) => {
             document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
@@ -429,18 +430,65 @@ document.addEventListener('DOMContentLoaded', () => {
             const navLink = document.querySelector(`[data-section="${sectionId}"]`);
             if (navLink) navLink.classList.add('active');
         },
-        renderDashboard: ({ totalClients, salesThisMonth, totalReceivable, overdueSales, salesByMonth }) => {
+        renderDashboard: ({ totalClients, salesThisMonth, totalReceivable, overdueSales, salesByMonth, lowStockProducts, salesToday, averageTicket }) => {
             const section = document.getElementById('dashboardSection');
+            
+            let lowStockAlertHtml = '';
+            if (lowStockProducts && lowStockProducts.length > 0) {
+                const productItems = lowStockProducts.map(p =>
+                    `<li class="list-group-item d-flex justify-content-between align-items-center">
+                        ${p.nome} (SKU: ${p.sku || 'N/A'})
+                        <span class="badge bg-danger rounded-pill">${p.estoque}</span>
+                    </li>`
+                ).join('');
+                lowStockAlertHtml = `
+                    <div class="alert alert-warning mb-4" role="alert">
+                        <h4 class="alert-heading"><i class="bi bi-exclamation-triangle-fill me-2"></i>Alerta: Estoque Baixo</h4>
+                        <p>Os seguintes produtos precisam de reposição urgente.</p>
+                        <hr>
+                        <ul class="list-group">
+                            ${productItems}
+                        </ul>
+                    </div>
+                `;
+            }
+
             section.innerHTML = `
                 <h3>Dashboard</h3>
+                ${lowStockAlertHtml}
                 <div class="row g-4 mb-4">
-                    <div class="col-md-3"><div class="card p-3"><h6>Total de Clientes</h6><p class="fs-2 fw-bold">${totalClients}</p></div></div>
-                    <div class="col-md-3"><div class="card p-3"><h6>Vendas este Mês</h6><p class="fs-2 fw-bold">${utils.formatCurrency(salesThisMonth)}</p></div></div>
-                    <div class="col-md-3"><div class="card p-3"><h6>A Receber</h6><p class="fs-2 fw-bold">${utils.formatCurrency(totalReceivable)}</p></div></div>
-                    <div class="col-md-3"><div class="card p-3 bg-danger text-white"><h6>Vencido</h6><p class="fs-2 fw-bold">${utils.formatCurrency(overdueSales)}</p></div></div>
+                    <div class="col-lg-2 col-md-4 col-sm-6"><div class="card p-3"><h6>Clientes</h6><p class="fs-2 fw-bold">${totalClients}</p></div></div>
+                    <div class="col-lg-2 col-md-4 col-sm-6"><div class="card p-3"><h6>Vendas Hoje</h6><p class="fs-2 fw-bold">${utils.formatCurrency(salesToday)}</p></div></div>
+                    <div class="col-lg-2 col-md-4 col-sm-6"><div class="card p-3"><h6>Vendas Mês</h6><p class="fs-2 fw-bold">${utils.formatCurrency(salesThisMonth)}</p></div></div>
+                    <div class="col-lg-2 col-md-4 col-sm-6"><div class="card p-3"><h6>Ticket Médio</h6><p class="fs-2 fw-bold">${utils.formatCurrency(averageTicket)}</p></div></div>
+                    <div class="col-lg-2 col-md-4 col-sm-6"><div class="card p-3"><h6>A Receber</h6><p class="fs-2 fw-bold">${utils.formatCurrency(totalReceivable)}</p></div></div>
+                    <div class="col-lg-2 col-md-4 col-sm-6"><div class="card p-3 bg-danger text-white"><h6>Vencido</h6><p class="fs-2 fw-bold">${utils.formatCurrency(overdueSales)}</p></div></div>
                 </div>
-                <div class="card p-3"><canvas id="salesChart"></canvas></div>`;
-            
+                <div class="card p-3 mb-4"><canvas id="salesChart"></canvas></div>
+                <!-- Seção de rankings abaixo do gráfico -->
+                <div class="row g-4 mt-4">
+                    <div class="col-md-6">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-primary text-white">
+                                <i class="bi bi-box-seam me-2"></i>Top 5 Produtos Mais Vendidos
+                            </div>
+                            <ul class="list-group list-group-flush" id="produtosMaisVendidos">
+                                <li class="list-group-item text-center text-muted">Carregando...</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-success text-white">
+                                <i class="bi bi-people-fill me-2"></i>Top 5 Clientes com Mais Compras
+                            </div>
+                            <ul class="list-group list-group-flush" id="clientesMaisCompraram">
+                                <li class="list-group-item text-center text-muted">Carregando...</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
             const ctx = document.getElementById('salesChart').getContext('2d');
             if (state.chartInstance) state.chartInstance.destroy();
             state.chartInstance = new Chart(ctx, {
@@ -449,7 +497,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     labels: salesByMonth.map(item => item.month),
                     datasets: [{ label: 'Vendas por Mês', data: salesByMonth.map(item => item.total), backgroundColor: 'rgba(79, 70, 229, 0.8)' }]
                 },
-                options: { scales: { y: { beginAtZero: true } } }
+                options: { 
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } } 
+                }
             });
         },
         renderClients: () => {
@@ -520,8 +572,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const totalPages = Math.ceil(totalItems / limit);
             const container = document.getElementById(`pagination${type.charAt(0).toUpperCase() + type.slice(1)}`);
             
-            if (!container || totalPages === 0) {
-                container.innerHTML = '';
+            if (!container || totalPages <= 1) {
+                if(container) container.innerHTML = '';
                 return;
             }
 
@@ -579,7 +631,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (sales.length === 0) {
                 resultsHtml = `<div class="alert alert-info text-center" role="alert">Nenhuma venda encontrada para o período selecionado.</div>`;
             } else {
-                // Resumo do relatório
                 resultsHtml += `
                     <div class="row g-3 mb-4">
                         <div class="col-md-3"><div class="card p-3"><h6>Total de Vendas</h6><p class="fs-4 fw-bold">${utils.formatCurrency(summary.totalSalesAmount)}</p></div></div>
@@ -605,16 +656,16 @@ document.addEventListener('DOMContentLoaded', () => {
                             </thead>
                             <tbody>
                                 ${sales.map(sale => `
-                                        <tr>
-                                            <td>${sale.id}</td>
-                                            <td>${sale.client?.nome || 'N/A'}</td>
-                                            <td>${utils.formatDate(sale.dataVenda)}</td>
-                                            <td>${utils.formatCurrency(sale.valorTotal)}</td>
-                                            <td>${utils.formatCurrency(sale.valorPago)}</td>
-                                            <td class="text-danger">${utils.formatCurrency(sale.valorTotal - sale.valorPago)}</td>
-                                            <td><span class="badge bg-secondary">${sale.status}</span></td>
-                                        </tr>
-                                    `).join('')}
+                                    <tr>
+                                        <td>${sale.id}</td>
+                                        <td>${sale.client?.nome || 'N/A'}</td>
+                                        <td>${utils.formatDate(sale.dataVenda)}</td>
+                                        <td>${utils.formatCurrency(sale.valorTotal)}</td>
+                                        <td>${utils.formatCurrency(sale.valorPago)}</td>
+                                        <td class="text-danger">${utils.formatCurrency(sale.valorTotal - sale.valorPago)}</td>
+                                        <td><span class="badge bg-secondary">${sale.status}</span></td>
+                                    </tr>
+                                `).join('')}
                             </tbody>
                         </table>
                     </div>
@@ -740,21 +791,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
             `;
-            const newPaymentFormaSelect = document.getElementById('paymentFormaNew');
-            if (newPaymentFormaSelect) {
-                newPaymentFormaSelect.addEventListener('change', () => {
-                    const forma = newPaymentFormaSelect.value;
-                    const newParcelasField = document.getElementById('newParcelasField');
-                    const newBandeiraCartaoField = document.getElementById('newBandeiraCartaoField');
-                    const newBancoCrediarioField = document.getElementById('newBancoCrediarioField');
-
-                    const newPaymentParcelas = document.getElementById('newPaymentParcelas');
-                    const newPaymentBandeiraCartao = document.getElementById('newPaymentBandeiraCartao');
-                    const newPaymentBancoCrediario = document.getElementById('newPaymentBancoCrediario');
-
-                    utils.togglePaymentFields(newPaymentFormaSelect, newParcelasField, newBandeiraCartaoField, newBancoCrediarioField, newPaymentParcelas, newPaymentBandeiraCartao, newPaymentBancoCrediario);
-                });
-            }
         },
         renderProducts: () => {
             const { data, total } = state.products;
@@ -792,14 +828,54 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- HANDLERS DE EVENTOS (ATUALIZADO) ---
+    // --- EVENT HANDLERS ---
     const handlers = {
         loadDashboard: async () => {
             try {
-                const stats = await api.getDashboardStats();
-                ui.renderDashboard(stats);
+                const dashboardData = await api.getDashboardStats();
+                const lowStockProducts = await api.getLowStockProducts();
+                ui.renderDashboard({ ...dashboardData, lowStockProducts });
                 ui.showSection('dashboardSection');
-            } catch (error) { utils.showToast(error.message, 'error'); }
+                handlers.loadRankings();
+            } catch (error) { 
+                utils.showToast(error.message, 'error'); 
+            }
+        },
+        loadRankings: async () => {
+            try {
+                const produtos = await api.getRankingsProdutos();
+                const clientes = await api.getRankingsClientes();
+
+                const ulProdutos = document.getElementById('produtosMaisVendidos');
+                if (produtos && produtos.length > 0) {
+                    ulProdutos.innerHTML = produtos.map(p => `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            ${p.nome_produto}
+                            <span class="badge bg-primary rounded-pill">${p.total_vendido} un</span>
+                        </li>
+                    `).join('');
+                } else {
+                    ulProdutos.innerHTML = '<li class="list-group-item text-center text-muted">Nenhum produto vendido este mês.</li>';
+                }
+
+                const ulClientes = document.getElementById('clientesMaisCompraram');
+                if (clientes && clientes.length > 0) {
+                    ulClientes.innerHTML = clientes.map(c => `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            ${c.nome_cliente}
+                            <span class="badge bg-success rounded-pill">${utils.formatCurrency(c.valor_gasto)}</span>
+                        </li>
+                    `).join('');
+                } else {
+                    ulClientes.innerHTML = '<li class="list-group-item text-center text-muted">Nenhuma venda registrada este mês.</li>';
+                }
+            } catch (error) {
+                console.error('Erro ao carregar rankings:', error);
+                const ulProdutos = document.getElementById('produtosMaisVendidos');
+                if (ulProdutos) ulProdutos.innerHTML = '<li class="list-group-item text-center text-danger">Erro ao carregar.</li>';
+                const ulClientes = document.getElementById('clientesMaisCompraram');
+                if (ulClientes) ulClientes.innerHTML = '<li class="list-group-item text-center text-danger">Erro ao carregar.</li>';
+            }
         },
         loadClients: async (force = false) => {
             if (state.clients.loaded && !force) {
@@ -891,7 +967,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 utils.showToast('Relatório de vendas por período exportado com sucesso!', 'success');
             } catch (error) {
                 console.error('Erro ao exportar relatório de vendas por período:', error);
-                utils.showToast(error.message || 'Falha ao exportar relatório de vendas por período.', 'error');
+                utils.showToast(error.message || 'Falha ao exportar relatório CSV de vendas.', 'error');
             }
         },
         handleSearch: (type, query) => {
@@ -964,13 +1040,30 @@ document.addEventListener('DOMContentLoaded', () => {
         openSaleModal: async (saleId = null) => {
             dom.saleForm.reset();
             document.getElementById('saleId').value = '';
-            state.selectedSaleProducts = []; // Limpa produtos selecionados
-            utils.renderSelectedProductsList(); // Atualiza a lista vazia
+            state.selectedSaleProducts = [];
+            utils.renderSelectedProductsList();
 
             const modalLabel = document.getElementById('saleModalLabel');
             const clientSelect = document.getElementById('saleClient');
             clientSelect.innerHTML = '<option value="">Carregando clientes...</option>';
-            dom.productSelect.innerHTML = '<option value="">Carregando produtos...</option>';
+            
+            dom.productSelect.empty().append($('<option value="">Selecione um produto</option>')).select2({
+                placeholder: "Buscar produto...",
+                dropdownParent: $('#saleModal'),
+                templateResult: (product) => {
+                    if (!product.id) { return product.text; }
+                    const p = state.availableProducts.find(item => String(item.id) === String(product.id));
+                    if (!p) return product.text;
+                    return $(`<span>${p.nome} (Estoque: ${p.estoque}, R$ ${p.precoVenda.toFixed(2)})</span>`);
+                },
+                templateSelection: (product) => {
+                    if (!product.id) { return product.text; }
+                    const p = state.availableProducts.find(item => String(item.id) === String(product.id));
+                    if (!p) return product.text;
+                    return p.nome;
+                },
+                data: [],
+            });
 
             try {
                 const { data: clients } = await api.getClients(1, '', 1000);
@@ -979,8 +1072,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const { data: products } = await api.getProducts(1, '', 1000);
                 state.availableProducts = products;
-                dom.productSelect.innerHTML = '<option value="">Selecione um produto</option>';
-                products.forEach(p => dom.productSelect.add(new Option(`${p.nome} (Estoque: ${p.estoque}, R$ ${p.precoVenda.toFixed(2)})`, p.id)));
+                dom.productSelect.empty().append($('<option value="">Selecione um produto</option>')).select2({
+                    data: state.availableProducts.map(p => ({ id: String(p.id), text: p.nome })),
+                    placeholder: "Buscar produto...",
+                    dropdownParent: $('#saleModal'),
+                    templateResult: (productData) => {
+                        if (!productData.id) { return productData.text; }
+                        const product = state.availableProducts.find(item => String(item.id) === String(productData.id));
+                        if (!product) return productData.text;
+                        return $(`<span>${product.nome} (Estoque: ${product.estoque}, R$ ${product.precoVenda.toFixed(2)})</span>`);
+                    },
+                    templateSelection: (productData) => {
+                        if (!productData.id) { return productData.text; }
+                        const product = state.availableProducts.find(item => String(item.id) === String(productData.id));
+                        if (!product) return productData.text;
+                        return product.nome;
+                    }
+                });
+                dom.productSelect.off('select2:select').on('select2:select', (e) => {
+                    const productId = String(e.params.data.id);
+                    const product = state.availableProducts.find(p => String(p.id) === productId);
+                    if (product) {
+                        state.currentSelectedProduct = product;
+                        dom.productDetailsDisplay.innerHTML = `Estoque: ${product.estoque}, Preço: ${utils.formatCurrency(product.precoVenda)}`;
+                        dom.productUnitPriceInput.value = product.precoVenda.toFixed(2);
+                        dom.productQuantityInput.value = '1';
+                    } else {
+                        state.currentSelectedProduct = null;
+                        dom.productDetailsDisplay.innerHTML = '';
+                        dom.productUnitPriceInput.value = '';
+                    }
+                });
+                dom.productSelect.off('select2:unselect').on('select2:unselect', (e) => {
+                    state.currentSelectedProduct = null;
+                    dom.productDetailsDisplay.innerHTML = '';
+                    dom.productUnitPriceInput.value = '';
+                });
 
                 dom.paymentFormaSelect.value = 'Dinheiro';
                 utils.togglePaymentFields(dom.paymentFormaSelect, dom.paymentParcelasField, dom.paymentBandeiraCartaoField, dom.paymentBancoCrediarioField, dom.paymentParcelasInput, dom.paymentBandeiraCartaoInput, dom.paymentBancoCrediarioInput);
@@ -992,7 +1119,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const sale = await api.getSaleById(saleId);
                     document.getElementById('saleId').value = sale.id;
                     document.getElementById('saleClient').value = sale.clientId;
-                    document.getElementById('saleDueDate').value = sale.dataVencimento;
+                    document.getElementById('saleDueDate').value = sale.dataVencimento.split('T')[0]; // Apenas a data
                     
                     if (sale.products && sale.products.length > 0) {
                         state.selectedSaleProducts = sale.products.map(p => ({
@@ -1012,8 +1139,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
         handleAddProductToSale: () => {
-            const productId = dom.productSelect.value;
+            const productId = dom.productSelect.val();
             const quantity = parseInt(dom.productQuantityInput.value);
+            const unitPrice = parseFloat(dom.productUnitPriceInput.value);
 
             if (!productId) {
                 utils.showToast('Selecione um produto.', 'error');
@@ -1023,38 +1151,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 utils.showToast('Quantidade inválida.', 'error');
                 return;
             }
+            if (isNaN(unitPrice) || unitPrice < 0) {
+                 utils.showToast('Preço unitário inválido.', 'error');
+                 return;
+            }
 
             const product = state.availableProducts.find(p => String(p.id) === productId);
             if (!product) {
                 utils.showToast('Produto não encontrado.', 'error');
                 return;
             }
-            if (product.estoque < quantity) {
-                utils.showToast(`Estoque insuficiente para ${product.nome}. Disponível: ${product.estoque}.`, 'error');
+            const existingItemInCart = state.selectedSaleProducts.find(item => String(item.id) === productId);
+            const currentQuantityInCart = existingItemInCart ? existingItemInCart.quantidade : 0;
+
+            if (product.estoque < (currentQuantityInCart + quantity)) {
+                utils.showToast(`Estoque insuficiente para ${product.nome}. Disponível: ${product.estoque}, já no carrinho: ${currentQuantityInCart}, solicitado: ${quantity}.`, 'error');
                 return;
             }
 
-            const existingItemIndex = state.selectedSaleProducts.findIndex(item => String(item.id) === productId);
-
-            if (existingItemIndex > -1) {
-                const currentQuantityInCart = state.selectedSaleProducts[existingItemIndex].quantidade;
-                if (product.estoque < (currentQuantityInCart + quantity)) {
-                     utils.showToast(`Estoque insuficiente para ${product.nome}. Você já tem ${currentQuantityInCart} no carrinho. Disponível: ${product.estoque}.`, 'error');
-                     return;
-                }
-                state.selectedSaleProducts[existingItemIndex].quantidade += quantity;
+            if (existingItemInCart) {
+                existingItemInCart.quantidade += quantity;
+                existingItemInCart.precoUnitario = unitPrice;
             } else {
                 state.selectedSaleProducts.push({
                     id: product.id,
                     nome: product.nome,
                     precoVenda: product.precoVenda,
-                    precoUnitario: product.precoVenda, 
+                    precoUnitario: unitPrice,
                     quantidade: quantity,
                 });
             }
             utils.renderSelectedProductsList();
-            dom.productSelect.value = '';
+            dom.productSelect.val(null).trigger('change');
             dom.productQuantityInput.value = '1';
+            dom.productUnitPriceInput.value = '';
+            dom.productDetailsDisplay.innerHTML = '';
+            state.currentSelectedProduct = null;
         },
         handleRemoveProductFromSale: (index) => {
             state.selectedSaleProducts.splice(index, 1);
@@ -1097,7 +1229,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-
             const saleData = {
                 clientId: clientId,
                 dataVencimento: dataVencimento || null,
@@ -1122,10 +1253,10 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 if (id) {
                     await api.updateSale(id, saleData);
-                    utils.showToast('Venda atualizada! (Itens e pagamentos não totalmente atualizados via PUT ainda)', 'info');
+                    utils.showToast('Venda atualizada!', 'info');
                 } else {
                     await api.createSale(saleData);
-                    utils.showToast('Venda registrada com produtos e estoque atualizado!', 'success');
+                    utils.showToast('Venda registrada com sucesso!', 'success');
                 }
                 state.bootstrapSaleModal.hide();
                 handlers.loadSales(true);
@@ -1161,11 +1292,15 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const saleId = e.target.dataset.saleId;
             const valor = document.getElementById('paymentValue').value;
-            const formaPagamento = dom.newPaymentFormaSelect.value;
-            const parcelas = parseInt(dom.newPaymentParcelasInput.value) || 1;
-            const bandeiraCartao = dom.newPaymentBandeiraCartaoInput.value || null;
-            const bancoCrediario = dom.newPaymentBancoCrediarioInput.value || null;
+            const formaPagamentoElement = document.getElementById('paymentFormaNew');
+            const parcelasElement = document.getElementById('newPaymentParcelas');
+            const bandeiraCartaoElement = document.getElementById('newPaymentBandeiraCartao');
+            const bancoCrediarioElement = document.getElementById('newPaymentBancoCrediario');
 
+            const formaPagamento = formaPagamentoElement ? formaPagamentoElement.value : 'Dinheiro';
+            const parcelas = parcelasElement ? parseInt(parcelasElement.value) || 1 : 1;
+            const bandeiraCartao = bandeiraCartaoElement ? bandeiraCartaoElement.value || null : null;
+            const bancoCrediario = bancoCrediarioElement ? bancoCrediarioElement.value || null : null;
 
             if (!valor || parseFloat(valor) <= 0) {
                 utils.showToast('Valor do pagamento inválido.', 'error');
@@ -1175,7 +1310,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 utils.showToast('Número de parcelas inválido para a forma de pagamento selecionada.', 'error');
                 return;
             }
-            if (formaPagamento === 'Cartão de Crédito' && !bandeiraCartao) {
+             if (formaPagamento === 'Cartão de Crédito' && !bandeiraCartao) {
                 utils.showToast('Bandeira do cartão é obrigatória para Cartão de Crédito.', 'error');
                 return;
             }
@@ -1189,7 +1324,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     valor, 
                     formaPagamento, 
                     parcelas, 
-                    bandeiraCartao, 
+                    bandeiraCartao: bandeiraCartao,
                     bancoCrediario 
                 });
                 utils.showToast('Pagamento registrado!', 'success');
@@ -1284,12 +1419,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- INICIALIZAÇÃO (ATUALIZADA) ---
+    // --- INITIALIZATION ---
     function initialize() {
-        // Adiciona a classe 'collapsed' ao sidebar em telas pequenas por padrão
-        // e ajusta a exibição do main-content
-        if (window.innerWidth < 992) {
+        if (window.innerWidth >= 992) {
+            dom.sidebar.classList.remove('collapsed');
+            dom.sidebar.classList.add('active');
+            dom.sidebarOverlay.classList.remove('active');
+            dom.mainContent.style.marginLeft = '280px'; 
+        } else {
             dom.sidebar.classList.add('collapsed');
+            dom.sidebar.classList.remove('active');
+            dom.sidebarOverlay.classList.remove('active');
+            dom.mainContent.style.marginLeft = '0px'; 
         }
 
         if (!utils.getToken()) {
@@ -1297,15 +1438,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Navegação
         dom.navLinks.forEach(link => {
             link.addEventListener('click', e => {
                 e.preventDefault();
                 const sectionId = e.currentTarget.dataset.section;
                 ui.showSection(sectionId);
-                // Oculta o sidebar ao navegar em telas pequenas
                 if (window.innerWidth < 992) {
-                    dom.sidebar.classList.remove('active'); // CORRIGIDO: Remove 'active' para ocultar
+                    dom.sidebar.classList.remove('active');
                     dom.sidebarOverlay.classList.remove('active');
                 }
                 if (sectionId === 'dashboardSection') handlers.loadDashboard();
@@ -1318,7 +1457,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Delegação de eventos ATUALIZADA
         document.body.addEventListener('click', (e) => {
             const button = e.target.closest('button');
             if (button) {
@@ -1333,7 +1471,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const index = parseInt(button.dataset.index);
                     handlers.handleRemoveProductFromSale(index);
                 }
-                // Listeners para os botões de compartilhamento (WhatsApp, Email)
                 if (button.id === 'btnShareWhatsapp') {
                     const saleId = button.dataset.saleId;
                     api.getSaleById(saleId).then(sale => {
@@ -1353,19 +1490,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.open(mailtoUrl, '_blank');
                     }).catch(error => utils.showToast(error.message, 'error'));
                 }
-                // Listener para o botão de impressão
                 if (button.id === 'btnPrintSale') {
                     const saleId = button.dataset.saleId;
                     api.getSaleById(saleId).then(sale => {
                         handlers.handlePrintSale(sale);
                     }).catch(error => utils.showToast(error.message, 'error'));
                 }
-                // Listener para o botão de alternar sidebar
                 if (button.id === 'sidebarToggle') {
-                    dom.sidebar.classList.toggle('active'); // Usa 'active' para mostrar/esconder
+                    dom.sidebar.classList.toggle('active');
                     dom.sidebarOverlay.classList.toggle('active');
                 }
-
 
                 const { type, id } = button.dataset;
                 if (button.classList.contains('action-delete')) {
@@ -1397,33 +1531,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Event listener para o formulário de relatório por período
         if (dom.reportPeriodForm) {
             dom.reportPeriodForm.addEventListener('submit', handlers.handleGenerateSalesReport);
         }
         
-        // Listener para a mudança da forma de pagamento no modal de Nova Venda
         if (dom.paymentFormaSelect) {
             dom.paymentFormaSelect.addEventListener('change', () => {
                 utils.togglePaymentFields(dom.paymentFormaSelect, dom.paymentParcelasField, dom.paymentBandeiraCartaoField, dom.paymentBancoCrediarioField, dom.paymentParcelasInput, dom.paymentBandeiraCartaoInput, dom.paymentBancoCrediarioInput);
             });
         }
-        // Listener para a mudança da forma de pagamento no modal de Registrar Pagamento (usa delegação)
         document.body.addEventListener('change', (e) => {
             if (e.target.id === 'paymentFormaNew') {
-                const newPaymentFormaSelect = e.target;
-                const newParcelasField = document.getElementById('newParcelasField');
-                const newBandeiraCartaoField = document.getElementById('newBandeiraCartaoField');
-                const newBancoCrediarioField = document.getElementById('newBancoCrediarioField');
-                const newPaymentParcelasInput = document.getElementById('newPaymentParcelas');
-                const newPaymentBandeiraCartaoInput = document.getElementById('newPaymentBandeiraCartao');
-                const newPaymentBancoCrediarioInput = document.getElementById('newPaymentBancoCrediario');
+                const newPaymentFormaSelectElement = document.getElementById('paymentFormaNew');
+                const newParcelasFieldElement = document.getElementById('newParcelasField');
+                const newBandeiraCartaoFieldElement = document.getElementById('newBandeiraCartaoField');
+                const newBancoCrediarioFieldElement = document.getElementById('newBancoCrediarioField');
+                const newPaymentParcelasInputElement = document.getElementById('newPaymentParcelas');
+                const newPaymentBandeiraCartaoInputElement = document.getElementById('newPaymentBandeiraCartao');
+                const newPaymentBancoCrediarioInputElement = document.getElementById('newPaymentBancoCrediario');
 
-                utils.togglePaymentFields(newPaymentFormaSelect, newParcelasField, newBandeiraCartaoField, newBancoCrediarioField, newPaymentParcelasInput, newPaymentBandeiraCartaoInput, newPaymentBancoCrediarioInput);
+                utils.togglePaymentFields(newPaymentFormaSelectElement, newParcelasFieldElement, newBandeiraCartaoFieldElement, newBancoCrediarioFieldElement, newPaymentParcelasInputElement, newPaymentBandeiraCartaoInputElement, newPaymentBancoCrediarioInputElement);
             }
         });
 
-        // Listener para o overlay do sidebar (clicar fora para fechar)
         if (dom.sidebarOverlay) {
             dom.sidebarOverlay.addEventListener('click', () => {
                 dom.sidebar.classList.remove('active');
@@ -1431,8 +1561,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-
-        // Evento para busca
         let searchTimeout;
         document.body.addEventListener('input', e => {
             if (e.target.classList.contains('search-input')) {
@@ -1445,7 +1573,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Formulários
         dom.clientForm.addEventListener('submit', handlers.handleSaveClient);
         dom.saleForm.addEventListener('submit', handlers.handleSaveSale);
         if (dom.productForm) {
@@ -1455,10 +1582,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.addEventListener('submit', e => {
             if (e.target.id === 'paymentForm') handlers.handleSavePayment(e);
         });
-        dom.confirmModalButton.addEventListener('click', () => {
-            if (state.confirmAction) state.confirmAction();
-            state.bootstrapConfirmModal.hide();
-        });
+        if (dom.confirmModalButton) {
+            dom.confirmModalButton.addEventListener('click', () => {
+                if (state.confirmAction) state.confirmAction();
+                state.bootstrapConfirmModal.hide(); 
+            });
+        }
 
         if (dom.logoutButton) {
             dom.logoutButton.addEventListener('click', () => {
@@ -1466,21 +1595,19 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // NOVO: Adiciona listener para redimensionamento da janela
         window.addEventListener('resize', () => {
-            if (window.innerWidth >= 992) { // Se a tela for maior ou igual ao breakpoint mobile (lg)
-                dom.sidebar.classList.remove('active'); // Garante que o sidebar não esteja em modo mobile
-                dom.sidebar.classList.remove('collapsed'); // Remove collapsed para desktop (sempre visível)
-                dom.sidebarOverlay.classList.remove('active'); // E o overlay esteja oculto
+            if (window.innerWidth >= 992) {
+                dom.sidebar.classList.remove('active');
+                dom.sidebar.classList.remove('collapsed');
+                dom.sidebarOverlay.classList.remove('active');
+                dom.mainContent.style.marginLeft = '280px';
             } else {
-                // Em mobile, garante que o sidebar comece oculto ao carregar
-                // mas apenas se não estiver ativamente aberto
                 if (!dom.sidebar.classList.contains('active')) {
                      dom.sidebar.classList.add('collapsed');
                 }
+                dom.mainContent.style.marginLeft = '0px';
             }
         });
-
 
         handlers.loadDashboard();
     }
