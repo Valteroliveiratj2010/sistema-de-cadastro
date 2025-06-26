@@ -1,54 +1,88 @@
-// backend/routes/api.js
 const express = require('express');
 const { Op, fn, col, where } = require('sequelize');
 
-// Importar os modelos que serão usados nestas rotas.
+// Importar os modelos
 const { Client, Sale, Payment, User, Product, SaleProduct } = require('../database'); 
 
-// Importe o middleware de autenticação
+// Importar os middlewares
 const authMiddleware = require('../middleware/authMiddleware'); 
+const authorizeRole = require('../middleware/authorizationMiddleware'); 
 
 const router = express.Router();
 
-// APLICA O MIDDLEWARE PARA TODAS AS ROTAS NESTE ARQUIVO
+// APLICA O MIDDLEWARE DE AUTENTICAÇÃO PARA TODAS AS ROTAS NESTE ARQUIVO
+// Todas as rotas abaixo requerem um token JWT válido
 router.use(authMiddleware); 
 
-// --- ROTA DO DASHBOARD ---
-router.get('/dashboard/stats', async (req, res) => {
+// --- ROTAS DO DASHBOARD ---
+// Acesso: Admin, Gerente, Vendedor
+router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     try {
         const today = new Date();
         const currentMonth = today.toISOString().slice(0, 7);
 
-        const totalClients = await Client.count();
-        const totalReceivable = (await Sale.sum('valorTotal') || 0) - (await Sale.sum('valorPago') || 0);
+        // Define a cláusula WHERE base para filtrar por userId se o usuário for 'vendedor'
+        const baseWhereClause = (req.user.role === 'vendedor') ? { userId: req.user.id } : {};
+
+        const totalClients = await Client.count({ where: baseWhereClause });
+        
+        const salesSumOptions = { where: baseWhereClause };
+        const totalReceivable = (await Sale.sum('valorTotal', salesSumOptions) || 0) - (await Sale.sum('valorPago', salesSumOptions) || 0);
         
         const salesThisMonth = await Sale.sum('valorTotal', {
-            where: where(fn('strftime', '%Y-%m', col('dataVenda')), currentMonth)
+            where: { 
+                ...baseWhereClause, // Inclui o filtro por userId para vendedores
+                [Op.and]: [
+                    where(fn('strftime', '%Y-%m', col('dataVenda')), currentMonth)
+                ]
+            }
         });
 
         const overdueSales = await Sale.sum('valorTotal', {
             where: {
+                ...baseWhereClause, // Inclui o filtro por userId para vendedores
                 status: 'Pendente',
                 dataVencimento: { [Op.lt]: today }
             }
         });
 
+        // Para vendas por mês, também filtrar por userId para vendedores
         const salesByMonth = await Sale.findAll({
             attributes: [
                 [fn('strftime', '%Y-%m', col('dataVenda')), 'month'],
                 [fn('sum', col('valorTotal')), 'total']
             ],
+            where: baseWhereClause, // Filtra por userId para vendedores
             group: ['month'],
             order: [['month', 'DESC']],
             limit: 6
         });
+
+        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+
+        const salesToday = await Sale.sum('valorTotal', {
+            where: {
+                ...baseWhereClause,
+                dataVenda: {
+                    [Op.between]: [todayStart, todayEnd]
+                }
+            }
+        }) || 0;
+
+        const totalSalesCount = await Sale.count({ where: baseWhereClause }) || 1; // Evita divisão por zero
+        const totalSalesSum = await Sale.sum('valorTotal', { where: baseWhereClause }) || 0;
+        const averageTicket = totalSalesSum / totalSalesCount;
+
 
         res.json({
             totalClients: totalClients || 0,
             totalReceivable: totalReceivable || 0,
             salesThisMonth: salesThisMonth || 0,
             overdueSales: overdueSales || 0,
-            salesByMonth: salesByMonth.reverse()
+            salesByMonth: salesByMonth.reverse(),
+            salesToday: salesToday, 
+            averageTicket: averageTicket 
         });
     } catch (error) {
         console.error('❌ ERRO NO ENDPOINT DO DASHBOARD:', error);
@@ -57,27 +91,22 @@ router.get('/dashboard/stats', async (req, res) => {
 });
 
 // --- ROTAS DE CLIENTES ---
-
-// Rota para exportar clientes para CSV
-router.get('/clients/export-csv', async (req, res) => {
-    // CORREÇÃO: String de log formatada corretamente
-    console.log(`[API Route Log] ${new Date().toISOString()} - Export clients CSV route accessed.`);
+// Acesso: Admin, Gerente (todos os clientes); Vendedor (apenas seus próprios clientes)
+router.get('/clients/export-csv', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
+    console.log(`[API Route Log] ${new Date().toISOString()} - Export clients CSV route accessed by ${req.user.username}.`);
     try {
-        const clients = await Client.findAll({ order: [['nome', 'ASC']] });
-
+        const whereClause = (req.user.role === 'vendedor') ? { userId: req.user.id } : {};
+        const clients = await Client.findAll({ where: whereClause, order: [['nome', 'ASC']] });
         const headers = ['ID', 'Nome', 'Email', 'Telefone', 'Data de Cadastro'];
-        
         const csvRows = clients.map(client => {
             const escapeCsv = (value) => {
                 if (value === null || value === undefined) return '';
                 const stringValue = String(value).replace(/"/g, '""');
                 if (stringValue.includes(',') || stringValue.includes('\n') || stringValue.includes('"')) {
-                    // CORREÇÃO: Interpolação de string correta
                     return `"${stringValue}"`;
                 }
                 return stringValue;
             };
-
             return [
                 escapeCsv(client.id),
                 escapeCsv(client.nome),
@@ -86,97 +115,129 @@ router.get('/clients/export-csv', async (req, res) => {
                 escapeCsv(client.createdAt ? client.createdAt.toLocaleDateString('pt-BR') : '')
             ].join(';');
         });
-
-        const csvContent = [
-            headers.join(';'),
-            ...csvRows
-        ].join('\n');
-
+        const csvContent = [headers.join(';'), ...csvRows].join('\n');
         res.setHeader('Content-Type', 'text/csv; charset=UTF-8');
-        // CORREÇÃO: String do nome do arquivo formatada corretamente
         res.setHeader('Content-Disposition', `attachment; filename="clientes_gestor_pro_${new Date().toISOString().slice(0,10)}.csv"`);
-        
         res.status(200).send(csvContent);
-
     } catch (error) {
         console.error('❌ ERRO AO EXPORTAR CLIENTES PARA CSV:', error);
         res.status(500).json({ message: 'Erro ao gerar o relatório de clientes CSV.' });
     }
 });
 
-// Rota para listar todos os clientes
-router.get('/clients', async (req, res) => {
+router.get('/clients', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     const { page = 1, limit = 10, q = '' } = req.query;
     const offset = (page - 1) * limit;
-    // CORREÇÃO: Uso correto de template literal para o Op.like
-    const whereClause = q ? { nome: { [Op.like]: `%${q}%` } } : {};
+    
+    let whereClause = {};
+    if (q) {
+        whereClause.nome = { [Op.like]: `%${q}%` };
+    }
+    // Filtrar por vendedor se a role for 'vendedor'
+    if (req.user.role === 'vendedor') {
+        whereClause.userId = req.user.id;
+    }
+
     try {
-        const { count, rows } = await Client.findAndCountAll({ where: whereClause, limit: parseInt(limit), offset: parseInt(offset), order: [['nome', 'ASC']] });
+        const { count, rows } = await Client.findAndCountAll({ 
+            where: whereClause, 
+            limit: parseInt(limit), 
+            offset: parseInt(offset), 
+            order: [['nome', 'ASC']] 
+        });
         res.json({ total: count, data: rows });
-    } catch (error) { res.status(500).json({ message: error.message }); }
+    } catch (error) { 
+        console.error('❌ ERRO AO BUSCAR CLIENTES:', error);
+        res.status(500).json({ message: error.message }); 
+    }
 });
 
-// Rota para obter cliente por ID
-router.get('/clients/:id', async (req, res) => {
+router.get('/clients/:id', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     try {
-        const client = await Client.findByPk(req.params.id);
+        const id = req.params.id;
+        let whereClause = { id };
+        // Vendedor só pode ver seus próprios clientes
+        if (req.user.role === 'vendedor') {
+            whereClause.userId = req.user.id;
+        }
+
+        const client = await Client.findByPk(id, { where: whereClause });
         if (client) res.json(client);
-        else res.status(404).json({ message: 'Cliente não encontrado' });
-    } catch (error) { res.status(500).json({ message: error.message }); }
+        else res.status(404).json({ message: 'Cliente não encontrado ou você não tem permissão para vê-lo.' });
+    } catch (error) { 
+        console.error('❌ ERRO AO BUSCAR CLIENTE POR ID:', error);
+        res.status(500).json({ message: error.message }); 
+    }
 });
 
-router.post('/clients', async (req, res) => {
+router.post('/clients', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     try {
-        const client = await Client.create(req.body);
+        // Atribui o userId do usuário logado ao cliente se for vendedor ou não
+        const clientData = { ...req.body, userId: req.user.id };
+        
+        const client = await Client.create(clientData);
         res.status(201).json(client);
-    } catch (error) { res.status(400).json({ message: error.message }); }
+    } catch (error) { 
+        console.error('❌ ERRO AO CRIAR CLIENTE:', error);
+        res.status(400).json({ message: error.message }); 
+    }
 });
 
-router.put('/clients/:id', async (req, res) => {
+router.put('/clients/:id', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     try {
-        const [updated] = await Client.update(req.body, { where: { id: req.params.id } });
+        const id = req.params.id;
+        let whereClause = { id };
+        // Vendedor só pode editar seus próprios clientes
+        if (req.user.role === 'vendedor') {
+            whereClause.userId = req.user.id;
+        }
+
+        const [updated] = await Client.update(req.body, { where: whereClause });
         if (updated) {
-            const updatedClient = await Client.findByPk(req.params.id);
+            const updatedClient = await Client.findByPk(id);
             res.json(updatedClient);
-        } else { res.status(404).json({ message: 'Cliente não encontrado' }); }
-    } catch (error) { res.status(400).json({ message: error.message }); }
+        } else { res.status(404).json({ message: 'Cliente não encontrado ou você não tem permissão para editá-lo.' }); }
+    } catch (error) { 
+        console.error('❌ ERRO AO ATUALIZAR CLIENTE:', error);
+        res.status(400).json({ message: error.message }); 
+    }
 });
 
-router.delete('/clients/:id', async (req, res) => {
+// Acesso: Admin, Gerente (Deleção - mais restrito)
+router.delete('/clients/:id', authorizeRole(['admin', 'gerente']), async (req, res) => {
     try {
         const deleted = await Client.destroy({ where: { id: req.params.id } });
         if (deleted) res.status(204).send();
         else res.status(404).json({ message: 'Cliente não encontrado' });
-    } catch (error) { res.status(500).json({ message: error.message }); }
+    } catch (error) { 
+        console.error('❌ ERRO AO DELETAR CLIENTE:', error);
+        res.status(500).json({ message: error.message }); 
+    }
 });
 
 
 // --- ROTAS DE VENDAS ---
-// Rota para exportar vendas para CSV
-router.get('/sales/export-csv', async (req, res) => {
-    // CORREÇÃO: String de log formatada corretamente
-    console.log(`[API Route Log] ${new Date().toISOString()} - Export sales CSV route accessed.`);
+// Acesso: Admin, Gerente (todas as vendas); Vendedor (apenas suas próprias vendas)
+router.get('/sales/export-csv', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
+    console.log(`[API Route Log] ${new Date().toISOString()} - Export sales CSV route accessed by ${req.user.username}.`);
     try {
+        const whereClause = (req.user.role === 'vendedor') ? { userId: req.user.id } : {};
         const sales = await Sale.findAll({
+            where: whereClause, // Filtra por userId para vendedores
             order: [['dataVenda', 'DESC']],
             include: [{ model: Client, as: 'client', attributes: ['nome'] }]
         });
-
         const headers = ['ID da Venda', 'Cliente', 'Data da Venda', 'Valor Total', 'Valor Pago', 'Valor Devido', 'Status'];
-        
         const csvRows = sales.map(sale => {
             const escapeCsv = (value) => {
                 if (value === null || value === undefined) return '';
                 const stringValue = String(value).replace(/"/g, '""');
                 if (stringValue.includes(',') || stringValue.includes('\n') || stringValue.includes('"')) {
-                    // CORREÇÃO: Interpolação de string correta
                     return `"${stringValue}"`;
                 }
                 return stringValue;
             };
-
             const valorDevido = sale.valorTotal - sale.valorPago;
-
             return [
                 escapeCsv(sale.id),
                 escapeCsv(sale.client ? sale.client.nome : 'N/A'),
@@ -187,56 +248,47 @@ router.get('/sales/export-csv', async (req, res) => {
                 escapeCsv(sale.status)
             ].join(';');
         });
-
-        const csvContent = [
-            headers.join(';'),
-            ...csvRows
-        ].join('\n');
-
+        const csvContent = [headers.join(';'), ...csvRows].join('\n');
         res.setHeader('Content-Type', 'text/csv; charset=UTF-8');
-        // CORREÇÃO: String do nome do arquivo formatada corretamente
         res.setHeader('Content-Disposition', `attachment; filename="vendas_gestor_pro_${new Date().toISOString().slice(0,10)}.csv"`);
-        
         res.status(200).send(csvContent);
-
     } catch (error) {
         console.error('❌ ERRO AO EXPORTAR VENDAS PARA CSV:', error);
         res.status(500).json({ message: 'Erro ao gerar o relatório de vendas CSV.' });
     }
 });
 
-// Rota para relatório de vendas por período
-router.get('/sales/report-by-period', async (req, res) => {
-    // CORREÇÃO: String de log formatada corretamente
-    console.log(`[API Route Log] ${new Date().toISOString()} - Sales report by period route accessed.`);
+router.get('/sales/report-by-period', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
+    console.log(`[API Route Log] ${new Date().toISOString()} - Sales report by period route accessed by ${req.user.username}.`);
     try {
         let { startDate, endDate } = req.query;
-
         if (!startDate || !endDate) {
             return res.status(400).json({ message: 'Parâmetros startDate e endDate são obrigatórios.' });
         }
-
         startDate = new Date(startDate + 'T00:00:00.000Z');
         endDate = new Date(endDate + 'T23:59:59.999Z');
-
         if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
             return res.status(400).json({ message: 'Formato de data inválido. Use AAAA-MM-DD.' });
         }
 
+        let whereClause = {
+            dataVenda: {
+                [Op.between]: [startDate, endDate]
+            }
+        };
+        // Filtrar por vendedor se a role for 'vendedor'
+        if (req.user.role === 'vendedor') {
+            whereClause.userId = req.user.id;
+        }
+
         const sales = await Sale.findAll({
-            where: {
-                dataVenda: {
-                    [Op.between]: [startDate, endDate]
-                }
-            },
+            where: whereClause, // Filtra por userId para vendedores
             order: [['dataVenda', 'ASC']],
             include: [{ model: Client, as: 'client', attributes: ['nome'] }]
         });
-
         const totalSalesAmount = sales.reduce((sum, sale) => sum + sale.valorTotal, 0);
         const totalPaidAmount = sales.reduce((sum, sale) => sum + sale.valorPago, 0);
         const totalDueAmount = totalSalesAmount - totalPaidAmount;
-
         res.json({
             sales,
             summary: {
@@ -246,22 +298,29 @@ router.get('/sales/report-by-period', async (req, res) => {
                 numberOfSales: sales.length
             }
         });
-
     } catch (error) {
         console.error('❌ ERRO AO GERAR RELATÓRIO DE VENDAS POR PERÍODO:', error);
         res.status(500).json({ message: 'Erro ao gerar o relatório de vendas por período.' });
     }
 });
 
-
-router.get('/sales', async (req, res) => {
+router.get('/sales', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     const { page = 1, limit = 5, q = '' } = req.query;
     const offset = (page - 1) * limit;
-    // CORREÇÃO: Uso correto de template literal para o Op.like
-    const whereClause = q ? { '$client.nome$': { [Op.like]: `%${q}%` } } : {};
+    
+    let whereClause = {};
+    if (q) {
+        // Assume que a busca por nome do cliente é através de um join
+        whereClause['$client.nome$'] = { [Op.like]: `%${q}%` };
+    }
+    // Filtrar por vendedor se a role for 'vendedor'
+    if (req.user.role === 'vendedor') {
+        whereClause.userId = req.user.id;
+    }
+
     try {
         const { count, rows } = await Sale.findAndCountAll({
-            where: whereClause,
+            where: whereClause, // Filtra por userId para vendedores
             limit: parseInt(limit),
             offset: parseInt(offset),
             order: [['dataVenda', 'DESC']],
@@ -269,14 +328,22 @@ router.get('/sales', async (req, res) => {
         });
         res.json({ total: count, data: rows });
     } catch (error) {
+        console.error('❌ ERRO AO BUSCAR VENDAS:', error);
         res.status(500).json({ message: error.message });
     }
 });
 
-// Rota para obter detalhes de uma venda específica (ATUALIZADA para incluir produtos e detalhes de pagamento)
-router.get('/sales/:id', async (req, res) => {
+router.get('/sales/:id', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     try {
-        const sale = await Sale.findByPk(req.params.id, {
+        const id = req.params.id;
+        let whereClause = { id };
+        // Vendedor só pode ver suas próprias vendas
+        if (req.user.role === 'vendedor') {
+            whereClause.userId = req.user.id;
+        }
+
+        const sale = await Sale.findByPk(id, {
+            where: whereClause, // Filtra por userId para vendedores
             include: [
                 { model: Client, as: 'client' },
                 { 
@@ -295,60 +362,48 @@ router.get('/sales/:id', async (req, res) => {
             ]
         });
         if (sale) res.json(sale);
-        else res.status(404).json({ message: 'Venda não encontrada' });
+        else res.status(404).json({ message: 'Venda não encontrada ou você não tem permissão para vê-la.' });
     } catch (error) {
         console.error('❌ ERRO AO OBTER DETALHES DA VENDA:', error);
         res.status(500).json({ message: error.message });
     }
 });
 
-// Rota para criar uma nova venda (ATUALIZADA para aceitar produtos e pagamento inicial)
-router.post('/sales', async (req, res) => {
+// Acesso: Admin, Gerente, Vendedor (Criação de Vendas)
+router.post('/sales', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     console.log('[API Route Log] POST /sales - Request Body:', JSON.stringify(req.body, null, 2));
+    const { clientId, dataVenda, dataVencimento, products: saleProductsData, initialPayment } = req.body;
 
-    const { clientId, dataVenda, dataVencimento, products: saleProductsData, initialPayment } = req.body; // initialPayment agora é recebido
+    // Garante que o userId do utilizador logado é atribuído à venda
+    const userId = req.user.id; 
 
     if (!clientId || !saleProductsData || saleProductsData.length === 0) {
         return res.status(400).json({ message: 'Cliente e produtos da venda são obrigatórios.' });
     }
-
     let transaction;
     try {
-        transaction = await Sale.sequelize.transaction(); // Inicia uma transação
-
-        // 1. Calcular valorTotal da venda e verificar estoque
+        transaction = await Sale.sequelize.transaction();
         let valorTotalCalculado = 0;
         for (const item of saleProductsData) {
             const product = await Product.findByPk(item.productId, { transaction });
-            if (!product) {
-                // CORREÇÃO: String formatada corretamente
-                throw new Error(`Produto com ID ${item.productId} não encontrado.`);
-            }
-            if (product.estoque < item.quantidade) {
-                // CORREÇÃO: String formatada corretamente
-                throw new Error(`Estoque insuficiente para o produto: ${product.nome}. Disponível: ${product.estoque}, Solicitado: ${item.quantidade}`);
-            }
-            // Usa o precoUnitario enviado pelo frontend, ou o precoVenda atual do produto como fallback
+            if (!product) { throw new Error(`Produto com ID ${item.productId} não encontrado.`); }
+            if (product.estoque < item.quantidade) { throw new Error(`Estoque insuficiente para o produto: ${product.nome}. Disponível: ${product.estoque}, Solicitado: ${item.quantidade}`); }
             const precoUnitario = item.precoUnitario !== undefined ? parseFloat(item.precoUnitario) : product.precoVenda;
             valorTotalCalculado += precoUnitario * item.quantidade;
         }
-
-        // 2. Criar a venda principal
         const sale = await Sale.create({
             clientId,
+            userId, // Atribui o userId do usuário logado
             dataVenda: dataVenda || new Date(),
             dataVencimento: dataVencimento || null,
             valorTotal: valorTotalCalculado,
-            // NOVO: Usar o valor do initialPayment para valorPago se existir
             valorPago: (initialPayment && initialPayment.valor) ? parseFloat(initialPayment.valor) : 0, 
-            status: (initialPayment && initialPayment.valor >= valorTotalCalculado) ? 'Paga' : 'Pendente' // Define status com base no pagamento inicial
+            status: (initialPayment && parseFloat(initialPayment.valor) >= valorTotalCalculado) ? 'Paga' : 'Pendente'
         }, { transaction });
-
-        // NOVO: Se houver pagamento inicial E um valor > 0, crie um registro em Payment
         if (initialPayment && parseFloat(initialPayment.valor) > 0) {
             await Payment.create({
                 valor: parseFloat(initialPayment.valor),
-                dataPagamento: new Date(), // Data do pagamento inicial (pode ser ajustada se vier do frontend)
+                dataPagamento: new Date(),
                 saleId: sale.id,
                 formaPagamento: initialPayment.formaPagamento || 'Dinheiro',
                 parcelas: initialPayment.parcelas || 1,
@@ -356,70 +411,64 @@ router.post('/sales', async (req, res) => {
                 bancoCrediario: initialPayment.bancoCrediario || null
             }, { transaction });
         }
-
-
-        // 3. Adicionar os itens de produto à venda e atualizar estoque
         for (const item of saleProductsData) {
             const product = await Product.findByPk(item.productId, { transaction });
             const precoUnitario = item.precoUnitario !== undefined ? parseFloat(item.precoUnitario) : product.precoVenda;
-
             await SaleProduct.create({
                 saleId: sale.id,
                 productId: item.productId,
                 quantidade: item.quantidade,
                 precoUnitario: precoUnitario
             }, { transaction });
-
-            // Reduzir o estoque do produto
             product.estoque -= item.quantidade;
             await product.save({ transaction });
         }
-
-        await transaction.commit(); // Confirma a transação
-
+        await transaction.commit();
         res.status(201).json(sale);
-
     } catch (error) {
-        if (transaction) await transaction.rollback(); // Desfaz a transação em caso de erro
+        if (transaction) await transaction.rollback();
         console.error('❌ ERRO AO CRIAR VENDA COM PRODUTOS:', error);
         res.status(400).json({ message: error.message || 'Erro ao criar venda.' });
     }
 });
 
-
-// Rota para atualizar uma venda existente (ainda não totalmente atualizada para produtos e pagamentos)
-router.put('/sales/:id', async (req, res) => {
-    // Para esta fase, o PUT de venda não atualiza itens de produto ou pagamentos.
-    // Isso será uma funcionalidade mais avançada (Fase 9.2).
+// Vendedor pode editar SUAS próprias vendas
+router.put('/sales/:id', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     try {
-        const [updated] = await Sale.update(req.body, { where: { id: req.params.id } });
-        if (updated) {
-            const updatedSale = await Sale.findByPk(req.params.id);
-            res.json(updatedSale);
-        } else {
-            res.status(404).json({ message: 'Venda não encontrada' });
+        const id = req.params.id;
+        let whereClause = { id };
+        // Vendedor só pode editar suas próprias vendas
+        if (req.user.role === 'vendedor') {
+            whereClause.userId = req.user.id;
         }
-    } catch (error) {
-        res.status(400).json({ message: error.message });
+
+        const [updated] = await Sale.update(req.body, { where: whereClause });
+        if (updated) {
+            const updatedSale = await Sale.findByPk(id); // Buscar a venda atualizada
+            res.json(updatedSale);
+        } else { res.status(404).json({ message: 'Venda não encontrada ou você não tem permissão para editá-la.' }); }
+    } catch (error) { 
+        console.error('❌ ERRO AO ATUALIZAR VENDA:', error);
+        res.status(400).json({ message: error.message }); 
     }
 });
 
-// Rota para deletar uma venda (ATUALIZADA para reverter estoque e deletar SaleProducts e Payments)
-router.delete('/sales/:id', async (req, res) => {
+// Acesso: Admin, Gerente (Deleção - mais restrito)
+router.delete('/sales/:id', authorizeRole(['admin', 'gerente']), async (req, res) => {
     try {
         const sale = await Sale.findByPk(req.params.id, {
             include: [{ model: SaleProduct, as: 'saleProducts' }]
         });
-
-        if (!sale) {
-            return res.status(404).json({ message: 'Venda não encontrada' });
+        // IMPORTANTE: Adiciona a verificação de propriedade para 'gerente'
+        // 'Admin' pode deletar qualquer um, 'Gerente' apenas suas vendas, 'Vendedor' não pode deletar
+        if (!sale || (req.user.role === 'gerente' && sale.userId !== req.user.id)) {
+             return res.status(403).json({ message: 'Acesso proibido: Você não pode deletar esta venda.' });
         }
+
 
         let transaction;
         try {
             transaction = await Sale.sequelize.transaction();
-
-            // Reverter estoque dos produtos associados
             for (const item of sale.saleProducts) {
                 const product = await Product.findByPk(item.productId, { transaction });
                 if (product) {
@@ -427,59 +476,48 @@ router.delete('/sales/:id', async (req, res) => {
                     await product.save({ transaction });
                 }
             }
-
-            // Deletar os Payments associados
             await Payment.destroy({ where: { saleId: sale.id }, transaction });
-            // Deletar os SaleProducts associados
             await SaleProduct.destroy({ where: { saleId: sale.id }, transaction });
-
-            // Deletar a venda
             const deleted = await Sale.destroy({ where: { id: req.params.id }, transaction });
-
             await transaction.commit();
-
             if (deleted) res.status(204).send();
             else res.status(404).json({ message: 'Venda não encontrada' });
-
         } catch (error) {
             if (transaction) await transaction.rollback();
             console.error('❌ ERRO AO DELETAR VENDA COM PRODUTOS:', error);
             res.status(500).json({ message: error.message || 'Erro ao deletar venda.' });
         }
-
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
-// --- ROTA DE PAGAMENTOS (ATUALIZADA para aceitar detalhes de pagamento) ---
-router.post('/sales/:saleId/payments', async (req, res) => {
+// Acesso: Admin, Gerente, Vendedor (Criação de Pagamentos)
+router.post('/sales/:saleId/payments', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     console.log('[API Route Log] POST /sales/:saleId/payments - Request Body:', JSON.stringify(req.body, null, 2));
-
     const { saleId } = req.params;
     const { valor, formaPagamento, parcelas, bandeiraCartao, bancoCrediario } = req.body;
-
-    if (!valor || valor <= 0) {
-        return res.status(400).json({ message: 'Valor do pagamento inválido.' });
-    }
-    if (!formaPagamento) {
-        return res.status(400).json({ message: 'Forma de pagamento é obrigatória.' });
-    }
-    if (['Cartão de Crédito', 'Crediário'].includes(formaPagamento) && (!parcelas || parcelas < 1)) {
-        // CORREÇÃO: String formatada corretamente
-        return res.status(400).json({ message: `Número de parcelas inválido para ${formaPagamento}.` });
+    
+    // Validar se a venda pertence ao vendedor antes de permitir o pagamento
+    if (req.user.role === 'vendedor') {
+        const sale = await Sale.findByPk(saleId);
+        if (!sale || sale.userId !== req.user.id) {
+            return res.status(403).json({ message: 'Acesso proibido: Você não pode registrar pagamentos para esta venda.' });
+        }
     }
 
+    if (!valor || parseFloat(valor) <= 0) { return res.status(400).json({ message: 'Valor do pagamento inválido.' }); }
+    if (!formaPagamento) { return res.status(400).json({ message: 'Forma de pagamento é obrigatória.' }); }
+    if (['Cartão de Crédito', 'Crediário'].includes(formaPagamento) && (!parcelas || parcelas < 1)) { return res.status(400).json({ message: `Número de parcelas inválido para ${formaPagamento}.` }); }
+    
     let transaction;
     try {
         transaction = await Sale.sequelize.transaction();
-
         const sale = await Sale.findByPk(saleId, { transaction });
         if (!sale) {
             await transaction.rollback();
             return res.status(404).json({ message: 'Venda não encontrada' });
         }
-
         await Payment.create({
             valor: parseFloat(valor),
             dataPagamento: new Date(),
@@ -489,20 +527,16 @@ router.post('/sales/:saleId/payments', async (req, res) => {
             bandeiraCartao: bandeiraCartao || null,
             bancoCrediario: bancoCrediario || null
         }, { transaction });
-
         const totalPaid = await Payment.sum('valor', { where: { saleId: sale.id }, transaction });
         sale.valorPago = totalPaid;
-        
         if (sale.valorPago >= sale.valorTotal) {
             sale.status = 'Paga';
         } else {
             sale.status = 'Pendente';
         }
         await sale.save({ transaction });
-
         await transaction.commit();
         res.status(201).json(sale);
-
     } catch (error) {
         if (transaction) await transaction.rollback();
         console.error('❌ ERRO AO REGISTRAR PAGAMENTO:', error);
@@ -511,11 +545,8 @@ router.post('/sales/:saleId/payments', async (req, res) => {
 });
 
 // --- ROTAS DE PRODUTOS ---
-
-// ==========> NOVA ROTA <==========
-// Rota para listar produtos com estoque baixo.
-router.get('/products/low-stock', async (req, res) => {
-    // No futuro, este valor pode vir de uma configuração do sistema.
+// Acesso: Admin, Gerente, Vendedor (Leitura)
+router.get('/products/low-stock', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     const LOW_STOCK_THRESHOLD = 10; 
     try {
         const products = await Product.findAll({
@@ -524,7 +555,7 @@ router.get('/products/low-stock', async (req, res) => {
                     [Op.lte]: LOW_STOCK_THRESHOLD
                 }
             },
-            order: [['estoque', 'ASC']] // Ordena para mostrar os mais críticos primeiro
+            order: [['estoque', 'ASC']]
         });
         res.json(products);
     } catch (error) {
@@ -533,10 +564,103 @@ router.get('/products/low-stock', async (req, res) => {
     }
 });
 
-router.get('/products', async (req, res) => {
+router.get('/rankings/produtos', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
+    try {
+        const topProducts = await SaleProduct.findAll({
+            attributes: [
+                'productId',
+                [fn('sum', col('quantidade')), 'totalQuantidadeVendida']
+            ],
+            group: ['productId'],
+            order: [[fn('sum', col('quantidade')), 'DESC']],
+            limit: 5,
+            include: [{
+                model: Product, 
+                as: 'Product', 
+                attributes: ['nome', 'precoVenda'] 
+            }]
+        });
+        const formattedRanking = topProducts.map(item => ({
+            id: item.productId,
+            nome: item.Product ? item.Product.nome : 'Produto Desconhecido',
+            totalQuantidadeVendida: item.dataValues.totalQuantidadeVendida,
+            precoVenda: item.Product ? item.Product.precoVenda : null
+        }));
+        res.json(formattedRanking);
+    } catch (error) {
+        console.error('❌ ERRO AO OBTER RANKING DE PRODUTOS:', error);
+        res.status(500).json({ message: error.message || 'Erro ao buscar ranking de produtos.' });
+    }
+});
+
+router.get('/rankings/clientes', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
+    try {
+        const topClients = await Sale.findAll({
+            attributes: [
+                'clientId',
+                [fn('count', col('Sale.id')), 'totalVendas'],
+                [fn('sum', col('valorTotal')), 'valorTotalVendido'] 
+            ],
+            group: ['clientId'],
+            order: [[fn('count', col('Sale.id')), 'DESC']],
+            limit: 5, 
+            include: [{
+                model: Client, 
+                as: 'client', 
+                attributes: ['nome', 'email', 'telefone'] 
+            }]
+        });
+        const formattedRanking = topClients.map(item => ({
+            id: item.clientId,
+            nome: item.client ? item.client.nome : 'Cliente Desconhecido',
+            totalVendas: item.dataValues.totalVendas,
+            valorTotalVendido: item.dataValues.valorTotalVendido
+        }));
+        res.json(formattedRanking);
+    } catch (error) {
+        console.error('❌ ERRO AO OBTER RANKING DE CLIENTES:', error);
+        res.status(500).json({ message: error.message || 'Erro ao buscar ranking de clientes.' });
+    }
+});
+
+// Rota para Ranking de Vendedores
+// Acesso: Admin, Gerente (restrito)
+router.get('/rankings/vendedores', authorizeRole(['admin', 'gerente']), async (req, res) => {
+    try {
+        const topSellers = await Sale.findAll({
+            attributes: [
+                'userId',
+                [fn('count', col('Sale.id')), 'totalVendasFeitas'], 
+                [fn('sum', col('valorTotal')), 'valorTotalVendido'] 
+            ],
+            group: ['userId'],
+            order: [[fn('sum', col('valorTotal')), 'DESC']], 
+            limit: 5, 
+            include: [{
+                model: User,
+                as: 'user', 
+                attributes: ['username'] 
+            }]
+        });
+
+        const formattedRanking = topSellers.map(item => ({
+            userId: item.userId,
+            username: item.user ? item.user.username : 'Vendedor Desconhecido',
+            totalVendasFeitas: item.dataValues.totalVendasFeitas,
+            valorTotalVendido: item.dataValues.valorTotalVendido
+        }));
+
+        res.json(formattedRanking);
+    } catch (error) {
+        console.error('❌ ERRO AO OBTER RANKING DE VENDEDORES:', error);
+        res.status(500).json({ message: error.message || 'Erro ao buscar ranking de vendedores.' });
+    }
+});
+
+
+router.get('/products', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     const { page = 1, limit = 10, q = '' } = req.query;
     const offset = (page - 1) * limit;
-    // CORREÇÃO: Uso correto de template literal para o Op.like
     const whereClause = q ? { nome: { [Op.like]: `%${q}%` } } : {};
     try {
         const { count, rows } = await Product.findAndCountAll({ where: whereClause, limit: parseInt(limit), offset: parseInt(offset), order: [['nome', 'ASC']] });
@@ -544,7 +668,7 @@ router.get('/products', async (req, res) => {
     } catch (error) { res.status(500).json({ message: error.message }); }
 });
 
-router.get('/products/:id', async (req, res) => {
+router.get('/products/:id', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     try {
         const product = await Product.findByPk(req.params.id);
         if (product) res.json(product);
@@ -552,14 +676,15 @@ router.get('/products/:id', async (req, res) => {
     } catch (error) { res.status(500).json({ message: error.message }); }
 });
 
-router.post('/products', async (req, res) => {
+// Acesso: Admin, Gerente (Criação/Edição de Produtos)
+router.post('/products', authorizeRole(['admin', 'gerente']), async (req, res) => { 
     try {
         const product = await Product.create(req.body);
         res.status(201).json(product);
     } catch (error) { res.status(400).json({ message: error.message }); }
 });
 
-router.put('/products/:id', async (req, res) => {
+router.put('/products/:id', authorizeRole(['admin', 'gerente']), async (req, res) => { 
     try {
         const [updated] = await Product.update(req.body, { where: { id: req.params.id } });
         if (updated) {
@@ -569,7 +694,8 @@ router.put('/products/:id', async (req, res) => {
     } catch (error) { res.status(400).json({ message: error.message }); }
 });
 
-router.delete('/products/:id', async (req, res) => {
+// Acesso: Admin, Gerente (Deleção - mais restrito)
+router.delete('/products/:id', authorizeRole(['admin', 'gerente']), async (req, res) => {
     try {
         const deleted = await Product.destroy({ where: { id: req.params.id } });
         if (deleted) res.status(204).send();

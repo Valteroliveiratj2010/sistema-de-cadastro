@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
         bootstrapProductModal: new bootstrap.Modal(document.getElementById('productModal')),
         chartInstance: null,
         confirmAction: null,
+        userRole: null, // Adicionado para armazenar a função do usuário logado
         clients: {
             page: 1,
             query: '',
@@ -96,8 +97,22 @@ document.addEventListener('DOMContentLoaded', () => {
             state.bootstrapConfirmModal.show();
         },
         getToken: () => localStorage.getItem('jwtToken'),
+        // NOVO: Função para obter a role do usuário a partir do token
+        getUserRole: () => {
+            const token = utils.getToken();
+            if (!token) return null;
+            try {
+                // Decodifica o token (apenas a parte do payload)
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                return payload.role;
+            } catch (error) {
+                console.error('Erro ao descodificar token JWT:', error);
+                return null;
+            }
+        },
         logout: (message = 'Sessão expirada ou inválida. Faça login novamente.') => {
             localStorage.removeItem('jwtToken');
+            state.userRole = null; // Limpa a role no estado
             utils.showToast(message, 'error');
             setTimeout(() => {
                 window.location.href = 'login.html';
@@ -108,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let filename = 'download.csv';
             if (contentDisposition && contentDisposition.indexOf('attachment') !== -1) {
                 const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
-                if (filenameMatch && filenameMatch.length > 1) {
+                if (filenameMatch && filenameMatch.length > 1) { // Fixed length check
                     filename = filenameMatch[1];
                 }
             }
@@ -370,13 +385,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (options.isFileDownload) {
                 delete headers['Content-Type'];
             } else if (!headers['Content-Type']) {
-                 headers['Content-Type'] = 'application/json';
+                    headers['Content-Type'] = 'application/json';
             }
 
             const response = await fetch(`${API_BASE}${endpoint}`, { headers, ...options });
 
             if (response.status === 401 || response.status === 403) {
-                utils.logout('Sessão expirada ou inválida. Por favor, faça login novamente.');
+                // Se o backend retornou 401/403, é um erro de autenticação/autorização
+                // O utils.logout já mostra um toast e redireciona.
+                utils.logout(response.status === 401 ? 
+                    'Sessão expirada ou inválida. Por favor, faça login novamente.' : 
+                    'Você não tem permissão para realizar esta ação.');
                 throw new Error('Não autorizado ou sessão expirada.'); 
             }
 
@@ -417,6 +436,8 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteProduct: (id) => api.request(`/products/${id}`, { method: 'DELETE' }),
         getRankingsProdutos: () => api.request('/rankings/produtos'),
         getRankingsClientes: () => api.request('/rankings/clientes'),
+        // NOVO: Adiciona a chamada à API para rankings de vendedores
+        getRankingsVendedores: () => api.request('/rankings/vendedores'), 
     };
 
     // --- UI AND RENDERING LOGIC ---
@@ -426,9 +447,41 @@ document.addEventListener('DOMContentLoaded', () => {
             const section = document.getElementById(sectionId);
             if (section) section.style.display = 'block';
 
+            // Atualiza os links de navegação para refletir a seção ativa
             dom.navLinks.forEach(l => l.classList.remove('active'));
             const navLink = document.querySelector(`[data-section="${sectionId}"]`);
             if (navLink) navLink.classList.add('active');
+
+            // NOVO: Esconde/mostra links da sidebar com base na role
+            ui.updateSidebarVisibility();
+        },
+        // NOVO: Função para atualizar a visibilidade dos itens da sidebar
+        updateSidebarVisibility: () => {
+            const userRole = state.userRole;
+            dom.navLinks.forEach(link => {
+                const sectionId = link.dataset.section;
+                // Por padrão, todos visíveis para admin e gerente. Vendedor tem restrições.
+                let isVisible = true; 
+                switch (sectionId) {
+                    case 'productsSection':
+                        // Vendedores podem VER produtos (rota GET permitida), mas não criar/editar/excluir (controlado por botões e handlers)
+                        // O link da sidebar pode ser visível.
+                        break;
+                    case 'reportsSection':
+                        // Relatórios são visíveis para todos
+                        break;
+                    case 'clientsSection':
+                    case 'salesSection':
+                    case 'dashboardSection':
+                        // Dashboard, Clientes e Vendas são visíveis para todos por enquanto.
+                        break;
+                }
+                // Aplica a visibilidade
+                link.style.display = isVisible ? '' : 'none';
+            });
+
+            // Exemplo de como ocultar/mostrar elementos globais se necessário
+            // if (userRole !== 'admin') { document.getElementById('someAdminButton').style.display = 'none'; }
         },
         renderDashboard: ({ totalClients, salesThisMonth, totalReceivable, overdueSales, salesByMonth, lowStockProducts, salesToday, averageTicket }) => {
             const section = document.getElementById('dashboardSection');
@@ -467,7 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card p-3 mb-4"><canvas id="salesChart"></canvas></div>
                 <!-- Seção de rankings abaixo do gráfico -->
                 <div class="row g-4 mt-4">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="card shadow-sm">
                             <div class="card-header bg-primary text-white">
                                 <i class="bi bi-box-seam me-2"></i>Top 5 Produtos Mais Vendidos
@@ -477,12 +530,22 @@ document.addEventListener('DOMContentLoaded', () => {
                             </ul>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="card shadow-sm">
                             <div class="card-header bg-success text-white">
                                 <i class="bi bi-people-fill me-2"></i>Top 5 Clientes com Mais Compras
                             </div>
                             <ul class="list-group list-group-flush" id="clientesMaisCompraram">
+                                <li class="list-group-item text-center text-muted">Carregando...</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-4" id="rankingVendedoresCard"> <!-- NOVO: Card para ranking de vendedores -->
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-info text-white">
+                                <i class="bi bi-person-badge me-2"></i>Top 5 Vendedores
+                            </div>
+                            <ul class="list-group list-group-flush" id="vendedoresMaisVenderam">
                                 <li class="list-group-item text-center text-muted">Carregando...</li>
                             </ul>
                         </div>
@@ -503,25 +566,45 @@ document.addEventListener('DOMContentLoaded', () => {
                     scales: { y: { beginAtZero: true } } 
                 }
             });
+            // NOVO: Ajusta a visibilidade do card de vendedores após renderizar o dashboard
+            if (!['admin', 'gerente'].includes(state.userRole)) {
+                const rankingVendedoresCard = document.getElementById('rankingVendedoresCard');
+                if (rankingVendedoresCard) {
+                    rankingVendedoresCard.style.display = 'none'; // Oculta o card inteiro
+                }
+            } else {
+                const rankingVendedoresCard = document.getElementById('rankingVendedoresCard');
+                if (rankingVendedoresCard) {
+                    rankingVendedoresCard.style.display = 'block'; // Garante que seja visível para admin/gerente
+                }
+            }
         },
         renderClients: () => {
-            const { data, total } = state.clients;
+            const { data, total } = state.clients; 
             const section = document.getElementById('clientsSection');
             const tableRows = data.map(client => `
                 <tr>
                     <td>${client.id}</td><td><strong>${client.nome}</strong></td><td>${client.email || 'N/A'}</td><td>${client.telefone || 'N/A'}</td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary action-edit" data-type="client" data-id="${client.id}" title="Editar"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-sm btn-outline-danger action-delete" data-type="client" data-id="${client.id}" title="Excluir"><i class="bi bi-trash"></i></button>
+                        ${(state.userRole === 'admin' || state.userRole === 'gerente' || state.userRole === 'vendedor') ? // Vendedor pode editar clientes
+                            `<button class="btn btn-sm btn-outline-primary action-edit" data-type="client" data-id="${client.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
+                        ${(state.userRole === 'admin' || state.userRole === 'gerente') ? // Apenas admin e gerente podem excluir
+                            `<button class="btn btn-sm btn-outline-danger action-delete" data-type="client" data-id="${client.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
                     </td>
                 </tr>`).join('');
             
+            // Botões de ação na seção Clientes (Novo Cliente, Exportar CSV)
+            let actionButtonsHtml = '';
+            if (state.userRole === 'admin' || state.userRole === 'gerente' || state.userRole === 'vendedor') { // Todos podem exportar e criar
+                actionButtonsHtml += `<button class="btn btn-outline-success me-2" id="btnExportClientsCsv"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Exportar CSV</button>`;
+                actionButtonsHtml += `<button class="btn btn-primary" id="btnNewClient"><i class="bi bi-plus-circle me-2"></i>Novo Cliente</button>`;
+            }
+
             section.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h3><i class="bi bi-people-fill me-2"></i>Clientes (${total})</h3>
                     <div>
-                        <button class="btn btn-outline-success me-2" id="btnExportClientsCsv"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Exportar CSV</button>
-                        <button class="btn btn-primary" id="btnNewClient"><i class="bi bi-plus-circle me-2"></i>Novo Cliente</button>
+                        ${actionButtonsHtml}
                     </div>
                 </div>
                 <div class="input-group mb-3">
@@ -540,25 +623,32 @@ document.addEventListener('DOMContentLoaded', () => {
             const section = document.getElementById('salesSection');
             const tableRows = data.map(sale => {
                 const valorDevido = sale.valorTotal - sale.valorPago;
-                const statusClass = valorDevido <= 0 ? 'text-success' : 'text-danger';
+                const statusClass = valorDevido > 0 ? 'text-danger' : 'text-success'; // Defined statusClass
                 return `
                 <tr>
                     <td>${sale.id}</td><td><strong>${sale.client?.nome || 'N/A'}</strong></td><td>${utils.formatDate(sale.dataVenda)}</td><td class="${statusClass}"><strong>${utils.formatCurrency(valorDevido)}</strong></td><td><span class="badge bg-primary">${sale.status}</span></td>
                     <td>
                         <button class="btn btn-sm btn-outline-info action-detail" data-type="sale" data-id="${sale.id}" title="Detalhes"><i class="bi bi-eye"></i></button>
-                        <button class="btn btn-sm btn-outline-danger action-delete" data-type="sale" data-id="${sale.id}" title="Excluir"><i class="bi bi-trash"></i></button>
+                        ${(state.userRole === 'admin' || state.userRole === 'gerente') ? 
+                            `<button class="btn btn-sm btn-outline-danger action-delete" data-type="sale" data-id="${sale.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
                     </td>
                 </tr>`;
             }).join('');
-             section.innerHTML = `
+            // Botões de ação na seção Vendas (Nova Venda, Exportar CSV)
+            let actionButtonsHtml = '';
+            if (state.userRole === 'admin' || state.userRole === 'gerente' || state.userRole === 'vendedor') { // Todos podem exportar e criar vendas
+                actionButtonsHtml += `<button class="btn btn-outline-success me-2" id="btnExportSalesCsv"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Exportar CSV</button>`;
+                actionButtonsHtml += `<button class="btn btn-primary" id="btnNewSale"><i class="bi bi-plus-circle me-2"></i>Nova Venda</button>`;
+            }
+
+            section.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h3><i class="bi bi-cart-check-fill me-2"></i>Vendas (${total})</h3> 
                     <div>
-                        <button class="btn btn-outline-success me-2" id="btnExportSalesCsv"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Exportar CSV</button>
-                        <button class="btn btn-primary" id="btnNewSale"><i class="bi bi-plus-circle me-2"></i>Nova Venda</button>
+                        ${actionButtonsHtml}
                     </div>
                 </div>
-                 <div class="input-group mb-3">
+                <div class="input-group mb-3">
                     <span class="input-group-text"><i class="bi bi-search"></i></span>
                     <input type="text" class="form-control search-input" data-type="sales" placeholder="Buscar por nome do cliente..." value="${state.sales.query}">
                 </div>
@@ -631,6 +721,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (sales.length === 0) {
                 resultsHtml = `<div class="alert alert-info text-center" role="alert">Nenhuma venda encontrada para o período selecionado.</div>`;
             } else {
+                // Botão de Exportar CSV para relatórios de período - visível para todos com acesso a relatórios
+                let exportButtonHtml = '';
+                if (['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
+                     exportButtonHtml = `
+                        <div class="d-flex justify-content-end mb-3">
+                            <button class="btn btn-success" id="btnExportPeriodReportCsv"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Exportar Relatório CSV</button>
+                        </div>
+                    `;
+                }
+
                 resultsHtml += `
                     <div class="row g-3 mb-4">
                         <div class="col-md-3"><div class="card p-3"><h6>Total de Vendas</h6><p class="fs-4 fw-bold">${utils.formatCurrency(summary.totalSalesAmount)}</p></div></div>
@@ -638,9 +738,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="col-md-3"><div class="card p-3 bg-danger text-white"><h6>Total Devido</h6><p class="fs-4 fw-bold">${utils.formatCurrency(summary.totalDueAmount)}</p></div></div>
                         <div class="col-md-3"><div class="card p-3"><h6>Qtd. de Vendas</h6><p class="fs-4 fw-bold">${summary.numberOfSales}</p></div></div>
                     </div>
-                    <div class="d-flex justify-content-end mb-3">
-                        <button class="btn btn-success" id="btnExportPeriodReportCsv"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Exportar Relatório CSV</button>
-                    </div>
+                    ${exportButtonHtml}
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
@@ -714,6 +812,63 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 paymentsHTML = `<p>Nenhum pagamento registrado.</p>`;
             }
+            // Botões de ação do detalhe da venda (Whatsapp, Email, Imprimir)
+            let detailActionButtonsHtml = '';
+            if (['admin', 'gerente', 'vendedor'].includes(state.userRole)) { // Todos podem compartilhar e imprimir
+                detailActionButtonsHtml = `
+                    <div class="d-flex justify-content-end mt-2">
+                        <button class="btn btn-sm btn-outline-success me-2" id="btnShareWhatsapp" data-sale-id="${sale.id}" title="Compartilhar no WhatsApp"><i class="bi bi-whatsapp"></i></button>
+                        <button class="btn btn-sm btn-outline-info me-2" id="btnShareEmail" data-sale-id="${sale.id}" title="Compartilhar por E-mail"><i class="bi bi-envelope"></i></button>
+                        <button class="btn btn-sm btn-outline-primary" id="btnPrintSale" data-sale-id="${sale.id}" title="Imprimir Venda"><i class="bi bi-printer"></i></button>
+                    </div>
+                `;
+            }
+
+            // Formulário de registro de pagamento - visível para todos que podem criar/editar vendas
+            let paymentFormHtml = '';
+            if (['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
+                paymentFormHtml = `
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Registrar Pagamento</h5>
+                            ${detailActionButtonsHtml}
+                        </div>
+                        <div class="card-body">
+                            <form id="paymentForm" data-sale-id="${sale.id}">
+                                <div class="mb-3">
+                                    <label for="paymentValue" class="form-label">Valor</label>
+                                    <input type="number" step="0.01" class="form-control" id="paymentValue" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="paymentFormaNew" class="form-label">Forma de Pagamento</label>
+                                    <select class="form-select" id="paymentFormaNew">
+                                        <option value="Dinheiro">Dinheiro</option>
+                                        <option value="Cartão de Crédito">Cartão de Crédito</option>
+                                        <option value="Crediário">Crediário</option>
+                                        <option value="PIX">PIX</option>
+                                    </select>
+                                </div>
+                                <div class="row" id="newPaymentDetailsFields">
+                                    <div class="col-md-6 mb-3" id="newParcelasField" style="display: none;">
+                                        <label for="newPaymentParcelas" class="form-label">Parcelas</label>
+                                        <input type="number" class="form-control" id="newPaymentParcelas" value="1" min="1">
+                                    </div>
+                                    <div class="col-md-6 mb-3" id="newBandeiraCartaoField" style="display: none;">
+                                        <label for="newPaymentBandeiraCartao" class="form-label">Bandeira Cartão</label>
+                                        <input type="text" class="form-control" id="newPaymentBandeiraCartao" placeholder="Ex: Visa, Mastercard">
+                                    </div>
+                                    <div class="col-md-12 mb-3" id="newBancoCrediarioField" style="display: none;">
+                                        <label for="newPaymentBancoCrediario" class="form-label">Banco/Instituição Crediário</label>
+                                        <input type="text" class="form-control" id="newPaymentBancoCrediario" placeholder="Ex: Banco X, Financeira Y">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-success w-100">Registrar</button>
+                            </form>
+                        </div>
+                    </div>
+                `;
+            }
+
 
             section.innerHTML = `
                 <nav aria-label="breadcrumb">
@@ -746,48 +901,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <p class="fs-5"><strong>Valor Devido: <span class="text-danger">${utils.formatCurrency(valorDevido)}</span></strong></p>
                             </div>
                         </div>
-                        <div class="card">
-                            <div class="card-header">
-                                <h5>Registrar Pagamento</h5>
-                                <div class="d-flex justify-content-end mt-2">
-                                    <button class="btn btn-sm btn-outline-success me-2" id="btnShareWhatsapp" data-sale-id="${sale.id}" title="Compartilhar no WhatsApp"><i class="bi bi-whatsapp"></i></button>
-                                    <button class="btn btn-sm btn-outline-info me-2" id="btnShareEmail" data-sale-id="${sale.id}" title="Compartilhar por E-mail"><i class="bi bi-envelope"></i></button>
-                                    <button class="btn btn-sm btn-outline-primary" id="btnPrintSale" data-sale-id="${sale.id}" title="Imprimir Venda"><i class="bi bi-printer"></i></button>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <form id="paymentForm" data-sale-id="${sale.id}">
-                                    <div class="mb-3">
-                                        <label for="paymentValue" class="form-label">Valor</label>
-                                        <input type="number" step="0.01" class="form-control" id="paymentValue" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="paymentFormaNew" class="form-label">Forma de Pagamento</label>
-                                        <select class="form-select" id="paymentFormaNew">
-                                            <option value="Dinheiro">Dinheiro</option>
-                                            <option value="Cartão de Crédito">Cartão de Crédito</option>
-                                            <option value="Crediário">Crediário</option>
-                                            <option value="PIX">PIX</option>
-                                        </select>
-                                    </div>
-                                    <div class="row" id="newPaymentDetailsFields">
-                                        <div class="col-md-6 mb-3" id="newParcelasField" style="display: none;">
-                                            <label for="newPaymentParcelas" class="form-label">Parcelas</label>
-                                            <input type="number" class="form-control" id="newPaymentParcelas" value="1" min="1">
-                                        </div>
-                                        <div class="col-md-6 mb-3" id="newBandeiraCartaoField" style="display: none;">
-                                            <label for="newPaymentBandeiraCartao" class="form-label">Bandeira Cartão</label>
-                                            <input type="text" class="form-control" id="newPaymentBandeiraCartao" placeholder="Ex: Visa, Mastercard">
-                                        </div>
-                                        <div class="col-md-12 mb-3" id="newBancoCrediarioField" style="display: none;">
-                                            <label for="newPaymentBancoCrediario" class="form-label">Banco/Instituição Crediário</label>
-                                            <input type="text" class="form-control" id="newPaymentBancoCrediario" placeholder="Ex: Banco X, Financeira Y">
-                                        </div>
-                                    </div>
-                                    <button type="submit" class="btn btn-success w-100">Registrar</button>
-                                </form>
-                            </div>
-                        </div>
+                        ${paymentFormHtml}
                     </div>
                 </div>
             `;
@@ -803,16 +917,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${utils.formatCurrency(product.precoVenda)}</td>
                     <td>${product.estoque}</td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary action-edit" data-type="product" data-id="${product.id}" title="Editar"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-sm btn-outline-danger action-delete" data-type="product" data-id="${product.id}" title="Excluir"><i class="bi bi-trash"></i></button>
+                        ${(state.userRole === 'admin' || state.userRole === 'gerente') ? // Apenas admin e gerente podem editar
+                            `<button class="btn btn-sm btn-outline-primary action-edit" data-type="product" data-id="${product.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
+                        ${(state.userRole === 'admin' || state.userRole === 'gerente') ? // Apenas admin e gerente podem excluir
+                            `<button class="btn btn-sm btn-outline-danger action-delete" data-type="product" data-id="${product.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
                     </td>
                 </tr>`).join('');
             
+            // Botão de "Novo Produto" - visível apenas para admin e gerente
+            let newProductButtonHtml = '';
+            if (state.userRole === 'admin' || state.userRole === 'gerente') {
+                newProductButtonHtml = `<button class="btn btn-primary" id="btnNewProduct"><i class="bi bi-plus-circle me-2"></i>Novo Produto</button>`;
+            }
+
             section.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h3><i class="bi bi-box-seam me-2"></i>Produtos (${total})</h3>
                     <div>
-                        <button class="btn btn-primary" id="btnNewProduct"><i class="bi bi-plus-circle me-2"></i>Novo Produto</button>
+                        ${newProductButtonHtml}
                     </div>
                 </div>
                 <div class="input-group mb-3">
@@ -836,47 +958,72 @@ document.addEventListener('DOMContentLoaded', () => {
                 const lowStockProducts = await api.getLowStockProducts();
                 ui.renderDashboard({ ...dashboardData, lowStockProducts });
                 ui.showSection('dashboardSection');
-                handlers.loadRankings();
+                handlers.loadRankings(); 
             } catch (error) { 
                 utils.showToast(error.message, 'error'); 
             }
         },
         loadRankings: async () => {
             try {
+                const ulProdutos = document.getElementById('produtosMaisVendidos');
+                const ulClientes = document.getElementById('clientesMaisCompraram');
+                const ulVendedores = document.getElementById('vendedoresMaisVenderam');
+        
+                // Always try to load product and client rankings
                 const produtos = await api.getRankingsProdutos();
                 const clientes = await api.getRankingsClientes();
-
-                const ulProdutos = document.getElementById('produtosMaisVendidos');
+        
                 if (produtos && produtos.length > 0) {
                     ulProdutos.innerHTML = produtos.map(p => `
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            ${p.nome_produto}
-                            <span class="badge bg-primary rounded-pill">${p.total_vendido} un</span>
+                            ${p.nome} 
+                            <span class="badge bg-primary rounded-pill">${p.totalQuantidadeVendida} un</span>
                         </li>
                     `).join('');
                 } else {
-                    ulProdutos.innerHTML = '<li class="list-group-item text-center text-muted">Nenhum produto vendido este mês.</li>';
+                    ulProdutos.innerHTML = '<li class="list-group-item text-center text-muted">Nenhum produto vendido.</li>'; 
                 }
-
-                const ulClientes = document.getElementById('clientesMaisCompraram');
+        
                 if (clientes && clientes.length > 0) {
                     ulClientes.innerHTML = clientes.map(c => `
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            ${c.nome_cliente}
-                            <span class="badge bg-success rounded-pill">${utils.formatCurrency(c.valor_gasto)}</span>
+                            ${c.nome} 
+                            <span class="badge bg-success rounded-pill">${utils.formatCurrency(c.valorTotalVendido)}</span> 
                         </li>
                     `).join('');
                 } else {
-                    ulClientes.innerHTML = '<li class="list-group-item text-center text-muted">Nenhuma venda registrada este mês.</li>';
+                    ulClientes.innerHTML = '<li class="list-group-item text-center text-muted">Nenhum cliente com compras.</li>'; 
                 }
+        
+                // NOVO: Condição para carregar e renderizar o ranking de vendedores
+                // Apenas para Admin e Gerente
+                if (['admin', 'gerente'].includes(state.userRole)) {
+                    const vendedores = await api.getRankingsVendedores(); 
+                    if (vendedores && vendedores.length > 0) {
+                        ulVendedores.innerHTML = vendedores.map(v => `
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                ${v.username} 
+                                <span class="badge bg-info rounded-pill">${utils.formatCurrency(v.valorTotalVendido)}</span>
+                            </li>
+                        `).join('');
+                    } else {
+                        ulVendedores.innerHTML = '<li class="list-group-item text-center text-muted">Nenhum vendedor com vendas registradas.</li>';
+                    }
+                } else { 
+                    // Se não for admin/gerente, exibir acesso restrito ou limpar o conteúdo
+                    if (ulVendedores) ulVendedores.innerHTML = '<li class="list-group-item text-center text-muted">Acesso restrito.</li>';
+                }
+        
             } catch (error) {
                 console.error('Erro ao carregar rankings:', error);
                 const ulProdutos = document.getElementById('produtosMaisVendidos');
                 if (ulProdutos) ulProdutos.innerHTML = '<li class="list-group-item text-center text-danger">Erro ao carregar.</li>';
                 const ulClientes = document.getElementById('clientesMaisCompraram');
                 if (ulClientes) ulClientes.innerHTML = '<li class="list-group-item text-center text-danger">Erro ao carregar.</li>';
+                const ulVendedores = document.getElementById('vendedoresMaisVenderam');
+                if (ulVendedores) ulVendedores.innerHTML = '<li class="list-group-item text-center text-danger">Erro ao carregar.</li>';
             }
-        },
+        },        
         loadClients: async (force = false) => {
             if (state.clients.loaded && !force) {
                 ui.renderClients();
@@ -984,6 +1131,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (type === 'products') handlers.loadProducts(true);
         },
         openClientModal: async (clientId = null) => {
+            // Apenas admin e gerente podem editar, mas vendedor pode criar
+            if (clientId && !['admin', 'gerente'].includes(state.userRole)) {
+                utils.showToast('Você não tem permissão para editar clientes.', 'error');
+                return;
+            }
+            if (!clientId && !['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
+                utils.showToast('Você não tem permissão para criar clientes.', 'error');
+                return;
+            }
+
             dom.clientForm.reset();
             document.getElementById('clientId').value = '';
             const modalLabel = document.getElementById('clientModalLabel');
@@ -1027,6 +1184,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
         handleDeleteClient: async (clientId) => {
+            if (!['admin', 'gerente'].includes(state.userRole)) { // Apenas admin e gerente podem deletar
+                utils.showToast('Você não tem permissão para excluir clientes.', 'error');
+                return;
+            }
             utils.showConfirm('Deseja realmente excluir este cliente?', async () => {
                 try {
                     await api.deleteClient(clientId);
@@ -1038,6 +1199,16 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
         openSaleModal: async (saleId = null) => {
+            // Apenas admin, gerente e vendedor podem criar/editar vendas
+            if (saleId && !['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
+                utils.showToast('Você não tem permissão para editar vendas.', 'error');
+                return;
+            }
+            if (!saleId && !['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
+                utils.showToast('Você não tem permissão para criar vendas.', 'error');
+                return;
+            }
+
             dom.saleForm.reset();
             document.getElementById('saleId').value = '';
             state.selectedSaleProducts = [];
@@ -1066,7 +1237,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             try {
-                const { data: clients } = await api.getClients(1, '', 1000);
+                // Fetch clients, filtered by userId for 'vendedor' role
+                const { data: clients } = await api.getClients(1, '', 1000); // This now respects userId filter in backend for vendedores
                 clientSelect.innerHTML = '<option value="">Selecione um cliente</option>';
                 clients.forEach(c => clientSelect.add(new Option(c.nome, c.id)));
                 
@@ -1139,6 +1311,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
         handleAddProductToSale: () => {
+            // Apenas admin, gerente e vendedor podem adicionar produtos à venda
+            if (!['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
+                utils.showToast('Você não tem permissão para adicionar produtos a vendas.', 'error');
+                return;
+            }
+
             const productId = dom.productSelect.val();
             const quantity = parseInt(dom.productQuantityInput.value);
             const unitPrice = parseFloat(dom.productUnitPriceInput.value);
@@ -1152,8 +1330,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             if (isNaN(unitPrice) || unitPrice < 0) {
-                 utils.showToast('Preço unitário inválido.', 'error');
-                 return;
+                utils.showToast('Preço unitário inválido.', 'error');
+                return;
             }
 
             const product = state.availableProducts.find(p => String(p.id) === productId);
@@ -1189,11 +1367,22 @@ document.addEventListener('DOMContentLoaded', () => {
             state.currentSelectedProduct = null;
         },
         handleRemoveProductFromSale: (index) => {
+            // Apenas admin, gerente e vendedor podem remover produtos da venda
+            if (!['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
+                utils.showToast('Você não tem permissão para remover produtos de vendas.', 'error');
+                return;
+            }
             state.selectedSaleProducts.splice(index, 1);
             utils.renderSelectedProductsList();
         },
         handleSaveSale: async (e) => {
             e.preventDefault();
+            // Apenas admin, gerente e vendedor podem salvar vendas
+            if (!['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
+                utils.showToast('Você não tem permissão para salvar vendas.', 'error');
+                return;
+            }
+
             const id = document.getElementById('saleId').value;
             const clientId = document.getElementById('saleClient').value;
             const dataVencimento = document.getElementById('saleDueDate').value;
@@ -1260,20 +1449,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 state.bootstrapSaleModal.hide();
                 handlers.loadSales(true);
-                handlers.loadDashboard();
-                handlers.loadProducts(true);
+                handlers.loadDashboard(); 
+                handlers.loadProducts(true); 
             } catch (error) {
                 utils.showToast(error.message, 'error');
             }
         },
         handleDeleteSale: async (saleId) => {
+            if (!['admin', 'gerente'].includes(state.userRole)) { // Apenas admin e gerente podem deletar
+                utils.showToast('Você não tem permissão para excluir vendas.', 'error');
+                return;
+            }
             utils.showConfirm('Deseja realmente excluir esta venda? O estoque dos produtos será revertido.', async () => {
                 try {
                     await api.deleteSale(saleId);
                     utils.showToast('Venda excluída e estoque revertido!', 'success');
                     handlers.loadSales(true);
-                    handlers.loadDashboard();
-                    handlers.loadProducts(true);
+                    handlers.loadDashboard(); 
+                    handlers.loadProducts(true); 
                 } catch (error) {
                     utils.showToast(error.message, 'error');
                 }
@@ -1290,17 +1483,23 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         handleSavePayment: async (e) => {
             e.preventDefault();
+            // Apenas admin, gerente e vendedor podem registrar pagamentos
+            if (!['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
+                utils.showToast('Você não tem permissão para registrar pagamentos.', 'error');
+                return;
+            }
+
             const saleId = e.target.dataset.saleId;
             const valor = document.getElementById('paymentValue').value;
             const formaPagamentoElement = document.getElementById('paymentFormaNew');
             const parcelasElement = document.getElementById('newPaymentParcelas');
-            const bandeiraCartaoElement = document.getElementById('newPaymentBandeiraCartao');
-            const bancoCrediarioElement = document.getElementById('newPaymentBancoCrediario');
+            // Corrected: get the value from the input field directly, not the field container
+            const bancoCrediarioInputElement = document.getElementById('newPaymentBancoCrediario'); 
 
             const formaPagamento = formaPagamentoElement ? formaPagamentoElement.value : 'Dinheiro';
             const parcelas = parcelasElement ? parseInt(parcelasElement.value) || 1 : 1;
-            const bandeiraCartao = bandeiraCartaoElement ? bandeiraCartaoElement.value || null : null;
-            const bancoCrediario = bancoCrediarioElement ? bancoCrediarioElement.value || null : null;
+            const bandeiraCartao = document.getElementById('newPaymentBandeiraCartao') ? document.getElementById('newPaymentBandeiraCartao').value || null : null;
+            const bancoCrediario = bancoCrediarioInputElement ? bancoCrediarioInputElement.value || null : null; // Get value from input
 
             if (!valor || parseFloat(valor) <= 0) {
                 utils.showToast('Valor do pagamento inválido.', 'error');
@@ -1310,7 +1509,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 utils.showToast('Número de parcelas inválido para a forma de pagamento selecionada.', 'error');
                 return;
             }
-             if (formaPagamento === 'Cartão de Crédito' && !bandeiraCartao) {
+            if (formaPagamento === 'Cartão de Crédito' && !bandeiraCartao) {
                 utils.showToast('Bandeira do cartão é obrigatória para Cartão de Crédito.', 'error');
                 return;
             }
@@ -1329,8 +1528,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 utils.showToast('Pagamento registrado!', 'success');
                 handlers.loadSaleDetail(saleId);
-                handlers.loadDashboard();
-                handlers.loadSales(true);
+                handlers.loadDashboard(); 
+                handlers.loadSales(true); 
             } catch (error) {
                 utils.showToast(error.message, 'error');
             }
@@ -1350,6 +1549,15 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) { utils.showToast(error.message, 'error'); }
         },
         openProductModal: async (productId = null) => {
+            // Apenas admin e gerente podem criar/editar produtos
+            if (productId && !['admin', 'gerente'].includes(state.userRole)) {
+                utils.showToast('Você não tem permissão para editar produtos.', 'error');
+                return;
+            }
+            if (!productId && !['admin', 'gerente'].includes(state.userRole)) {
+                utils.showToast('Você não tem permissão para criar produtos.', 'error');
+                return;
+            }
             dom.productForm.reset();
             document.getElementById('productId').value = '';
             const modalLabel = document.getElementById('productModalLabel');
@@ -1375,6 +1583,12 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         handleSaveProduct: async (e) => {
             e.preventDefault();
+            // Apenas admin e gerente podem salvar produtos
+            if (!['admin', 'gerente'].includes(state.userRole)) {
+                utils.showToast('Você não tem permissão para salvar produtos.', 'error');
+                return;
+            }
+
             const id = document.getElementById('productId').value;
             const data = {
                 nome: document.getElementById('productName').value,
@@ -1399,17 +1613,27 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
         handleDeleteProduct: async (productId) => {
+            if (!['admin', 'gerente'].includes(state.userRole)) { // Apenas admin e gerente podem deletar
+                utils.showToast('Você não tem permissão para excluir produtos.', 'error');
+                return;
+            }
             utils.showConfirm('Deseja realmente excluir este produto?', async () => {
                 try {
                     await api.deleteProduct(productId);
                     utils.showToast('Produto excluído!', 'success');
                     handlers.loadProducts(true);
-                } catch (error) {
+                }
+                catch (error) {
                     utils.showToast(error.message, 'error');
                 }
             });
         },
         handlePrintSale: (sale) => {
+            // Todos que podem ver detalhes da venda podem imprimir
+            if (!['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
+                utils.showToast('Você não tem permissão para imprimir vendas.', 'error');
+                return;
+            }
             const printContent = utils.generatePrintContent(sale);
             const printWindow = window.open('', '_blank');
             printWindow.document.write(printContent);
@@ -1421,6 +1645,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- INITIALIZATION ---
     function initialize() {
+        // Obter a role do usuário imediatamente após a inicialização
+        state.userRole = utils.getUserRole();
+        if (!state.userRole) { // Se não há token ou role, redireciona para o login
+            utils.logout('Você precisa estar logado para acessar esta página.');
+            return;
+        }
+
+        // Ajuste da sidebar e mainContent para telas maiores
         if (window.innerWidth >= 992) {
             dom.sidebar.classList.remove('collapsed');
             dom.sidebar.classList.add('active');
@@ -1432,16 +1664,37 @@ document.addEventListener('DOMContentLoaded', () => {
             dom.sidebarOverlay.classList.remove('active');
             dom.mainContent.style.marginLeft = '0px'; 
         }
-
-        if (!utils.getToken()) {
-            utils.logout('Você precisa estar logado para acessar esta página.');
-            return;
-        }
+        
+        // NOVO: Atualiza a visibilidade da sidebar com base na role ao carregar a página
+        ui.updateSidebarVisibility();
 
         dom.navLinks.forEach(link => {
             link.addEventListener('click', e => {
                 e.preventDefault();
                 const sectionId = e.currentTarget.dataset.section;
+                // NOVO: Verificação de permissão para navegação na sidebar
+                let hasPermission = true;
+                switch (sectionId) {
+                    case 'productsSection':
+                        if (!['admin', 'gerente', 'vendedor'].includes(state.userRole)) hasPermission = false;
+                        break;
+                    case 'reportsSection':
+                        if (!['admin', 'gerente', 'vendedor'].includes(state.userRole)) hasPermission = false;
+                        break;
+                    case 'clientsSection':
+                    case 'salesSection':
+                    case 'dashboardSection':
+                        // Todos podem acessar
+                        break;
+                    default:
+                        hasPermission = false; // Se uma nova seção for adicionada e não tiver permissão definida
+                }
+
+                if (!hasPermission) {
+                    utils.showToast('Você não tem permissão para acessar esta seção.', 'error');
+                    return;
+                }
+
                 ui.showSection(sectionId);
                 if (window.innerWidth < 992) {
                     dom.sidebar.classList.remove('active');
@@ -1460,6 +1713,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.addEventListener('click', (e) => {
             const button = e.target.closest('button');
             if (button) {
+                // Adicione verificações de permissão aos handlers chamados pelos botões
                 if (button.id === 'btnNewClient') handlers.openClientModal();
                 if (button.id === 'btnNewSale') handlers.openSaleModal();
                 if (button.id === 'btnExportClientsCsv') handlers.handleExportClientsCsv();
@@ -1474,6 +1728,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (button.id === 'btnShareWhatsapp') {
                     const saleId = button.dataset.saleId;
                     api.getSaleById(saleId).then(sale => {
+                        // Verificação de permissão para compartilhar/imprimir
+                        if (!['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
+                            utils.showToast('Você não tem permissão para compartilhar detalhes de vendas.', 'error');
+                            return;
+                        }
                         const message = utils.generateSaleMessage(sale);
                         const clientPhone = sale.client?.telefone?.replace(/\D/g, '') || '';
                         const whatsappUrl = `https://wa.me/${clientPhone}?text=${encodeURIComponent(message)}`;
@@ -1483,6 +1742,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (button.id === 'btnShareEmail') {
                     const saleId = button.dataset.saleId;
                     api.getSaleById(saleId).then(sale => {
+                         // Verificação de permissão para compartilhar/imprimir
+                        if (!['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
+                            utils.showToast('Você não tem permissão para compartilhar detalhes de vendas.', 'error');
+                            return;
+                        }
                         const subject = encodeURIComponent(`Detalhes da sua compra #${sale.id} no Gestor PRO`);
                         const body = encodeURIComponent(utils.generateSaleMessage(sale));
                         const clientEmail = sale.client?.email || '';
@@ -1493,6 +1757,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (button.id === 'btnPrintSale') {
                     const saleId = button.dataset.saleId;
                     api.getSaleById(saleId).then(sale => {
+                        // A função handlePrintSale já tem a verificação
                         handlers.handlePrintSale(sale);
                     }).catch(error => utils.showToast(error.message, 'error'));
                 }
@@ -1503,6 +1768,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const { type, id } = button.dataset;
                 if (button.classList.contains('action-delete')) {
+                    // A verificação de permissão está dentro dos handlers handleDeleteClient/Sale/Product
                     if (type === 'client') handlers.handleDeleteClient(id);
                     if (type === 'sale') handlers.handleDeleteSale(id);
                     if (type === 'product') handlers.handleDeleteProduct(id);
@@ -1511,6 +1777,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (type === 'sale') handlers.loadSaleDetail(id);
                 }
                 if(button.classList.contains('action-edit')) {
+                    // A verificação de permissão está dentro dos handlers openClientModal/openProductModal
                     if (type === 'client') handlers.openClientModal(id);
                     if (type === 'product') handlers.openProductModal(id);
                 }
@@ -1526,8 +1793,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const backLink = e.target.closest('.nav-back');
             if (backLink) {
-                 e.preventDefault();
-                 ui.showSection(backLink.dataset.section);
+                e.preventDefault();
+                ui.showSection(backLink.dataset.section);
             }
         });
 
@@ -1545,7 +1812,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newPaymentFormaSelectElement = document.getElementById('paymentFormaNew');
                 const newParcelasFieldElement = document.getElementById('newParcelasField');
                 const newBandeiraCartaoFieldElement = document.getElementById('newBandeiraCartaoField');
-                const newBancoCrediarioFieldElement = document.getElementById('newBancoCrediarioField');
+                const newBancoCrediarioFieldElement = document.getElementById('newBancoCrediarioField'); // This is the div, not the input
                 const newPaymentParcelasInputElement = document.getElementById('newPaymentParcelas');
                 const newPaymentBandeiraCartaoInputElement = document.getElementById('newPaymentBandeiraCartao');
                 const newPaymentBancoCrediarioInputElement = document.getElementById('newPaymentBancoCrediario');
@@ -1603,12 +1870,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 dom.mainContent.style.marginLeft = '280px';
             } else {
                 if (!dom.sidebar.classList.contains('active')) {
-                     dom.sidebar.classList.add('collapsed');
+                    dom.sidebar.classList.add('collapsed');
                 }
                 dom.mainContent.style.marginLeft = '0px';
             }
         });
 
+        // Inicia o carregamento do dashboard APÓS a role ser definida
         handlers.loadDashboard();
     }
 

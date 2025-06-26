@@ -1,4 +1,3 @@
-// backend/models/Client.js
 const { DataTypes } = require('sequelize');
 
 // Exporta uma função que define o modelo
@@ -21,6 +20,15 @@ module.exports = (sequelize) => {
         telefone: {
             type: DataTypes.STRING,
             allowNull: true
+        },
+        // NOVO: Adiciona a coluna userId ao modelo Client
+        userId: {
+            type: DataTypes.INTEGER,
+            allowNull: false, // Assume que todo cliente é criado por um usuário
+            references: {
+                model: 'Users', // Nome da tabela que ele referencia (geralmente plural do nome do modelo)
+                key: 'id'
+            }
         }
     });
     return Client; // Retorna o modelo definido

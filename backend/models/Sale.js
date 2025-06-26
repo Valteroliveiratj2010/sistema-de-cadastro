@@ -1,34 +1,64 @@
 // backend/models/Sale.js
 const { DataTypes } = require('sequelize');
 
-// Exporta uma função que define o modelo
 module.exports = (sequelize) => {
     const Sale = sequelize.define('Sale', {
         id: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
-            primaryKey: true
+            primaryKey: true,
         },
-        valorTotal: {
-            type: DataTypes.FLOAT,
-            allowNull: false
+        clientId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            references: {
+                model: 'Clients', // Nome da tabela no banco de dados
+                key: 'id',
+            },
+            onUpdate: 'CASCADE',
+            onDelete: 'RESTRICT', // Restringe a exclusão de cliente se houver vendas
         },
-        valorPago: {
-            type: DataTypes.FLOAT,
-            defaultValue: 0
-        },
-        status: {
-            type: DataTypes.STRING,
-            defaultValue: 'Pendente'
+        // NOVO: Adiciona o campo userId para associar a venda a um utilizador
+        userId: {
+            type: DataTypes.INTEGER,
+            allowNull: true, // Pode ser null se a venda não for associada a um utilizador específico (ex: importação)
+            references: {
+                model: 'Users', // Nome da tabela no banco de dados
+                key: 'id',
+            },
+            onUpdate: 'CASCADE',
+            onDelete: 'SET NULL', // Se o utilizador for excluído, define userId como NULL
         },
         dataVenda: {
-            type: DataTypes.DATEONLY,
-            defaultValue: DataTypes.NOW
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: DataTypes.NOW,
         },
         dataVencimento: {
-            type: DataTypes.DATEONLY,
-            allowNull: true
-        }
+            type: DataTypes.DATE,
+            allowNull: true, // Vendas podem não ter data de vencimento (ex: pagas à vista)
+        },
+        valorTotal: {
+            type: DataTypes.DECIMAL(10, 2),
+            allowNull: false,
+        },
+        valorPago: {
+            type: DataTypes.DECIMAL(10, 2),
+            allowNull: false,
+            defaultValue: 0.00,
+        },
+        status: {
+            type: DataTypes.ENUM('Pendente', 'Paga', 'Cancelada'),
+            allowNull: false,
+            defaultValue: 'Pendente',
+        },
     });
-    return Sale; // Retorna o modelo definido
+
+    // Definindo associações (serão chamadas no database/index.js)
+    // Sale.associate = (models) => {
+    //     Sale.belongsTo(models.Client, { foreignKey: 'clientId', as: 'client' });
+    //     Sale.belongsTo(models.User, { foreignKey: 'userId', as: 'user' }); // Nova associação
+    // };
+
+    return Sale;
 };

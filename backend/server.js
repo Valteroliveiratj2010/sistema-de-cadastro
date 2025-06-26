@@ -3,8 +3,9 @@ const express = require('express');
 const cors = require('cors');
 
 // Importe o objeto sequelize E as funções syncDatabase e seedData do database.js
-const sequelize = require('./database'); // A instância do Sequelize para testConnection
-const { syncDatabase, seedData } = require('./database'); // Importa as funções para usar aqui!
+// CORREÇÃO FINAL: Altere o caminho para apontar para a pasta 'database'.
+// O Node.js vai procurar por 'index.js' dentro dela.
+const { sequelize, syncDatabase, seedData, Client, Sale, Payment, User, Product, SaleProduct } = require('./database'); 
 
 // Importe as rotas
 const apiRoutes = require('./routes/api');
@@ -40,9 +41,8 @@ async function startServer() {
         // Chame a função de seed de dados do database.js
         await seedData();
 
-        // CORREÇÃO: A string inteira, incluindo o emoji, deve estar dentro de backticks `` ou aspas ""/''.
         app.listen(PORT, () => {
-            console.log(` Servidor rodando em http://localhost:${PORT}`);
+            console.log(`✅ Servidor rodando em http://localhost:${PORT}`);
         });
     } catch (error) {
         console.error('❌ Erro fatal ao iniciar o servidor:', error);

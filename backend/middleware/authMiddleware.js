@@ -1,41 +1,37 @@
 // backend/middleware/authMiddleware.js
 const jwt = require('jsonwebtoken');
 
-const authMiddleware = (req, res, next) => {
-    // O token é geralmente enviado no cabeçalho 'Authorization' como 'Bearer TOKEN'
-    const authHeader = req.header('Authorization');
-    if (!authHeader) {
-        // Se não há cabeçalho de autorização, o usuário não está logado ou não tentou
-        return res.status(401).json({ message: 'Nenhum token fornecido, autorização negada.' });
-    }
+// A CHAVE SECRETA DO JWT DEVE SER EXATAMENTE A MESMA QUE EM backend/routes/auth.js
+// ATENÇÃO: Em produção, ambas DEVEM vir de variáveis de ambiente.
+const JWT_SECRET = 'X4A1D2BZ0GUBD2QRQQATWI1INGV6BDW0P1WSTV30C4APHBAYF1095MJVEQUJ076X686XT3GIRCX3YU959EU73ASLEB07TFX8XG'; // <-- Use A MESMA CHAVE AQUI!
 
-    // O cabeçalho é geralmente no formato "Bearer <token>", então dividimos para pegar apenas o token
-    const token = authHeader.split(' ')[1]; 
+module.exports = (req, res, next) => {
+    // 1. Obter o token do cabeçalho da requisição
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Formato esperado: "Bearer SEU_TOKEN_JWT"
 
-    // Se o token não existir após a divisão ou se o formato estiver incorreto
     if (!token) {
-        return res.status(401).json({ message: 'Formato de token inválido, autorização negada.' });
+        console.log('[AUTH_MIDDLEWARE] Acesso negado: Token não fornecido.');
+        return res.status(401).json({ message: 'Acesso negado: Token não fornecido.' });
     }
 
     try {
-        // Verificar o token usando a chave secreta
-        // A chave secreta deve ser a mesma usada em auth.js para gerar o token
-        const decoded = jwt.verify(token, process.env.TOKEN_SECRET || 'umasecretamuitoescondida');
+        // 2. Verificar o token usando a chave secreta
+        const decoded = jwt.verify(token, JWT_SECRET); // Verifica a assinatura do token
         
-        // Se o token for válido, adiciona os dados do usuário (payload do token) ao objeto `req`
-        // Assim, outras rotas podem saber quem é o usuário logado (ex: req.user.id)
+        // 3. Anexar os dados do utilizador (id, username, role) à requisição para uso nas rotas
         req.user = decoded; 
+        console.log(`[AUTH_MIDDLEWARE] Token verificado com sucesso para usuário: ${req.user.username}`);
         
-        // NOVO: Log de requisições que passam pelo middleware de autenticação
-        // console.log(`[AuthMiddleware Log] ${new Date().toISOString()} - User ${req.user.username} authenticated for path: ${req.path}`);
-
-        // Continua para a próxima função middleware ou para a rota final
-        next(); 
+        // 4. Continuar para a próxima função middleware ou rota
+        next();
     } catch (error) {
-        // Se a verificação do token falhar (token inválido, expirado, etc.)
+        // Se a verificação falhar (token inválido, expirado, assinatura errada)
         console.error('❌ Erro na verificação do token:', error);
-        return res.status(403).json({ message: 'Token inválido ou expirado.' });
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ message: 'Token expirado. Por favor, faça login novamente.' });
+        }
+        // Inclui 'JsonWebTokenError: invalid signature'
+        return res.status(403).json({ message: 'Token inválido ou não autorizado.' });
     }
 };
-
-module.exports = authMiddleware;
