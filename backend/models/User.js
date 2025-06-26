@@ -14,17 +14,20 @@ module.exports = (sequelize) => {
             allowNull: false,
             unique: true
         },
+        email: { // ESTA É A COLUNA QUE FALTAVA!
+            type: DataTypes.STRING,
+            allowNull: false, // Pode ser alterado para true se o email for opcional
+            unique: true      // Garante que não haja emails duplicados
+        },
         password: {
             type: DataTypes.STRING,
             allowNull: false
         },
-        // --- NOVO CAMPO ADICIONADO ---
         role: {
             type: DataTypes.ENUM('admin', 'gerente', 'vendedor'),
             allowNull: false,
-            defaultValue: 'vendedor' // Garante que novos usuários sejam vendedores por padrão
+            defaultValue: 'vendedor'
         }
-        // -----------------------------
     }, {
         hooks: {
             beforeCreate: async (user) => {

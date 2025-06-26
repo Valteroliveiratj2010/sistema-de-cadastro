@@ -8,9 +8,11 @@ document.addEventListener('DOMContentLoaded', () => {
         bootstrapSaleModal: new bootstrap.Modal(document.getElementById('saleModal')),
         bootstrapConfirmModal: new bootstrap.Modal(document.getElementById('confirmModal')),
         bootstrapProductModal: new bootstrap.Modal(document.getElementById('productModal')),
+        bootstrapUserModal: new bootstrap.Modal(document.getElementById('userModal')),
         chartInstance: null,
         confirmAction: null,
-        userRole: null, // Adicionado para armazenar a função do usuário logado
+        userRole: null,
+        user: null,
         clients: {
             page: 1,
             query: '',
@@ -34,6 +36,14 @@ document.addEventListener('DOMContentLoaded', () => {
             summary: null,
         },
         products: {
+            page: 1,
+            query: '',
+            limit: 10,
+            data: [],
+            total: 0,
+            loaded: false
+        },
+        users: {
             page: 1,
             query: '',
             limit: 10,
@@ -82,6 +92,14 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebarToggle: document.getElementById('sidebarToggle'),
         sidebarOverlay: document.getElementById('sidebar-overlay'),
         mainContent: document.getElementById('mainContent'),
+
+        userForm: document.getElementById('userForm'),
+        userIdInput: document.getElementById('userId'),
+        userNameInput: document.getElementById('userName'),
+        userEmailInput: document.getElementById('userEmail'),
+        userPasswordInput: document.getElementById('userPassword'),
+        userRoleSelect: document.getElementById('userRole'),
+        userModalLabel: document.getElementById('userModalLabel'),
     };
 
     // --- UTILITY FUNCTIONS ---
@@ -97,12 +115,10 @@ document.addEventListener('DOMContentLoaded', () => {
             state.bootstrapConfirmModal.show();
         },
         getToken: () => localStorage.getItem('jwtToken'),
-        // NOVO: Função para obter a role do usuário a partir do token
         getUserRole: () => {
             const token = utils.getToken();
             if (!token) return null;
             try {
-                // Decodifica o token (apenas a parte do payload)
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 return payload.role;
             } catch (error) {
@@ -110,20 +126,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 return null;
             }
         },
+        hasPermission: (allowedRoles) => {
+            return allowedRoles.includes(state.userRole);
+        },
         logout: (message = 'Sessão expirada ou inválida. Faça login novamente.') => {
             localStorage.removeItem('jwtToken');
-            state.userRole = null; // Limpa a role no estado
+            state.userRole = null;
+            state.user = null;
             utils.showToast(message, 'error');
             setTimeout(() => {
                 window.location.href = 'login.html';
-            }, 1000); 
+            }, 1000);
         },
         downloadFile: (response) => {
             const contentDisposition = response.headers.get('content-disposition');
             let filename = 'download.csv';
             if (contentDisposition && contentDisposition.indexOf('attachment') !== -1) {
                 const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
-                if (filenameMatch && filenameMatch.length > 1) { // Fixed length check
+                if (filenameMatch && filenameMatch.length > 1) {
                     filename = filenameMatch[1];
                 }
             }
@@ -378,7 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
         async request(endpoint, options = {}) {
             const token = utils.getToken();
             const headers = {
-                ...(options.headers || {}), 
+                ...(options.headers || {}),
                 ...(token && { 'Authorization': `Bearer ${token}` })
             };
 
@@ -391,12 +411,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`${API_BASE}${endpoint}`, { headers, ...options });
 
             if (response.status === 401 || response.status === 403) {
-                // Se o backend retornou 401/403, é um erro de autenticação/autorização
-                // O utils.logout já mostra um toast e redireciona.
-                utils.logout(response.status === 401 ? 
-                    'Sessão expirada ou inválida. Por favor, faça login novamente.' : 
+                utils.logout(response.status === 401 ?
+                    'Sessão expirada ou inválida. Por favor, faça login novamente.' :
                     'Você não tem permissão para realizar esta ação.');
-                throw new Error('Não autorizado ou sessão expirada.'); 
+                throw new Error('Não autorizado ou sessão expirada.');
             }
 
             if (!response.ok) {
@@ -436,8 +454,12 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteProduct: (id) => api.request(`/products/${id}`, { method: 'DELETE' }),
         getRankingsProdutos: () => api.request('/rankings/produtos'),
         getRankingsClientes: () => api.request('/rankings/clientes'),
-        // NOVO: Adiciona a chamada à API para rankings de vendedores
-        getRankingsVendedores: () => api.request('/rankings/vendedores'), 
+        getRankingsVendedores: () => api.request('/rankings/vendedores'),
+        getUsers: (page = 1, q = '', limit = 10) => api.request(`/users?page=${page}&q=${q}&limit=${limit}`),
+        getUserById: (id) => api.request(`/users/${id}`),
+        createUser: (data) => api.request('/users', { method: 'POST', body: JSON.stringify(data) }),
+        updateUser: (id, data) => api.request(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+        deleteUser: (id) => api.request(`/users/${id}`, { method: 'DELETE' }),
     };
 
     // --- UI AND RENDERING LOGIC ---
@@ -447,41 +469,39 @@ document.addEventListener('DOMContentLoaded', () => {
             const section = document.getElementById(sectionId);
             if (section) section.style.display = 'block';
 
-            // Atualiza os links de navegação para refletir a seção ativa
             dom.navLinks.forEach(l => l.classList.remove('active'));
             const navLink = document.querySelector(`[data-section="${sectionId}"]`);
             if (navLink) navLink.classList.add('active');
 
-            // NOVO: Esconde/mostra links da sidebar com base na role
             ui.updateSidebarVisibility();
         },
-        // NOVO: Função para atualizar a visibilidade dos itens da sidebar
         updateSidebarVisibility: () => {
             const userRole = state.userRole;
             dom.navLinks.forEach(link => {
                 const sectionId = link.dataset.section;
-                // Por padrão, todos visíveis para admin e gerente. Vendedor tem restrições.
-                let isVisible = true; 
+                let isVisible = true;
+
                 switch (sectionId) {
                     case 'productsSection':
-                        // Vendedores podem VER produtos (rota GET permitida), mas não criar/editar/excluir (controlado por botões e handlers)
-                        // O link da sidebar pode ser visível.
-                        break;
                     case 'reportsSection':
-                        // Relatórios são visíveis para todos
-                        break;
                     case 'clientsSection':
                     case 'salesSection':
                     case 'dashboardSection':
-                        // Dashboard, Clientes e Vendas são visíveis para todos por enquanto.
+                        break;
+                    case 'usersSection':
+                        if (!utils.hasPermission(['admin'])) {
+                            isVisible = false;
+                        }
+                        break;
+                    case 'logoutSection':
+                        isVisible = true;
+                        break;
+                    default:
+                        isVisible = false;
                         break;
                 }
-                // Aplica a visibilidade
                 link.style.display = isVisible ? '' : 'none';
             });
-
-            // Exemplo de como ocultar/mostrar elementos globais se necessário
-            // if (userRole !== 'admin') { document.getElementById('someAdminButton').style.display = 'none'; }
         },
         renderDashboard: ({ totalClients, salesThisMonth, totalReceivable, overdueSales, salesByMonth, lowStockProducts, salesToday, averageTicket }) => {
             const section = document.getElementById('dashboardSection');
@@ -518,7 +538,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="col-lg-2 col-md-4 col-sm-6"><div class="card p-3 bg-danger text-white"><h6>Vencido</h6><p class="fs-2 fw-bold">${utils.formatCurrency(overdueSales)}</p></div></div>
                 </div>
                 <div class="card p-3 mb-4"><canvas id="salesChart"></canvas></div>
-                <!-- Seção de rankings abaixo do gráfico -->
                 <div class="row g-4 mt-4">
                     <div class="col-md-4">
                         <div class="card shadow-sm">
@@ -540,7 +559,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </ul>
                         </div>
                     </div>
-                    <div class="col-md-4" id="rankingVendedoresCard"> <!-- NOVO: Card para ranking de vendedores -->
+                    <div class="col-md-4" id="rankingVendedoresCard">
                         <div class="card shadow-sm">
                             <div class="card-header bg-info text-white">
                                 <i class="bi bi-person-badge me-2"></i>Top 5 Vendedores
@@ -560,42 +579,40 @@ document.addEventListener('DOMContentLoaded', () => {
                     labels: salesByMonth.map(item => item.month),
                     datasets: [{ label: 'Vendas por Mês', data: salesByMonth.map(item => item.total), backgroundColor: 'rgba(79, 70, 229, 0.8)' }]
                 },
-                options: { 
+                options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true } } 
+                    scales: { y: { beginAtZero: true } }
                 }
             });
-            // NOVO: Ajusta a visibilidade do card de vendedores após renderizar o dashboard
-            if (!['admin', 'gerente'].includes(state.userRole)) {
+            if (!utils.hasPermission(['admin', 'gerente'])) {
                 const rankingVendedoresCard = document.getElementById('rankingVendedoresCard');
                 if (rankingVendedoresCard) {
-                    rankingVendedoresCard.style.display = 'none'; // Oculta o card inteiro
+                    rankingVendedoresCard.style.display = 'none';
                 }
             } else {
                 const rankingVendedoresCard = document.getElementById('rankingVendedoresCard');
                 if (rankingVendedoresCard) {
-                    rankingVendedoresCard.style.display = 'block'; // Garante que seja visível para admin/gerente
+                    rankingVendedoresCard.style.display = 'block';
                 }
             }
         },
         renderClients: () => {
-            const { data, total } = state.clients; 
+            const { data, total } = state.clients;
             const section = document.getElementById('clientsSection');
             const tableRows = data.map(client => `
                 <tr>
                     <td>${client.id}</td><td><strong>${client.nome}</strong></td><td>${client.email || 'N/A'}</td><td>${client.telefone || 'N/A'}</td>
                     <td>
-                        ${(state.userRole === 'admin' || state.userRole === 'gerente' || state.userRole === 'vendedor') ? // Vendedor pode editar clientes
+                        ${(utils.hasPermission(['admin', 'gerente']) || (utils.hasPermission(['vendedor']) && client.userId === state.user.id)) ?
                             `<button class="btn btn-sm btn-outline-primary action-edit" data-type="client" data-id="${client.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
-                        ${(state.userRole === 'admin' || state.userRole === 'gerente') ? // Apenas admin e gerente podem excluir
+                        ${utils.hasPermission(['admin', 'gerente']) ?
                             `<button class="btn btn-sm btn-outline-danger action-delete" data-type="client" data-id="${client.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
                     </td>
                 </tr>`).join('');
             
-            // Botões de ação na seção Clientes (Novo Cliente, Exportar CSV)
             let actionButtonsHtml = '';
-            if (state.userRole === 'admin' || state.userRole === 'gerente' || state.userRole === 'vendedor') { // Todos podem exportar e criar
+            if (utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
                 actionButtonsHtml += `<button class="btn btn-outline-success me-2" id="btnExportClientsCsv"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Exportar CSV</button>`;
                 actionButtonsHtml += `<button class="btn btn-primary" id="btnNewClient"><i class="bi bi-plus-circle me-2"></i>Novo Cliente</button>`;
             }
@@ -619,31 +636,32 @@ document.addEventListener('DOMContentLoaded', () => {
             ui.renderPagination('clients', total, state.clients.page, state.clients.limit);
         },
         renderSales: () => {
-            const { data, total } = state.sales; 
+            const { data, total } = state.sales;
             const section = document.getElementById('salesSection');
             const tableRows = data.map(sale => {
                 const valorDevido = sale.valorTotal - sale.valorPago;
-                const statusClass = valorDevido > 0 ? 'text-danger' : 'text-success'; // Defined statusClass
+                const statusClass = valorDevido > 0 ? 'text-danger' : 'text-success';
                 return `
                 <tr>
                     <td>${sale.id}</td><td><strong>${sale.client?.nome || 'N/A'}</strong></td><td>${utils.formatDate(sale.dataVenda)}</td><td class="${statusClass}"><strong>${utils.formatCurrency(valorDevido)}</strong></td><td><span class="badge bg-primary">${sale.status}</span></td>
                     <td>
                         <button class="btn btn-sm btn-outline-info action-detail" data-type="sale" data-id="${sale.id}" title="Detalhes"><i class="bi bi-eye"></i></button>
-                        ${(state.userRole === 'admin' || state.userRole === 'gerente') ? 
+                        ${(utils.hasPermission(['admin', 'gerente']) || (utils.hasPermission(['vendedor']) && sale.userId === state.user.id)) ? // Admin/gerente editam todos; vendedor edita os seus
+                            `<button class="btn btn-sm btn-outline-primary action-edit" data-type="sale" data-id="${sale.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
+                        ${utils.hasPermission(['admin', 'gerente']) ?
                             `<button class="btn btn-sm btn-outline-danger action-delete" data-type="sale" data-id="${sale.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
                     </td>
                 </tr>`;
             }).join('');
-            // Botões de ação na seção Vendas (Nova Venda, Exportar CSV)
             let actionButtonsHtml = '';
-            if (state.userRole === 'admin' || state.userRole === 'gerente' || state.userRole === 'vendedor') { // Todos podem exportar e criar vendas
+            if (utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
                 actionButtonsHtml += `<button class="btn btn-outline-success me-2" id="btnExportSalesCsv"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Exportar CSV</button>`;
                 actionButtonsHtml += `<button class="btn btn-primary" id="btnNewSale"><i class="bi bi-plus-circle me-2"></i>Nova Venda</button>`;
             }
 
             section.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h3><i class="bi bi-cart-check-fill me-2"></i>Vendas (${total})</h3> 
+                    <h3><i class="bi bi-cart-check-fill me-2"></i>Vendas (${total})</h3>
                     <div>
                         ${actionButtonsHtml}
                     </div>
@@ -721,9 +739,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (sales.length === 0) {
                 resultsHtml = `<div class="alert alert-info text-center" role="alert">Nenhuma venda encontrada para o período selecionado.</div>`;
             } else {
-                // Botão de Exportar CSV para relatórios de período - visível para todos com acesso a relatórios
                 let exportButtonHtml = '';
-                if (['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
+                if (utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
                      exportButtonHtml = `
                         <div class="d-flex justify-content-end mb-3">
                             <button class="btn btn-success" id="btnExportPeriodReportCsv"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Exportar Relatório CSV</button>
@@ -798,7 +815,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${sale.payments.map(p => `
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
-                                    Pagamento de ${utils.formatCurrency(p.valor)} em ${utils.formatDate(p.dataPagamento)} 
+                                    Pagamento de ${utils.formatCurrency(p.valor)} em ${utils.formatDate(p.dataPagamento)}
                                     <span class="badge bg-info ms-2">${p.formaPagamento}</span>
                                     ${p.parcelas && p.parcelas > 1 ? `<span class="badge bg-secondary ms-1">${p.parcelas}x</span>` : ''}
                                     ${p.bandeiraCartao ? `<span class="badge bg-secondary ms-1">${p.bandeiraCartao}</span>` : ''}
@@ -812,9 +829,8 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 paymentsHTML = `<p>Nenhum pagamento registrado.</p>`;
             }
-            // Botões de ação do detalhe da venda (Whatsapp, Email, Imprimir)
             let detailActionButtonsHtml = '';
-            if (['admin', 'gerente', 'vendedor'].includes(state.userRole)) { // Todos podem compartilhar e imprimir
+            if (utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
                 detailActionButtonsHtml = `
                     <div class="d-flex justify-content-end mt-2">
                         <button class="btn btn-sm btn-outline-success me-2" id="btnShareWhatsapp" data-sale-id="${sale.id}" title="Compartilhar no WhatsApp"><i class="bi bi-whatsapp"></i></button>
@@ -824,9 +840,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             }
 
-            // Formulário de registro de pagamento - visível para todos que podem criar/editar vendas
             let paymentFormHtml = '';
-            if (['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
+            if (utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
                 paymentFormHtml = `
                     <div class="card">
                         <div class="card-header">
@@ -917,16 +932,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${utils.formatCurrency(product.precoVenda)}</td>
                     <td>${product.estoque}</td>
                     <td>
-                        ${(state.userRole === 'admin' || state.userRole === 'gerente') ? // Apenas admin e gerente podem editar
+                        ${utils.hasPermission(['admin', 'gerente']) ?
                             `<button class="btn btn-sm btn-outline-primary action-edit" data-type="product" data-id="${product.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
-                        ${(state.userRole === 'admin' || state.userRole === 'gerente') ? // Apenas admin e gerente podem excluir
+                        ${utils.hasPermission(['admin', 'gerente']) ?
                             `<button class="btn btn-sm btn-outline-danger action-delete" data-type="product" data-id="${product.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
                     </td>
                 </tr>`).join('');
             
-            // Botão de "Novo Produto" - visível apenas para admin e gerente
             let newProductButtonHtml = '';
-            if (state.userRole === 'admin' || state.userRole === 'gerente') {
+            if (utils.hasPermission(['admin', 'gerente'])) {
                 newProductButtonHtml = `<button class="btn btn-primary" id="btnNewProduct"><i class="bi bi-plus-circle me-2"></i>Novo Produto</button>`;
             }
 
@@ -947,6 +961,46 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div id="paginationProducts"></div>`;
             
             ui.renderPagination('products', total, state.products.page, state.products.limit);
+        },
+        renderUsers: () => {
+            const { data, total } = state.users;
+            const section = document.getElementById('usersSection');
+            const tableRows = data.map(user => `
+                <tr>
+                    <td>${user.id}</td>
+                    <td><strong>${user.username}</strong></td>
+                    <td>${user.email}</td>
+                    <td><span class="badge bg-secondary">${user.role}</span></td>
+                    <td>
+                        ${utils.hasPermission(['admin']) ?
+                            `<button class="btn btn-sm btn-outline-primary action-edit" data-type="user" data-id="${user.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
+                        ${(utils.hasPermission(['admin']) && user.id !== state.user.id) ?
+                            `<button class="btn btn-sm btn-outline-danger action-delete" data-type="user" data-id="${user.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
+                    </td>
+                </tr>`).join('');
+            
+            let newUsersButtonHtml = '';
+            if (utils.hasPermission(['admin'])) {
+                newUsersButtonHtml = `<button class="btn btn-primary" id="btnNewUser"><i class="bi bi-plus-circle me-2"></i>Novo Usuário</button>`;
+            }
+
+            section.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3><i class="bi bi-people-fill me-2"></i>Utilizadores (${total})</h3>
+                    <div>
+                        ${newUsersButtonHtml}
+                    </div>
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control search-input" data-type="users" placeholder="Buscar por nome de usuário ou email..." value="${state.users.query}">
+                </div>
+                <div class="table-responsive"><table class="table table-hover"><thead><tr><th>ID</th><th>Nome de Usuário</th><th>Email</th><th>Função</th><th>Ações</th></tr></thead><tbody>
+                    ${data.length > 0 ? tableRows : '<tr><td colspan="5" class="text-center">Nenhum usuário encontrado.</td></tr>'}
+                </tbody></table></div>
+                <div id="paginationUsers"></div>`;
+            
+            ui.renderPagination('users', total, state.users.page, state.users.limit);
         }
     };
 
@@ -958,72 +1012,65 @@ document.addEventListener('DOMContentLoaded', () => {
                 const lowStockProducts = await api.getLowStockProducts();
                 ui.renderDashboard({ ...dashboardData, lowStockProducts });
                 ui.showSection('dashboardSection');
-                handlers.loadRankings(); 
-            } catch (error) { 
-                utils.showToast(error.message, 'error'); 
-            }
+                handlers.loadRankings();
+            } catch (error) { utils.showToast(error.message, 'error'); }
         },
         loadRankings: async () => {
             try {
                 const ulProdutos = document.getElementById('produtosMaisVendidos');
                 const ulClientes = document.getElementById('clientesMaisCompraram');
                 const ulVendedores = document.getElementById('vendedoresMaisVenderam');
-        
-                // Always try to load product and client rankings
+                
                 const produtos = await api.getRankingsProdutos();
                 const clientes = await api.getRankingsClientes();
-        
+                
                 if (produtos && produtos.length > 0) {
                     ulProdutos.innerHTML = produtos.map(p => `
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            ${p.nome} 
+                            ${p.nome}
                             <span class="badge bg-primary rounded-pill">${p.totalQuantidadeVendida} un</span>
                         </li>
                     `).join('');
                 } else {
-                    ulProdutos.innerHTML = '<li class="list-group-item text-center text-muted">Nenhum produto vendido.</li>'; 
+                    ulProdutos.innerHTML = '<li class="list-group-item text-center text-muted">Nenhum produto vendido.</li>';
                 }
-        
+                
                 if (clientes && clientes.length > 0) {
                     ulClientes.innerHTML = clientes.map(c => `
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            ${c.nome} 
-                            <span class="badge bg-success rounded-pill">${utils.formatCurrency(c.valorTotalVendido)}</span> 
+                            ${c.nome}
+                            <span class="badge bg-success rounded-pill">${utils.formatCurrency(c.valorTotalVendido)}</span>
                         </li>
                     `).join('');
                 } else {
-                    ulClientes.innerHTML = '<li class="list-group-item text-center text-muted">Nenhum cliente com compras.</li>'; 
+                    ulClientes.innerHTML = '<li class="list-group-item text-center text-muted">Nenhum cliente com compras.</li>';
                 }
-        
-                // NOVO: Condição para carregar e renderizar o ranking de vendedores
-                // Apenas para Admin e Gerente
-                if (['admin', 'gerente'].includes(state.userRole)) {
-                    const vendedores = await api.getRankingsVendedores(); 
+                
+                if (utils.hasPermission(['admin', 'gerente'])) {
+                    const vendedores = await api.getRankingsVendedores();
                     if (vendedores && vendedores.length > 0) {
                         ulVendedores.innerHTML = vendedores.map(v => `
                             <li class="list-group-item d-flex justify-content-between align-items-center">
-                                ${v.username} 
+                                ${v.username}
                                 <span class="badge bg-info rounded-pill">${utils.formatCurrency(v.valorTotalVendido)}</span>
                             </li>
                         `).join('');
                     } else {
                         ulVendedores.innerHTML = '<li class="list-group-item text-center text-muted">Nenhum vendedor com vendas registradas.</li>';
                     }
-                } else { 
-                    // Se não for admin/gerente, exibir acesso restrito ou limpar o conteúdo
+                } else {
                     if (ulVendedores) ulVendedores.innerHTML = '<li class="list-group-item text-center text-muted">Acesso restrito.</li>';
                 }
-        
-            } catch (error) {
-                console.error('Erro ao carregar rankings:', error);
-                const ulProdutos = document.getElementById('produtosMaisVendidos');
-                if (ulProdutos) ulProdutos.innerHTML = '<li class="list-group-item text-center text-danger">Erro ao carregar.</li>';
-                const ulClientes = document.getElementById('clientesMaisCompraram');
-                if (ulClientes) ulClientes.innerHTML = '<li class="list-group-item text-center text-danger">Erro ao carregar.</li>';
-                const ulVendedores = document.getElementById('vendedoresMaisVenderam');
-                if (ulVendedores) ulVendedores.innerHTML = '<li class="list-group-item text-center text-danger">Erro ao carregar.</li>';
             }
-        },        
+            catch (error) {
+                console.error('Erro ao carregar rankings:', error);
+                utils.showToast(error.message, 'error');
+                ['produtosMaisVendidos', 'clientesMaisCompraram', 'vendedoresMaisVenderam'].forEach(id => {
+                    const ul = document.getElementById(id);
+                    if (ul) ul.innerHTML = '<li class="list-group-item text-center text-danger">Erro ao carregar.</li>';
+                });
+            }
+        },
         loadClients: async (force = false) => {
             if (state.clients.loaded && !force) {
                 ui.renderClients();
@@ -1039,6 +1086,10 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) { utils.showToast(error.message, 'error'); }
         },
         handleExportClientsCsv: async () => {
+            if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
+                utils.showToast('Você não tem permissão para exportar clientes.', 'error');
+                return;
+            }
             utils.showToast('Gerando relatório CSV de clientes...', 'info');
             try {
                 const response = await api.exportClientsCsv();
@@ -1058,12 +1109,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const { page, query, limit } = state.sales;
                 const apiData = await api.getSales(page, query, limit);
                 state.sales.data = apiData.data;
-                state.sales.total = apiData.total; 
+                state.sales.total = apiData.total;
                 state.sales.loaded = true;
                 ui.renderSales();
             } catch (error) { utils.showToast(error.message, 'error'); }
         },
         handleExportSalesCsv: async () => {
+            if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
+                utils.showToast('Você não tem permissão para exportar vendas.', 'error');
+                return;
+            }
             utils.showToast('Gerando relatório CSV de vendas...', 'info');
             try {
                 const response = await api.exportSalesCsv();
@@ -1076,6 +1131,10 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         handleGenerateSalesReport: async (e) => {
             e.preventDefault();
+            if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
+                utils.showToast('Você não tem permissão para gerar relatórios de vendas.', 'error');
+                return;
+            }
             const startDate = dom.startDateInput.value;
             const endDate = dom.endDateInput.value;
 
@@ -1096,6 +1155,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 state.salesReport.data = reportData.sales;
                 state.salesReport.summary = reportData.summary;
                 ui.renderSalesByPeriod(reportData);
+                ui.showSection('reportsSection');
                 utils.showToast('Relatório de vendas gerado com sucesso!', 'success');
             } catch (error) {
                 console.error('Erro ao gerar relatório de vendas:', error);
@@ -1103,6 +1163,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
         handleExportPeriodReportCsv: async () => {
+            if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
+                utils.showToast('Você não tem permissão para exportar relatórios por período.', 'error');
+                return;
+            }
             if (!state.salesReport.startDate || !state.salesReport.endDate) {
                 utils.showToast('Nenhum período selecionado para exportar.', 'error');
                 return;
@@ -1123,20 +1187,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if (type === 'clients') handlers.loadClients(true);
             if (type === 'sales') handlers.loadSales(true);
             if (type === 'products') handlers.loadProducts(true);
+            if (type === 'users') handlers.loadUsers(true);
         },
         handlePageChange: (type, newPage) => {
             state[type].page = newPage;
             if (type === 'clients') handlers.loadClients(true);
             if (type === 'sales') handlers.loadSales(true);
             if (type === 'products') handlers.loadProducts(true);
+            if (type === 'users') handlers.loadUsers(true);
         },
         openClientModal: async (clientId = null) => {
-            // Apenas admin e gerente podem editar, mas vendedor pode criar
-            if (clientId && !['admin', 'gerente'].includes(state.userRole)) {
+            if (clientId && !utils.hasPermission(['admin', 'gerente'])) {
                 utils.showToast('Você não tem permissão para editar clientes.', 'error');
                 return;
             }
-            if (!clientId && !['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
+            if (!clientId && !utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
                 utils.showToast('Você não tem permissão para criar clientes.', 'error');
                 return;
             }
@@ -1163,6 +1228,10 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         handleSaveClient: async (e) => {
             e.preventDefault();
+            if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
+                utils.showToast('Você não tem permissão para salvar clientes.', 'error');
+                return;
+            }
             const id = document.getElementById('clientId').value;
             const data = {
                 nome: document.getElementById('clientName').value,
@@ -1179,12 +1248,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 state.bootstrapClientModal.hide();
                 handlers.loadClients(true);
-            } catch (error) {
+            }
+            catch (error) {
                 utils.showToast(error.message, 'error');
             }
         },
         handleDeleteClient: async (clientId) => {
-            if (!['admin', 'gerente'].includes(state.userRole)) { // Apenas admin e gerente podem deletar
+            if (!utils.hasPermission(['admin', 'gerente'])) {
                 utils.showToast('Você não tem permissão para excluir clientes.', 'error');
                 return;
             }
@@ -1199,16 +1269,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
         openSaleModal: async (saleId = null) => {
-            // Apenas admin, gerente e vendedor podem criar/editar vendas
-            if (saleId && !['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
-                utils.showToast('Você não tem permissão para editar vendas.', 'error');
-                return;
-            }
-            if (!saleId && !['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
-                utils.showToast('Você não tem permissão para criar vendas.', 'error');
-                return;
-            }
-
             dom.saleForm.reset();
             document.getElementById('saleId').value = '';
             state.selectedSaleProducts = [];
@@ -1237,8 +1297,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             try {
-                // Fetch clients, filtered by userId for 'vendedor' role
-                const { data: clients } = await api.getClients(1, '', 1000); // This now respects userId filter in backend for vendedores
+                const { data: clients } = await api.getClients(1, '', 1000);
                 clientSelect.innerHTML = '<option value="">Selecione um cliente</option>';
                 clients.forEach(c => clientSelect.add(new Option(c.nome, c.id)));
                 
@@ -1289,9 +1348,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (saleId) {
                     modalLabel.textContent = 'Editar Venda';
                     const sale = await api.getSaleById(saleId);
+
+                    // Lógica de permissão refinada para edição de vendas existentes
+                    // Gerente e Admin podem editar qualquer venda.
+                    // Vendedor só pode editar suas próprias vendas.
+                    if (!utils.hasPermission(['admin', 'gerente'])) { 
+                        if (utils.hasPermission(['vendedor']) && sale.userId !== state.user.id) {
+                            utils.showToast('Você não tem permissão para editar esta venda.', 'error');
+                            return; // Impede a abertura do modal se não tiver permissão
+                        } else if (!utils.hasPermission(['vendedor'])) { // Se não for admin, gerente, E não for vendedor ou não for o dono da venda
+                             utils.showToast('Você não tem permissão para editar vendas.', 'error');
+                             return;
+                        }
+                    }
+                    
                     document.getElementById('saleId').value = sale.id;
-                    document.getElementById('saleClient').value = sale.clientId;
-                    document.getElementById('saleDueDate').value = sale.dataVencimento.split('T')[0]; // Apenas a data
+                    // Adicionado verificação para dataVencimento antes de usar split
+                    document.getElementById('saleDueDate').value = sale.dataVencimento ? sale.dataVencimento.split('T')[0] : '';
                     
                     if (sale.products && sale.products.length > 0) {
                         state.selectedSaleProducts = sale.products.map(p => ({
@@ -1303,16 +1376,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         }));
                         utils.renderSelectedProductsList();
                     }
+                    // Define o cliente no Select2 se estiver usando jQuery e Select2
+                    $('#saleClient').val(sale.clientId).trigger('change');
+                } else { // Criando uma nova venda
+                    if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
+                        utils.showToast('Você não tem permissão para criar vendas.', 'error');
+                        return; // Impede a abertura do modal se não tiver permissão
+                    }
                 }
                 
                 state.bootstrapSaleModal.show();
             } catch(error) {
+                // Aqui capturamos erros da requisição API.getSaleById(saleId)
                 utils.showToast(error.message, 'error');
             }
         },
         handleAddProductToSale: () => {
-            // Apenas admin, gerente e vendedor podem adicionar produtos à venda
-            if (!['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
+            if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
                 utils.showToast('Você não tem permissão para adicionar produtos a vendas.', 'error');
                 return;
             }
@@ -1367,8 +1447,7 @@ document.addEventListener('DOMContentLoaded', () => {
             state.currentSelectedProduct = null;
         },
         handleRemoveProductFromSale: (index) => {
-            // Apenas admin, gerente e vendedor podem remover produtos da venda
-            if (!['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
+            if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
                 utils.showToast('Você não tem permissão para remover produtos de vendas.', 'error');
                 return;
             }
@@ -1377,8 +1456,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         handleSaveSale: async (e) => {
             e.preventDefault();
-            // Apenas admin, gerente e vendedor podem salvar vendas
-            if (!['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
+            if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
                 utils.showToast('Você não tem permissão para salvar vendas.', 'error');
                 return;
             }
@@ -1449,14 +1527,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 state.bootstrapSaleModal.hide();
                 handlers.loadSales(true);
-                handlers.loadDashboard(); 
-                handlers.loadProducts(true); 
+                handlers.loadDashboard();
+                handlers.loadProducts(true);
             } catch (error) {
                 utils.showToast(error.message, 'error');
             }
         },
         handleDeleteSale: async (saleId) => {
-            if (!['admin', 'gerente'].includes(state.userRole)) { // Apenas admin e gerente podem deletar
+            if (!utils.hasPermission(['admin', 'gerente'])) {
                 utils.showToast('Você não tem permissão para excluir vendas.', 'error');
                 return;
             }
@@ -1465,8 +1543,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     await api.deleteSale(saleId);
                     utils.showToast('Venda excluída e estoque revertido!', 'success');
                     handlers.loadSales(true);
-                    handlers.loadDashboard(); 
-                    handlers.loadProducts(true); 
+                    handlers.loadDashboard();
+                    handlers.loadProducts(true);
                 } catch (error) {
                     utils.showToast(error.message, 'error');
                 }
@@ -1483,8 +1561,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         handleSavePayment: async (e) => {
             e.preventDefault();
-            // Apenas admin, gerente e vendedor podem registrar pagamentos
-            if (!['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
+            if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
                 utils.showToast('Você não tem permissão para registrar pagamentos.', 'error');
                 return;
             }
@@ -1493,13 +1570,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const valor = document.getElementById('paymentValue').value;
             const formaPagamentoElement = document.getElementById('paymentFormaNew');
             const parcelasElement = document.getElementById('newPaymentParcelas');
-            // Corrected: get the value from the input field directly, not the field container
-            const bancoCrediarioInputElement = document.getElementById('newPaymentBancoCrediario'); 
+            const bandeiraCartaoElement = document.getElementById('newPaymentBandeiraCartao');
+            const bancoCrediarioInputElement = document.getElementById('newPaymentBancoCrediario');
 
             const formaPagamento = formaPagamentoElement ? formaPagamentoElement.value : 'Dinheiro';
             const parcelas = parcelasElement ? parseInt(parcelasElement.value) || 1 : 1;
-            const bandeiraCartao = document.getElementById('newPaymentBandeiraCartao') ? document.getElementById('newPaymentBandeiraCartao').value || null : null;
-            const bancoCrediario = bancoCrediarioInputElement ? bancoCrediarioInputElement.value || null : null; // Get value from input
+            const bandeiraCartao = bandeiraCartaoElement ? bandeiraCartaoElement.value || null : null;
+            const bancoCrediario = bancoCrediarioInputElement ? bancoCrediarioInputElement.value || null : null;
 
             if (!valor || parseFloat(valor) <= 0) {
                 utils.showToast('Valor do pagamento inválido.', 'error');
@@ -1519,17 +1596,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
-                await api.createPayment(saleId, { 
-                    valor, 
-                    formaPagamento, 
-                    parcelas, 
+                await api.createPayment(saleId, {
+                    valor,
+                    formaPagamento,
+                    parcelas,
                     bandeiraCartao: bandeiraCartao,
-                    bancoCrediario 
+                    bancoCrediario
                 });
                 utils.showToast('Pagamento registrado!', 'success');
                 handlers.loadSaleDetail(saleId);
-                handlers.loadDashboard(); 
-                handlers.loadSales(true); 
+                handlers.loadDashboard();
+                handlers.loadSales(true);
             } catch (error) {
                 utils.showToast(error.message, 'error');
             }
@@ -1549,12 +1626,11 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) { utils.showToast(error.message, 'error'); }
         },
         openProductModal: async (productId = null) => {
-            // Apenas admin e gerente podem criar/editar produtos
-            if (productId && !['admin', 'gerente'].includes(state.userRole)) {
+            if (productId && !utils.hasPermission(['admin', 'gerente'])) {
                 utils.showToast('Você não tem permissão para editar produtos.', 'error');
                 return;
             }
-            if (!productId && !['admin', 'gerente'].includes(state.userRole)) {
+            if (!productId && !utils.hasPermission(['admin', 'gerente'])) {
                 utils.showToast('Você não tem permissão para criar produtos.', 'error');
                 return;
             }
@@ -1583,8 +1659,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         handleSaveProduct: async (e) => {
             e.preventDefault();
-            // Apenas admin e gerente podem salvar produtos
-            if (!['admin', 'gerente'].includes(state.userRole)) {
+            if (!utils.hasPermission(['admin', 'gerente'])) {
                 utils.showToast('Você não tem permissão para salvar produtos.', 'error');
                 return;
             }
@@ -1613,7 +1688,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
         handleDeleteProduct: async (productId) => {
-            if (!['admin', 'gerente'].includes(state.userRole)) { // Apenas admin e gerente podem deletar
+            if (!utils.hasPermission(['admin', 'gerente'])) {
                 utils.showToast('Você não tem permissão para excluir produtos.', 'error');
                 return;
             }
@@ -1629,8 +1704,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
         handlePrintSale: (sale) => {
-            // Todos que podem ver detalhes da venda podem imprimir
-            if (!['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
+            if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
                 utils.showToast('Você não tem permissão para imprimir vendas.', 'error');
                 return;
             }
@@ -1640,54 +1714,170 @@ document.addEventListener('DOMContentLoaded', () => {
             printWindow.document.close();
             printWindow.focus();
             printWindow.print();
-        }
+        },
+        loadUsers: async (force = false) => {
+            if (!utils.hasPermission(['admin'])) {
+                utils.showToast('Você não tem permissão para ver os usuários.', 'error');
+                document.getElementById('usersSection').innerHTML = `
+                    <div class="alert alert-danger text-center" role="alert">
+                        <i class="bi bi-lock-fill me-2"></i>Acesso Negado: Você não tem permissão para visualizar esta seção.
+                    </div>
+                `;
+                return;
+            }
+            if (state.users.loaded && !force) {
+                ui.renderUsers();
+                return;
+            }
+            try {
+                const { page, query, limit } = state.users;
+                const apiData = await api.getUsers(page, query, limit);
+                state.users.data = apiData.data;
+                state.users.total = apiData.total;
+                state.users.loaded = true;
+                ui.renderUsers();
+            } catch (error) { utils.showToast(error.message, 'error'); }
+        },
+        openUserModal: async (userId = null) => {
+            if (!utils.hasPermission(['admin'])) {
+                utils.showToast('Você não tem permissão para gerenciar usuários.', 'error');
+                return;
+            }
+            dom.userForm.reset();
+            dom.userIdInput.value = '';
+            dom.userPasswordInput.required = true;
+            dom.userPasswordInput.placeholder = 'Senha';
+
+            if (userId) {
+                dom.userModalLabel.textContent = 'Editar Usuário';
+                dom.userPasswordInput.required = false;
+                dom.userPasswordInput.placeholder = 'Deixe em branco para não alterar';
+                try {
+                    const user = await api.getUserById(userId);
+                    dom.userIdInput.value = user.id;
+                    dom.userNameInput.value = user.username;
+                    dom.userEmailInput.value = user.email;
+                    dom.userRoleSelect.value = user.role;
+                } catch (error) {
+                    utils.showToast(error.message, 'error');
+                    return;
+                }
+            } else {
+                dom.userModalLabel.textContent = 'Novo Usuário';
+                dom.userPasswordInput.required = true;
+                dom.userPasswordInput.placeholder = 'Senha';
+            }
+            state.bootstrapUserModal.show();
+        },
+        handleSaveUser: async (e) => {
+            e.preventDefault();
+            if (!utils.hasPermission(['admin'])) {
+                utils.showToast('Você não tem permissão para salvar usuários.', 'error');
+                return;
+            }
+
+            const id = dom.userIdInput.value;
+            const data = {
+                username: dom.userNameInput.value,
+                email: dom.userEmailInput.value,
+                role: dom.userRoleSelect.value,
+            };
+
+            if (dom.userPasswordInput.value) {
+                data.password = dom.userPasswordInput.value;
+            } else if (!id) {
+                utils.showToast('A senha é obrigatória para novos usuários.', 'error');
+                return;
+            }
+
+            try {
+                if (id) {
+                    await api.updateUser(id, data);
+                    utils.showToast('Usuário atualizado!', 'success');
+                } else {
+                    await api.createUser(data);
+                    utils.showToast('Usuário criado!', 'success');
+                }
+                state.bootstrapUserModal.hide();
+                handlers.loadUsers(true);
+            } catch (error) {
+                utils.showToast(error.message, 'error');
+            }
+        },
+        handleDeleteUser: async (userId) => {
+            if (!utils.hasPermission(['admin'])) {
+                utils.showToast('Você não tem permissão para excluir usuários.', 'error');
+                return;
+            }
+            if (userId === state.user.id) {
+                utils.showToast('Você não pode excluir sua própria conta!', 'error');
+                return;
+            }
+            utils.showConfirm('Deseja realmente excluir este usuário? Esta ação é irreversível.', async () => {
+                try {
+                    await api.deleteUser(userId);
+                    utils.showToast('Usuário excluído!', 'success');
+                    handlers.loadUsers(true);
+                } catch (error) {
+                    utils.showToast(error.message, 'error');
+                }
+            });
+        },
     };
 
     // --- INITIALIZATION ---
     function initialize() {
-        // Obter a role do usuário imediatamente após a inicialização
         state.userRole = utils.getUserRole();
-        if (!state.userRole) { // Se não há token ou role, redireciona para o login
+        const token = utils.getToken();
+        if (token) {
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                state.user = { id: payload.id, username: payload.username, role: payload.role };
+            } catch (error) {
+                console.error("Erro ao parsear token na inicialização:", error);
+                utils.logout('Token de usuário inválido.');
+                return;
+            }
+        }
+
+        if (!state.userRole) {
             utils.logout('Você precisa estar logado para acessar esta página.');
             return;
         }
 
-        // Ajuste da sidebar e mainContent para telas maiores
         if (window.innerWidth >= 992) {
             dom.sidebar.classList.remove('collapsed');
             dom.sidebar.classList.add('active');
             dom.sidebarOverlay.classList.remove('active');
-            dom.mainContent.style.marginLeft = '280px'; 
+            dom.mainContent.style.marginLeft = '280px';
         } else {
             dom.sidebar.classList.add('collapsed');
             dom.sidebar.classList.remove('active');
             dom.sidebarOverlay.classList.remove('active');
-            dom.mainContent.style.marginLeft = '0px'; 
+            dom.mainContent.style.marginLeft = '0px';
         }
         
-        // NOVO: Atualiza a visibilidade da sidebar com base na role ao carregar a página
         ui.updateSidebarVisibility();
 
         dom.navLinks.forEach(link => {
             link.addEventListener('click', e => {
                 e.preventDefault();
                 const sectionId = e.currentTarget.dataset.section;
-                // NOVO: Verificação de permissão para navegação na sidebar
                 let hasPermission = true;
                 switch (sectionId) {
                     case 'productsSection':
-                        if (!['admin', 'gerente', 'vendedor'].includes(state.userRole)) hasPermission = false;
-                        break;
                     case 'reportsSection':
-                        if (!['admin', 'gerente', 'vendedor'].includes(state.userRole)) hasPermission = false;
-                        break;
                     case 'clientsSection':
                     case 'salesSection':
                     case 'dashboardSection':
-                        // Todos podem acessar
+                        break;
+                    case 'usersSection':
+                        if (!utils.hasPermission(['admin'])) hasPermission = false;
+                        break;
+                    case 'logoutSection':
                         break;
                     default:
-                        hasPermission = false; // Se uma nova seção for adicionada e não tiver permissão definida
+                        hasPermission = false;
                 }
 
                 if (!hasPermission) {
@@ -1707,13 +1897,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     dom.reportResults.innerHTML = '<p class="text-center text-muted">Selecione um período e clique em "Gerar Relatório" para ver os resultados.</p>';
                 }
                 if (sectionId === 'productsSection') handlers.loadProducts();
+                if (sectionId === 'usersSection') handlers.loadUsers();
             });
         });
 
         document.body.addEventListener('click', (e) => {
             const button = e.target.closest('button');
             if (button) {
-                // Adicione verificações de permissão aos handlers chamados pelos botões
                 if (button.id === 'btnNewClient') handlers.openClientModal();
                 if (button.id === 'btnNewSale') handlers.openSaleModal();
                 if (button.id === 'btnExportClientsCsv') handlers.handleExportClientsCsv();
@@ -1728,10 +1918,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (button.id === 'btnShareWhatsapp') {
                     const saleId = button.dataset.saleId;
                     api.getSaleById(saleId).then(sale => {
-                        // Verificação de permissão para compartilhar/imprimir
-                        if (!['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
-                            utils.showToast('Você não tem permissão para compartilhar detalhes de vendas.', 'error');
-                            return;
+                        if (!utils.hasPermission(['admin', 'gerente']) && (utils.hasPermission(['vendedor']) && sale.userId !== state.user.id)) {
+                             utils.showToast('Você não tem permissão para compartilhar detalhes desta venda.', 'error');
+                             return;
                         }
                         const message = utils.generateSaleMessage(sale);
                         const clientPhone = sale.client?.telefone?.replace(/\D/g, '') || '';
@@ -1742,10 +1931,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (button.id === 'btnShareEmail') {
                     const saleId = button.dataset.saleId;
                     api.getSaleById(saleId).then(sale => {
-                         // Verificação de permissão para compartilhar/imprimir
-                        if (!['admin', 'gerente', 'vendedor'].includes(state.userRole)) {
-                            utils.showToast('Você não tem permissão para compartilhar detalhes de vendas.', 'error');
-                            return;
+                        if (!utils.hasPermission(['admin', 'gerente']) && (utils.hasPermission(['vendedor']) && sale.userId !== state.user.id)) {
+                             utils.showToast('Você não tem permissão para compartilhar detalhes desta venda.', 'error');
+                             return;
                         }
                         const subject = encodeURIComponent(`Detalhes da sua compra #${sale.id} no Gestor PRO`);
                         const body = encodeURIComponent(utils.generateSaleMessage(sale));
@@ -1757,7 +1945,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (button.id === 'btnPrintSale') {
                     const saleId = button.dataset.saleId;
                     api.getSaleById(saleId).then(sale => {
-                        // A função handlePrintSale já tem a verificação
+                        if (!utils.hasPermission(['admin', 'gerente']) && (utils.hasPermission(['vendedor']) && sale.userId !== state.user.id)) {
+                             utils.showToast('Você não tem permissão para imprimir detalhes desta venda.', 'error');
+                             return;
+                        }
                         handlers.handlePrintSale(sale);
                     }).catch(error => utils.showToast(error.message, 'error'));
                 }
@@ -1766,20 +1957,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     dom.sidebarOverlay.classList.toggle('active');
                 }
 
+                if (button.id === 'btnNewUser') handlers.openUserModal();
+
                 const { type, id } = button.dataset;
                 if (button.classList.contains('action-delete')) {
-                    // A verificação de permissão está dentro dos handlers handleDeleteClient/Sale/Product
                     if (type === 'client') handlers.handleDeleteClient(id);
                     if (type === 'sale') handlers.handleDeleteSale(id);
                     if (type === 'product') handlers.handleDeleteProduct(id);
+                    if (type === 'user') handlers.handleDeleteUser(id);
                 }
                 if (button.classList.contains('action-detail')) {
                     if (type === 'sale') handlers.loadSaleDetail(id);
                 }
+                // Adicionado a chamada para openSaleModal aqui
                 if(button.classList.contains('action-edit')) {
-                    // A verificação de permissão está dentro dos handlers openClientModal/openProductModal
                     if (type === 'client') handlers.openClientModal(id);
                     if (type === 'product') handlers.openProductModal(id);
+                    if (type === 'sale') handlers.openSaleModal(id); // <--- Chama o openSaleModal para edição
+                    if (type === 'user') handlers.openUserModal(id);
                 }
             }
 
@@ -1798,10 +1993,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        dom.clientForm.addEventListener('submit', handlers.handleSaveClient);
+        dom.saleForm.addEventListener('submit', handlers.handleSaveSale);
+        if (dom.productForm) {
+            dom.productForm.addEventListener('submit', handlers.handleSaveProduct);
+        }
+        if (dom.userForm) {
+            dom.userForm.addEventListener('submit', handlers.handleSaveUser);
+        }
+
         if (dom.reportPeriodForm) {
             dom.reportPeriodForm.addEventListener('submit', handlers.handleGenerateSalesReport);
         }
-        
+
+        document.body.addEventListener('submit', e => {
+            if (e.target.id === 'paymentForm') handlers.handleSavePayment(e);
+        });
         if (dom.paymentFormaSelect) {
             dom.paymentFormaSelect.addEventListener('change', () => {
                 utils.togglePaymentFields(dom.paymentFormaSelect, dom.paymentParcelasField, dom.paymentBandeiraCartaoField, dom.paymentBancoCrediarioField, dom.paymentParcelasInput, dom.paymentBandeiraCartaoInput, dom.paymentBancoCrediarioInput);
@@ -1812,7 +2019,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newPaymentFormaSelectElement = document.getElementById('paymentFormaNew');
                 const newParcelasFieldElement = document.getElementById('newParcelasField');
                 const newBandeiraCartaoFieldElement = document.getElementById('newBandeiraCartaoField');
-                const newBancoCrediarioFieldElement = document.getElementById('newBancoCrediarioField'); // This is the div, not the input
+                const newBancoCrediarioFieldElement = document.getElementById('newBancoCrediarioField');
                 const newPaymentParcelasInputElement = document.getElementById('newPaymentParcelas');
                 const newPaymentBandeiraCartaoInputElement = document.getElementById('newPaymentBandeiraCartao');
                 const newPaymentBancoCrediarioInputElement = document.getElementById('newPaymentBancoCrediario');
@@ -1840,19 +2047,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        dom.clientForm.addEventListener('submit', handlers.handleSaveClient);
-        dom.saleForm.addEventListener('submit', handlers.handleSaveSale);
-        if (dom.productForm) {
-            dom.productForm.addEventListener('submit', handlers.handleSaveProduct);
-        }
-
-        document.body.addEventListener('submit', e => {
-            if (e.target.id === 'paymentForm') handlers.handleSavePayment(e);
-        });
         if (dom.confirmModalButton) {
             dom.confirmModalButton.addEventListener('click', () => {
                 if (state.confirmAction) state.confirmAction();
-                state.bootstrapConfirmModal.hide(); 
+                state.bootstrapConfirmModal.hide();
             });
         }
 
@@ -1876,7 +2074,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Inicia o carregamento do dashboard APÓS a role ser definida
         handlers.loadDashboard();
     }
 

@@ -1,5 +1,6 @@
 const express = require('express');
 const { Op, fn, col, where } = require('sequelize');
+const bcrypt = require('bcryptjs'); // Importar bcryptjs para criptografia de senhas
 
 // Importar os modelos
 const { Client, Sale, Payment, User, Product, SaleProduct } = require('../database'); 
@@ -157,6 +158,7 @@ router.get('/clients/:id', authorizeRole(['admin', 'gerente', 'vendedor']), asyn
         const id = req.params.id;
         let whereClause = { id };
         // Vendedor só pode ver seus próprios clientes
+        // Gerente/Admin podem ver todos os clientes
         if (req.user.role === 'vendedor') {
             whereClause.userId = req.user.id;
         }
@@ -188,6 +190,7 @@ router.put('/clients/:id', authorizeRole(['admin', 'gerente', 'vendedor']), asyn
         const id = req.params.id;
         let whereClause = { id };
         // Vendedor só pode editar seus próprios clientes
+        // Gerente/Admin podem editar todos os clientes
         if (req.user.role === 'vendedor') {
             whereClause.userId = req.user.id;
         }
@@ -223,7 +226,7 @@ router.get('/sales/export-csv', authorizeRole(['admin', 'gerente', 'vendedor']),
     try {
         const whereClause = (req.user.role === 'vendedor') ? { userId: req.user.id } : {};
         const sales = await Sale.findAll({
-            where: whereClause, // Filtra por userId para vendedores
+            where: whereClause, 
             order: [['dataVenda', 'DESC']],
             include: [{ model: Client, as: 'client', attributes: ['nome'] }]
         });
@@ -282,7 +285,7 @@ router.get('/sales/report-by-period', authorizeRole(['admin', 'gerente', 'vended
         }
 
         const sales = await Sale.findAll({
-            where: whereClause, // Filtra por userId para vendedores
+            where: whereClause, 
             order: [['dataVenda', 'ASC']],
             include: [{ model: Client, as: 'client', attributes: ['nome'] }]
         });
@@ -320,7 +323,7 @@ router.get('/sales', authorizeRole(['admin', 'gerente', 'vendedor']), async (req
 
     try {
         const { count, rows } = await Sale.findAndCountAll({
-            where: whereClause, // Filtra por userId para vendedores
+            where: whereClause, 
             limit: parseInt(limit),
             offset: parseInt(offset),
             order: [['dataVenda', 'DESC']],
@@ -459,12 +462,13 @@ router.delete('/sales/:id', authorizeRole(['admin', 'gerente']), async (req, res
         const sale = await Sale.findByPk(req.params.id, {
             include: [{ model: SaleProduct, as: 'saleProducts' }]
         });
-        // IMPORTANTE: Adiciona a verificação de propriedade para 'gerente'
-        // 'Admin' pode deletar qualquer um, 'Gerente' apenas suas vendas, 'Vendedor' não pode deletar
-        if (!sale || (req.user.role === 'gerente' && sale.userId !== req.user.id)) {
-             return res.status(403).json({ message: 'Acesso proibido: Você não pode deletar esta venda.' });
-        }
+        
+        if (!sale) { return res.status(404).json({ message: 'Venda não encontrada' }); }
 
+        // Acesso restrito: gerente só pode deletar as vendas que criou (apenas se for a sua própria)
+        if (req.user.role === 'gerente' && sale.userId !== req.user.id) {
+            return res.status(403).json({ message: 'Acesso proibido: Você não pode deletar esta venda.' });
+        }
 
         let transaction;
         try {
@@ -701,6 +705,119 @@ router.delete('/products/:id', authorizeRole(['admin', 'gerente']), async (req, 
         if (deleted) res.status(204).send();
         else res.status(404).json({ message: 'Produto não encontrado' });
     } catch (error) { res.status(500).json({ message: error.message }); }
+});
+
+// --- NOVAS ROTAS DE GESTÃO DE UTILIZADORES (APENAS PARA ADMIN) ---
+// Acesso: Admin
+router.get('/users', authorizeRole(['admin']), async (req, res) => {
+    const { page = 1, limit = 10, q = '' } = req.query;
+    const offset = (page - 1) * limit;
+    
+    let whereClause = {};
+    if (q) {
+        whereClause = {
+            [Op.or]: [
+                { username: { [Op.like]: `%${q}%` } },
+                { email: { [Op.like]: `%${q}%` } }
+            ]
+        };
+    }
+
+    try {
+        const { count, rows } = await User.findAndCountAll({
+            where: whereClause,
+            attributes: ['id', 'username', 'email', 'role', 'createdAt', 'updatedAt'], // Não retornar a senha
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            order: [['username', 'ASC']]
+        });
+        res.json({ total: count, data: rows });
+    } catch (error) {
+        console.error('❌ ERRO AO BUSCAR UTILIZADORES:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Acesso: Admin
+router.get('/users/:id', authorizeRole(['admin']), async (req, res) => {
+    try {
+        const user = await User.findByPk(req.params.id, {
+            attributes: ['id', 'username', 'email', 'role', 'createdAt', 'updatedAt'] // Não retornar a senha
+        });
+        if (user) res.json(user);
+        else res.status(404).json({ message: 'Utilizador não encontrado' });
+    } catch (error) {
+        console.error('❌ ERRO AO BUSCAR UTILIZADOR POR ID:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Acesso: Admin
+router.post('/users', authorizeRole(['admin']), async (req, res) => {
+    const { username, email, password, role } = req.body;
+    try {
+        if (!password) {
+            return res.status(400).json({ message: 'A senha é obrigatória para criar um novo utilizador.' });
+        }
+        const hashedPassword = await bcrypt.hash(password, 10); // Criptografa a senha
+        const user = await User.create({ username, email, password: hashedPassword, role });
+        // Retorna o usuário sem a senha
+        res.status(201).json({ id: user.id, username: user.username, email: user.email, role: user.role });
+    } catch (error) {
+        console.error('❌ ERRO AO CRIAR UTILIZADOR:', error);
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(400).json({ message: 'Nome de usuário ou email já em uso.' });
+        }
+        res.status(400).json({ message: error.message || 'Erro ao criar utilizador.' });
+    }
+});
+
+// Acesso: Admin
+router.put('/users/:id', authorizeRole(['admin']), async (req, res) => {
+    const { username, email, password, role } = req.body;
+    try {
+        const user = await User.findByPk(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: 'Utilizador não encontrado' });
+        }
+
+        // Atualiza apenas os campos fornecidos
+        if (username) user.username = username;
+        if (email) user.email = email;
+        if (role) user.role = role;
+
+        // Se uma nova senha for fornecida, criptografa e atualiza
+        if (password) {
+            user.password = await bcrypt.hash(password, 10);
+        }
+
+        await user.save();
+        // Retorna o usuário atualizado sem a senha
+        res.json({ id: user.id, username: user.username, email: user.email, role: user.role });
+    } catch (error) {
+        console.error('❌ ERRO AO ATUALIZAR UTILIZADOR:', error);
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(400).json({ message: 'Nome de usuário ou email já em uso.' });
+        }
+        res.status(400).json({ message: error.message || 'Erro ao atualizar utilizador.' });
+    }
+});
+
+// Acesso: Admin
+router.delete('/users/:id', authorizeRole(['admin']), async (req, res) => {
+    try {
+        // Impedir que o admin logado exclua sua própria conta
+        if (req.params.id === req.user.id) {
+            return res.status(403).json({ message: 'Você não pode excluir sua própria conta.' });
+        }
+
+        const deleted = await User.destroy({ where: { id: req.params.id } });
+        if (deleted) res.status(204).send();
+        else res.status(404).json({ message: 'Utilizador não encontrado' });
+    } catch (error) {
+        console.error('❌ ERRO AO DELETAR UTILIZADOR:', error);
+        res.status(500).json({ message: error.message });
+    }
 });
 
 module.exports = router;

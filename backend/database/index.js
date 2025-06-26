@@ -41,11 +41,11 @@ Product.hasMany(SaleProduct, { foreignKey: 'productId', as: 'saleProducts' });
 SaleProduct.belongsTo(Sale, { foreignKey: 'saleId' });
 Sale.hasMany(SaleProduct, { foreignKey: 'saleId', as: 'saleProducts' });
 
-// NOVO: Associações entre Sale e User (já estava correto)
+// Associações entre Sale e User
 Sale.belongsTo(User, { foreignKey: 'userId', as: 'user' }); 
 User.hasMany(Sale, { foreignKey: 'userId', as: 'salesMade' }); 
 
-// NOVO: Associação entre Client e User
+// Associação entre Client e User
 Client.belongsTo(User, { foreignKey: 'userId', as: 'user' }); // Um Cliente pertence a um Utilizador (o vendedor que o cadastrou)
 User.hasMany(Client, { foreignKey: 'userId', as: 'clientsRegistered' }); // Um Utilizador pode ter muitos Clientes cadastrados por ele
 
@@ -73,9 +73,10 @@ module.exports = {
             }
 
             // CRIAÇÃO DOS USUÁRIOS (Admin, Gerente, Vendedor)
+            // Certifique-se de que os e-mails estão presentes aqui!
             let adminUser = await User.findOne({ where: { username: 'admin' } });
             if (!adminUser) {
-                adminUser = await User.create({ username: 'admin', password: 'guaguas00', role: 'admin' });
+                adminUser = await User.create({ username: 'admin', email: 'admin@gestorpro.com', password: 'guaguas00', role: 'admin' });
                 console.log('✅ Usuário admin criado com sucesso.');
             } else {
                 console.log('Usuário admin já existe na base de dados.');
@@ -83,7 +84,7 @@ module.exports = {
 
             let gerenteUser = await User.findOne({ where: { username: 'gerente1' } });
             if (!gerenteUser) {
-                gerenteUser = await User.create({ username: 'gerente1', password: 'senha_gerente', role: 'gerente' });
+                gerenteUser = await User.create({ username: 'gerente1', email: 'gerente1@gestorpro.com', password: 'senha_gerente', role: 'gerente' });
                 console.log('✅ Usuário gerente1 criado com sucesso.');
             } else {
                 console.log('Usuário gerente1 já existe na base de dados.');
@@ -91,7 +92,7 @@ module.exports = {
 
             let vendedorUser = await User.findOne({ where: { username: 'vendedor1' } });
             if (!vendedorUser) {
-                vendedorUser = await User.create({ username: 'vendedor1', password: 'senha_vendedor1', role: 'vendedor' });
+                vendedorUser = await User.create({ username: 'vendedor1', email: 'vendedor1@gestorpro.com', password: 'senha_vendedor1', role: 'vendedor' });
                 console.log('✅ Usuário vendedor1 criado com sucesso.');
             } else {
                 console.log('Usuário vendedor1 já existe na base de dados.');
