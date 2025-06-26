@@ -1,9 +1,9 @@
 const express = require('express');
 const { Op, fn, col, where } = require('sequelize');
-const bcrypt = require('bcryptjs'); // Importar bcryptjs para criptografia de senhas
+const bcrypt = require('bcryptjs');
 
 // Importar os modelos
-const { Client, Sale, Payment, User, Product, SaleProduct } = require('../database'); 
+const { Client, Sale, Payment, User, Product, SaleProduct, Supplier, Purchase, PurchaseProduct } = require('../database'); 
 
 // Importar os middlewares
 const authMiddleware = require('../middleware/authMiddleware'); 
@@ -11,49 +11,48 @@ const authorizeRole = require('../middleware/authorizationMiddleware');
 
 const router = express.Router();
 
-// APLICA O MIDDLEWARE DE AUTENTICAÇÃO PARA TODAS AS ROTAS NESTE ARQUIVO
-// Todas as rotas abaixo requerem um token JWT válido
 router.use(authMiddleware); 
 
 // --- ROTAS DO DASHBOARD ---
-// Acesso: Admin, Gerente, Vendedor
 router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     try {
         const today = new Date();
         const currentMonth = today.toISOString().slice(0, 7);
 
-        // Define a cláusula WHERE base para filtrar por userId se o usuário for 'vendedor'
         const baseWhereClause = (req.user.role === 'vendedor') ? { userId: req.user.id } : {};
 
         const totalClients = await Client.count({ where: baseWhereClause });
         
+        // KPIs de Vendas
         const salesSumOptions = { where: baseWhereClause };
-        const totalReceivable = (await Sale.sum('valorTotal', salesSumOptions) || 0) - (await Sale.sum('valorPago', salesSumOptions) || 0);
+        const totalSalesAmountAll = await Sale.sum('valorTotal', { where: baseWhereClause }) || 0;
+        const totalPaidAmountAll = await Sale.sum('valorPago', { where: baseWhereClause }) || 0;
+
+        const totalReceivable = totalSalesAmountAll - totalPaidAmountAll;
         
         const salesThisMonth = await Sale.sum('valorTotal', {
             where: { 
-                ...baseWhereClause, // Inclui o filtro por userId para vendedores
+                ...baseWhereClause,
                 [Op.and]: [
                     where(fn('strftime', '%Y-%m', col('dataVenda')), currentMonth)
                 ]
             }
-        });
+        }) || 0;
 
         const overdueSales = await Sale.sum('valorTotal', {
             where: {
-                ...baseWhereClause, // Inclui o filtro por userId para vendedores
+                ...baseWhereClause,
                 status: 'Pendente',
                 dataVencimento: { [Op.lt]: today }
             }
-        });
+        }) || 0;
 
-        // Para vendas por mês, também filtrar por userId para vendedores
         const salesByMonth = await Sale.findAll({
             attributes: [
                 [fn('strftime', '%Y-%m', col('dataVenda')), 'month'],
                 [fn('sum', col('valorTotal')), 'total']
             ],
-            where: baseWhereClause, // Filtra por userId para vendedores
+            where: baseWhereClause,
             group: ['month'],
             order: [['month', 'DESC']],
             limit: 6
@@ -71,19 +70,39 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
             }
         }) || 0;
 
-        const totalSalesCount = await Sale.count({ where: baseWhereClause }) || 1; // Evita divisão por zero
+        const totalSalesCount = await Sale.count({ where: baseWhereClause }) || 1;
         const totalSalesSum = await Sale.sum('valorTotal', { where: baseWhereClause }) || 0;
         const averageTicket = totalSalesSum / totalSalesCount;
 
+        // NOVO: KPIs de Compras
+        // Contas a Pagar (todas as compras)
+        const totalPurchasesAmount = await Purchase.sum('valorTotal', { where: {} }) || 0; // Contas a pagar não são por vendedor
+        // Contas a Pagar Vencidas (status 'Pendente' e data de compra no passado, ou vencimento explícito se adicionarmos)
+        const overduePurchases = await Purchase.sum('valorTotal', {
+            where: {
+                status: 'Pendente',
+                dataCompra: { [Op.lt]: today }
+            }
+        }) || 0;
+        
+        // Acessível apenas para Admin e Gerente (se for o caso, pode ser filtrado também na rota do frontend)
+        let totalAccountsPayable = 0;
+        let overdueAccountsPayable = 0;
+        if (req.user.role === 'admin' || req.user.role === 'gerente') {
+            totalAccountsPayable = totalPurchasesAmount;
+            overdueAccountsPayable = overduePurchases;
+        }
 
         res.json({
             totalClients: totalClients || 0,
-            totalReceivable: totalReceivable || 0,
+            totalReceivable: totalReceivable || 0, // Contas a receber total
+            overdueSales: overdueSales || 0, // Contas a receber vencidas
             salesThisMonth: salesThisMonth || 0,
-            overdueSales: overdueSales || 0,
             salesByMonth: salesByMonth.reverse(),
             salesToday: salesToday, 
-            averageTicket: averageTicket 
+            averageTicket: averageTicket,
+            totalAccountsPayable: totalAccountsPayable, // NOVO
+            overdueAccountsPayable: overdueAccountsPayable // NOVO
         });
     } catch (error) {
         console.error('❌ ERRO NO ENDPOINT DO DASHBOARD:', error);
@@ -92,7 +111,6 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
 });
 
 // --- ROTAS DE CLIENTES ---
-// Acesso: Admin, Gerente (todos os clientes); Vendedor (apenas seus próprios clientes)
 router.get('/clients/export-csv', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     console.log(`[API Route Log] ${new Date().toISOString()} - Export clients CSV route accessed by ${req.user.username}.`);
     try {
@@ -134,7 +152,6 @@ router.get('/clients', authorizeRole(['admin', 'gerente', 'vendedor']), async (r
     if (q) {
         whereClause.nome = { [Op.like]: `%${q}%` };
     }
-    // Filtrar por vendedor se a role for 'vendedor'
     if (req.user.role === 'vendedor') {
         whereClause.userId = req.user.id;
     }
@@ -157,8 +174,6 @@ router.get('/clients/:id', authorizeRole(['admin', 'gerente', 'vendedor']), asyn
     try {
         const id = req.params.id;
         let whereClause = { id };
-        // Vendedor só pode ver seus próprios clientes
-        // Gerente/Admin podem ver todos os clientes
         if (req.user.role === 'vendedor') {
             whereClause.userId = req.user.id;
         }
@@ -174,7 +189,6 @@ router.get('/clients/:id', authorizeRole(['admin', 'gerente', 'vendedor']), asyn
 
 router.post('/clients', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     try {
-        // Atribui o userId do usuário logado ao cliente se for vendedor ou não
         const clientData = { ...req.body, userId: req.user.id };
         
         const client = await Client.create(clientData);
@@ -189,8 +203,6 @@ router.put('/clients/:id', authorizeRole(['admin', 'gerente', 'vendedor']), asyn
     try {
         const id = req.params.id;
         let whereClause = { id };
-        // Vendedor só pode editar seus próprios clientes
-        // Gerente/Admin podem editar todos os clientes
         if (req.user.role === 'vendedor') {
             whereClause.userId = req.user.id;
         }
@@ -206,7 +218,6 @@ router.put('/clients/:id', authorizeRole(['admin', 'gerente', 'vendedor']), asyn
     }
 });
 
-// Acesso: Admin, Gerente (Deleção - mais restrito)
 router.delete('/clients/:id', authorizeRole(['admin', 'gerente']), async (req, res) => {
     try {
         const deleted = await Client.destroy({ where: { id: req.params.id } });
@@ -220,7 +231,6 @@ router.delete('/clients/:id', authorizeRole(['admin', 'gerente']), async (req, r
 
 
 // --- ROTAS DE VENDAS ---
-// Acesso: Admin, Gerente (todas as vendas); Vendedor (apenas suas próprias vendas)
 router.get('/sales/export-csv', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     console.log(`[API Route Log] ${new Date().toISOString()} - Export sales CSV route accessed by ${req.user.username}.`);
     try {
@@ -279,7 +289,6 @@ router.get('/sales/report-by-period', authorizeRole(['admin', 'gerente', 'vended
                 [Op.between]: [startDate, endDate]
             }
         };
-        // Filtrar por vendedor se a role for 'vendedor'
         if (req.user.role === 'vendedor') {
             whereClause.userId = req.user.id;
         }
@@ -313,10 +322,8 @@ router.get('/sales', authorizeRole(['admin', 'gerente', 'vendedor']), async (req
     
     let whereClause = {};
     if (q) {
-        // Assume que a busca por nome do cliente é através de um join
         whereClause['$client.nome$'] = { [Op.like]: `%${q}%` };
     }
-    // Filtrar por vendedor se a role for 'vendedor'
     if (req.user.role === 'vendedor') {
         whereClause.userId = req.user.id;
     }
@@ -340,13 +347,12 @@ router.get('/sales/:id', authorizeRole(['admin', 'gerente', 'vendedor']), async 
     try {
         const id = req.params.id;
         let whereClause = { id };
-        // Vendedor só pode ver suas próprias vendas
         if (req.user.role === 'vendedor') {
             whereClause.userId = req.user.id;
         }
 
         const sale = await Sale.findByPk(id, {
-            where: whereClause, // Filtra por userId para vendedores
+            where: whereClause,
             include: [
                 { model: Client, as: 'client' },
                 { 
@@ -372,12 +378,10 @@ router.get('/sales/:id', authorizeRole(['admin', 'gerente', 'vendedor']), async 
     }
 });
 
-// Acesso: Admin, Gerente, Vendedor (Criação de Vendas)
 router.post('/sales', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     console.log('[API Route Log] POST /sales - Request Body:', JSON.stringify(req.body, null, 2));
     const { clientId, dataVenda, dataVencimento, products: saleProductsData, initialPayment } = req.body;
 
-    // Garante que o userId do utilizador logado é atribuído à venda
     const userId = req.user.id; 
 
     if (!clientId || !saleProductsData || saleProductsData.length === 0) {
@@ -396,7 +400,7 @@ router.post('/sales', authorizeRole(['admin', 'gerente', 'vendedor']), async (re
         }
         const sale = await Sale.create({
             clientId,
-            userId, // Atribui o userId do usuário logado
+            userId,
             dataVenda: dataVenda || new Date(),
             dataVencimento: dataVencimento || null,
             valorTotal: valorTotalCalculado,
@@ -435,19 +439,17 @@ router.post('/sales', authorizeRole(['admin', 'gerente', 'vendedor']), async (re
     }
 });
 
-// Vendedor pode editar SUAS próprias vendas
 router.put('/sales/:id', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     try {
         const id = req.params.id;
         let whereClause = { id };
-        // Vendedor só pode editar suas próprias vendas
         if (req.user.role === 'vendedor') {
             whereClause.userId = req.user.id;
         }
 
         const [updated] = await Sale.update(req.body, { where: whereClause });
         if (updated) {
-            const updatedSale = await Sale.findByPk(id); // Buscar a venda atualizada
+            const updatedSale = await Sale.findByPk(id);
             res.json(updatedSale);
         } else { res.status(404).json({ message: 'Venda não encontrada ou você não tem permissão para editá-la.' }); }
     } catch (error) { 
@@ -456,7 +458,6 @@ router.put('/sales/:id', authorizeRole(['admin', 'gerente', 'vendedor']), async 
     }
 });
 
-// Acesso: Admin, Gerente (Deleção - mais restrito)
 router.delete('/sales/:id', authorizeRole(['admin', 'gerente']), async (req, res) => {
     try {
         const sale = await Sale.findByPk(req.params.id, {
@@ -465,7 +466,6 @@ router.delete('/sales/:id', authorizeRole(['admin', 'gerente']), async (req, res
         
         if (!sale) { return res.status(404).json({ message: 'Venda não encontrada' }); }
 
-        // Acesso restrito: gerente só pode deletar as vendas que criou (apenas se for a sua própria)
         if (req.user.role === 'gerente' && sale.userId !== req.user.id) {
             return res.status(403).json({ message: 'Acesso proibido: Você não pode deletar esta venda.' });
         }
@@ -496,13 +496,11 @@ router.delete('/sales/:id', authorizeRole(['admin', 'gerente']), async (req, res
     }
 });
 
-// Acesso: Admin, Gerente, Vendedor (Criação de Pagamentos)
 router.post('/sales/:saleId/payments', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     console.log('[API Route Log] POST /sales/:saleId/payments - Request Body:', JSON.stringify(req.body, null, 2));
     const { saleId } = req.params;
     const { valor, formaPagamento, parcelas, bandeiraCartao, bancoCrediario } = req.body;
     
-    // Validar se a venda pertence ao vendedor antes de permitir o pagamento
     if (req.user.role === 'vendedor') {
         const sale = await Sale.findByPk(saleId);
         if (!sale || sale.userId !== req.user.id) {
@@ -549,7 +547,6 @@ router.post('/sales/:saleId/payments', authorizeRole(['admin', 'gerente', 'vende
 });
 
 // --- ROTAS DE PRODUTOS ---
-// Acesso: Admin, Gerente, Vendedor (Leitura)
 router.get('/products/low-stock', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     const LOW_STOCK_THRESHOLD = 10; 
     try {
@@ -627,8 +624,6 @@ router.get('/rankings/clientes', authorizeRole(['admin', 'gerente', 'vendedor'])
     }
 });
 
-// Rota para Ranking de Vendedores
-// Acesso: Admin, Gerente (restrito)
 router.get('/rankings/vendedores', authorizeRole(['admin', 'gerente']), async (req, res) => {
     try {
         const topSellers = await Sale.findAll({
@@ -680,7 +675,6 @@ router.get('/products/:id', authorizeRole(['admin', 'gerente', 'vendedor']), asy
     } catch (error) { res.status(500).json({ message: error.message }); }
 });
 
-// Acesso: Admin, Gerente (Criação/Edição de Produtos)
 router.post('/products', authorizeRole(['admin', 'gerente']), async (req, res) => { 
     try {
         const product = await Product.create(req.body);
@@ -698,7 +692,6 @@ router.put('/products/:id', authorizeRole(['admin', 'gerente']), async (req, res
     } catch (error) { res.status(400).json({ message: error.message }); }
 });
 
-// Acesso: Admin, Gerente (Deleção - mais restrito)
 router.delete('/products/:id', authorizeRole(['admin', 'gerente']), async (req, res) => {
     try {
         const deleted = await Product.destroy({ where: { id: req.params.id } });
@@ -707,8 +700,7 @@ router.delete('/products/:id', authorizeRole(['admin', 'gerente']), async (req, 
     } catch (error) { res.status(500).json({ message: error.message }); }
 });
 
-// --- NOVAS ROTAS DE GESTÃO DE UTILIZADORES (APENAS PARA ADMIN) ---
-// Acesso: Admin
+// --- ROTAS DE GESTÃO DE UTILIZADORES (APENAS PARA ADMIN) ---
 router.get('/users', authorizeRole(['admin']), async (req, res) => {
     const { page = 1, limit = 10, q = '' } = req.query;
     const offset = (page - 1) * limit;
@@ -726,7 +718,7 @@ router.get('/users', authorizeRole(['admin']), async (req, res) => {
     try {
         const { count, rows } = await User.findAndCountAll({
             where: whereClause,
-            attributes: ['id', 'username', 'email', 'role', 'createdAt', 'updatedAt'], // Não retornar a senha
+            attributes: ['id', 'username', 'email', 'role', 'createdAt', 'updatedAt'],
             limit: parseInt(limit),
             offset: parseInt(offset),
             order: [['username', 'ASC']]
@@ -738,11 +730,10 @@ router.get('/users', authorizeRole(['admin']), async (req, res) => {
     }
 });
 
-// Acesso: Admin
 router.get('/users/:id', authorizeRole(['admin']), async (req, res) => {
     try {
         const user = await User.findByPk(req.params.id, {
-            attributes: ['id', 'username', 'email', 'role', 'createdAt', 'updatedAt'] // Não retornar a senha
+            attributes: ['id', 'username', 'email', 'role', 'createdAt', 'updatedAt']
         });
         if (user) res.json(user);
         else res.status(404).json({ message: 'Utilizador não encontrado' });
@@ -752,16 +743,14 @@ router.get('/users/:id', authorizeRole(['admin']), async (req, res) => {
     }
 });
 
-// Acesso: Admin
 router.post('/users', authorizeRole(['admin']), async (req, res) => {
     const { username, email, password, role } = req.body;
     try {
         if (!password) {
             return res.status(400).json({ message: 'A senha é obrigatória para criar um novo utilizador.' });
         }
-        const hashedPassword = await bcrypt.hash(password, 10); // Criptografa a senha
+        const hashedPassword = await bcrypt.hash(password, 10);
         const user = await User.create({ username, email, password: hashedPassword, role });
-        // Retorna o usuário sem a senha
         res.status(201).json({ id: user.id, username: user.username, email: user.email, role: user.role });
     } catch (error) {
         console.error('❌ ERRO AO CRIAR UTILIZADOR:', error);
@@ -772,7 +761,6 @@ router.post('/users', authorizeRole(['admin']), async (req, res) => {
     }
 });
 
-// Acesso: Admin
 router.put('/users/:id', authorizeRole(['admin']), async (req, res) => {
     const { username, email, password, role } = req.body;
     try {
@@ -781,18 +769,15 @@ router.put('/users/:id', authorizeRole(['admin']), async (req, res) => {
             return res.status(404).json({ message: 'Utilizador não encontrado' });
         }
 
-        // Atualiza apenas os campos fornecidos
         if (username) user.username = username;
         if (email) user.email = email;
         if (role) user.role = role;
 
-        // Se uma nova senha for fornecida, criptografa e atualiza
         if (password) {
             user.password = await bcrypt.hash(password, 10);
         }
 
         await user.save();
-        // Retorna o usuário atualizado sem a senha
         res.json({ id: user.id, username: user.username, email: user.email, role: user.role });
     } catch (error) {
         console.error('❌ ERRO AO ATUALIZAR UTILIZADOR:', error);
@@ -803,10 +788,8 @@ router.put('/users/:id', authorizeRole(['admin']), async (req, res) => {
     }
 });
 
-// Acesso: Admin
 router.delete('/users/:id', authorizeRole(['admin']), async (req, res) => {
     try {
-        // Impedir que o admin logado exclua sua própria conta
         if (req.params.id === req.user.id) {
             return res.status(403).json({ message: 'Você não pode excluir sua própria conta.' });
         }
@@ -819,5 +802,278 @@ router.delete('/users/:id', authorizeRole(['admin']), async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
+// --- ROTAS DE FORNECEDORES (APENAS ADMIN E GERENTE) ---
+router.get('/suppliers', authorizeRole(['admin', 'gerente']), async (req, res) => {
+    const { page = 1, limit = 10, q = '' } = req.query;
+    const offset = (page - 1) * limit;
+    
+    let whereClause = {};
+    if (q) {
+        whereClause = {
+            [Op.or]: [
+                { nome: { [Op.like]: `%${q}%` } },
+                { contato: { [Op.like]: `%${q}%` } },
+                { email: { [Op.like]: `%${q}%` } },
+                { cnpj: { [Op.like]: `%${q}%` } }
+            ]
+        };
+    }
+
+    try {
+        const { count, rows } = await Supplier.findAndCountAll({
+            where: whereClause,
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            order: [['nome', 'ASC']]
+        });
+        res.json({ total: count, data: rows });
+    } catch (error) {
+        console.error('❌ ERRO AO BUSCAR FORNECEDORES:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+router.get('/suppliers/:id', authorizeRole(['admin', 'gerente']), async (req, res) => {
+    try {
+        const supplier = await Supplier.findByPk(req.params.id);
+        if (supplier) res.json(supplier);
+        else res.status(404).json({ message: 'Fornecedor não encontrado' });
+    } catch (error) {
+        console.error('❌ ERRO AO BUSCAR FORNECEDOR POR ID:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+router.post('/suppliers', authorizeRole(['admin', 'gerente']), async (req, res) => {
+    try {
+        const supplier = await Supplier.create(req.body);
+        res.status(201).json(supplier);
+    } catch (error) {
+        console.error('❌ ERRO AO CRIAR FORNECEDOR:', error);
+        res.status(400).json({ message: error.message });
+    }
+});
+
+router.put('/suppliers/:id', authorizeRole(['admin', 'gerente']), async (req, res) => {
+    try {
+        const [updated] = await Supplier.update(req.body, { where: { id: req.params.id } });
+        if (updated) {
+            const updatedSupplier = await Supplier.findByPk(req.params.id);
+            res.json(updatedSupplier);
+        } else { res.status(404).json({ message: 'Fornecedor não encontrado' }); }
+    } catch (error) {
+        console.error('❌ ERRO AO ATUALIZAR FORNECEDOR:', error);
+        res.status(400).json({ message: error.message });
+    }
+});
+
+router.delete('/suppliers/:id', authorizeRole(['admin', 'gerente']), async (req, res) => {
+    try {
+        const deleted = await Supplier.destroy({ where: { id: req.params.id } });
+        if (deleted) res.status(204).send();
+        else res.status(404).json({ message: 'Fornecedor não encontrado' });
+    } catch (error) {
+        console.error('❌ ERRO AO DELETAR FORNECEDOR:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// --- ROTAS DE COMPRAS (APENAS ADMIN E GERENTE) ---
+router.get('/purchases', authorizeRole(['admin', 'gerente']), async (req, res) => {
+    const { page = 1, limit = 10, q = '' } = req.query;
+    const offset = (page - 1) * limit;
+
+    let whereClause = {};
+    if (q) {
+        whereClause['$supplier.nome$'] = { [Op.like]: `%${q}%` };
+    }
+
+    try {
+        const { count, rows } = await Purchase.findAndCountAll({
+            where: whereClause,
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            order: [['dataCompra', 'DESC']],
+            include: [{ model: Supplier, as: 'supplier', attributes: ['nome'] }]
+        });
+        res.json({ total: count, data: rows });
+    } catch (error) {
+        console.error('❌ ERRO AO BUSCAR COMPRAS:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+router.get('/purchases/:id', authorizeRole(['admin', 'gerente']), async (req, res) => {
+    try {
+        const purchase = await Purchase.findByPk(req.params.id, {
+            include: [
+                { model: Supplier, as: 'supplier' },
+                { 
+                    model: Product, 
+                    as: 'products', 
+                    through: {
+                        attributes: ['quantidade', 'precoCustoUnitario'] 
+                    }
+                }
+            ]
+        });
+        if (purchase) res.json(purchase);
+        else res.status(404).json({ message: 'Compra não encontrada' });
+    } catch (error) {
+        console.error('❌ ERRO AO BUSCAR COMPRA POR ID:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+router.post('/purchases', authorizeRole(['admin', 'gerente']), async (req, res) => {
+    console.log('[API Route Log] POST /purchases - Request Body:', JSON.stringify(req.body, null, 2));
+    const { supplierId, dataCompra, valorTotal, status, observacoes, products: purchaseProductsData } = req.body;
+    const userId = req.user.id; // Usuário logado registrando a compra
+
+    if (!supplierId || !purchaseProductsData || purchaseProductsData.length === 0) {
+        return res.status(400).json({ message: 'Fornecedor e produtos da compra são obrigatórios.' });
+    }
+
+    let transaction;
+    try {
+        transaction = await Purchase.sequelize.transaction();
+        
+        let calculatedTotalValue = 0;
+        for (const item of purchaseProductsData) {
+            calculatedTotalValue += item.precoCustoUnitario * item.quantidade;
+        }
+
+        const purchase = await Purchase.create({
+            supplierId,
+            userId,
+            dataCompra: dataCompra || new Date(),
+            valorTotal: calculatedTotalValue,
+            status: status || 'Concluída',
+            observacoes: observacoes || null
+        }, { transaction });
+
+        for (const item of purchaseProductsData) {
+            const product = await Product.findByPk(item.productId, { transaction });
+            if (!product) { throw new Error(`Produto com ID ${item.productId} não encontrado.`); }
+            
+            await PurchaseProduct.create({
+                purchaseId: purchase.id,
+                productId: item.productId,
+                quantidade: item.quantidade,
+                precoCustoUnitario: item.precoCustoUnitario
+            }, { transaction });
+
+            product.estoque += item.quantidade;
+            await product.save({ transaction });
+        }
+
+        await transaction.commit();
+        res.status(201).json(purchase);
+    } catch (error) {
+        if (transaction) await transaction.rollback();
+        console.error('❌ ERRO AO CRIAR COMPRA COM PRODUTOS:', error);
+        res.status(400).json({ message: error.message || 'Erro ao criar compra.' });
+    }
+});
+
+router.put('/purchases/:id', authorizeRole(['admin', 'gerente']), async (req, res) => {
+    console.log('[API Route Log] PUT /purchases/:id - Request Body:', JSON.stringify(req.body, null, 2));
+    const { supplierId, dataCompra, valorTotal, status, observacoes, products: purchaseProductsData } = req.body;
+    const purchaseId = req.params.id;
+
+    let transaction;
+    try {
+        transaction = await Purchase.sequelize.transaction();
+        const purchase = await Purchase.findByPk(purchaseId, { include: [{ model: PurchaseProduct, as: 'purchaseProducts' }], transaction });
+
+        if (!purchase) {
+            await transaction.rollback();
+            return res.status(404).json({ message: 'Compra não encontrada' });
+        }
+
+        for (const oldItem of purchase.purchaseProducts) {
+            const product = await Product.findByPk(oldItem.productId, { transaction });
+            if (product) {
+                product.estoque -= oldItem.quantidade; 
+                await product.save({ transaction });
+            }
+        }
+        
+        await PurchaseProduct.destroy({ where: { purchaseId: purchase.id }, transaction });
+
+        let newCalculatedTotalValue = 0;
+        for (const newItem of purchaseProductsData) {
+            newCalculatedTotalValue += newItem.precoCustoUnitario * newItem.quantidade;
+        }
+
+        await purchase.update({
+            supplierId,
+            dataCompra: dataCompra || new Date(),
+            valorTotal: newCalculatedTotalValue,
+            status: status || 'Concluída',
+            observacoes: observacoes || null
+        }, { transaction });
+
+        for (const item of purchaseProductsData) {
+            const product = await Product.findByPk(item.productId, { transaction });
+            if (!product) { throw new Error(`Produto com ID ${item.productId} não encontrado.`); }
+
+            await PurchaseProduct.create({
+                purchaseId: purchase.id,
+                productId: item.productId,
+                quantidade: item.quantidade,
+                precoCustoUnitario: item.precoCustoUnitario
+            }, { transaction });
+
+            product.estoque += item.quantidade;
+            await product.save({ transaction });
+        }
+
+        await transaction.commit();
+        const updatedPurchase = await Purchase.findByPk(purchaseId, {
+            include: [{ model: Supplier, as: 'supplier' }, { model: Product, as: 'products', through: { attributes: ['quantidade', 'precoCustoUnitario'] } }]
+        });
+        res.json(updatedPurchase);
+    } catch (error) {
+        if (transaction) await transaction.rollback();
+        console.error('❌ ERRO AO ATUALIZAR COMPRA:', error);
+        res.status(400).json({ message: error.message || 'Erro ao atualizar compra.' });
+    }
+});
+
+router.delete('/purchases/:id', authorizeRole(['admin', 'gerente']), async (req, res) => {
+    try {
+        const purchase = await Purchase.findByPk(req.params.id, {
+            include: [{ model: PurchaseProduct, as: 'purchaseProducts' }]
+        });
+        
+        if (!purchase) { return res.status(404).json({ message: 'Compra não encontrada' }); }
+
+        let transaction;
+        try {
+            transaction = await Purchase.sequelize.transaction();
+            for (const item of purchase.purchaseProducts) {
+                const product = await Product.findByPk(item.productId, { transaction });
+                if (product) {
+                    product.estoque -= item.quantidade; 
+                    await product.save({ transaction });
+                }
+            }
+            await PurchaseProduct.destroy({ where: { purchaseId: purchase.id }, transaction });
+            const deleted = await Purchase.destroy({ where: { id: req.params.id }, transaction });
+            await transaction.commit();
+            if (deleted) res.status(204).send();
+            else res.status(404).json({ message: 'Compra não encontrada' });
+        } catch (error) {
+            if (transaction) await transaction.rollback();
+            console.error('❌ ERRO AO DELETAR COMPRA COM PRODUTOS:', error);
+            res.status(500).json({ message: error.message || 'Erro ao deletar compra.' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 
 module.exports = router;

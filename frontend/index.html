@@ -30,21 +30,20 @@
                 <a class="nav-link" href="#" data-section="salesSection"><i class="bi bi-cart-check-fill me-2"></i>Vendas</a>
                 <a class="nav-link" href="#" data-section="reportsSection"><i class="bi bi-graph-up me-2"></i>Relatórios</a>
                 <a class="nav-link" href="#" data-section="productsSection"><i class="bi bi-box-seam me-2"></i>Produtos</a>
-                <!-- Link para a seção de Usuários -->
                 <a class="nav-link" href="#" data-section="usersSection"><i class="bi bi-person-gear me-2"></i>Utilizadores</a>
-                <!-- NOVO: Adicionado data-section para garantir visibilidade pelo JS -->
+                <a class="nav-link" href="#" data-section="suppliersSection"><i class="bi bi-truck me-2"></i>Fornecedores</a>
+                <!-- NOVO: Link para a seção de Compras -->
+                <a class="nav-link" href="#" data-section="purchasesSection"><i class="bi bi-bag me-2"></i>Compras</a>
                 <a class="nav-link mt-auto" href="#" id="logoutButton" data-section="logoutSection"><i class="bi bi-box-arrow-right me-2"></i>Sair</a>
             </nav>
         </aside>
 
         <main class="main-content" id="mainContent">
             <div class="content-wrapper">
-                <!-- As seções agora estão organizadas e sem duplicatas -->
                 <section id="dashboardSection" class="content-section"></section>
                 <section id="clientsSection" class="content-section" style="display: none;"></section>
                 <section id="salesSection" class="content-section" style="display: none;"></section>
                 <section id="reportsSection" class="content-section" style="display: none;">
-                    <!-- CONTEÚDO DA SEÇÃO DE RELATÓRIOS -->
                     <div class="container-fluid mt-4">
                         <h3><i class="bi bi-graph-up me-2"></i>Relatórios de Vendas por Período</h3>
                         <div class="card shadow-sm mb-4">
@@ -71,8 +70,10 @@
                 </section>
                 <section id="productsSection" class="content-section" style="display: none;"></section>
                 <section id="saleDetailSection" class="content-section" style="display: none;"></section>
-                <!-- Seção para Gestão de Utilizadores -->
                 <section id="usersSection" class="content-section" style="display: none;"></section>
+                <section id="suppliersSection" class="content-section" style="display: none;"></section>
+                <!-- NOVO: Seção para Compras -->
+                <section id="purchasesSection" class="content-section" style="display: none;"></section>
             </div>
         </main>
     </div>
@@ -117,7 +118,7 @@
     
     <!-- Modal de Venda -->
     <div class="modal fade" id="saleModal" tabindex="-1" aria-labelledby="saleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg"> <!-- Aumentado para modal-lg para mais espaço -->
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="saleModalLabel">Nova Venda</h5>
@@ -311,6 +312,116 @@
                             </select>
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Salvar Usuário</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Adicionar/Editar Fornecedor -->
+    <div class="modal fade" id="supplierModal" tabindex="-1" aria-labelledby="supplierModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="supplierModalLabel">Novo Fornecedor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="supplierForm">
+                        <input type="hidden" id="supplierId">
+                        <div class="mb-3">
+                            <label for="supplierName" class="form-label">Nome</label>
+                            <input type="text" class="form-control" id="supplierName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="supplierContact" class="form-label">Contato</label>
+                            <input type="text" class="form-control" id="supplierContact">
+                        </div>
+                        <div class="mb-3">
+                            <label for="supplierEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="supplierEmail">
+                        </div>
+                        <div class="mb-3">
+                            <label for="supplierCnpj" class="form-label">CNPJ</label>
+                            <input type="text" class="form-control" id="supplierCnpj">
+                        </div>
+                        <div class="mb-3">
+                            <label for="supplierAddress" class="form-label">Endereço</label>
+                            <input type="text" class="form-control" id="supplierAddress">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Salvar Fornecedor</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOVO: Modal para Adicionar/Editar Compra -->
+    <div class="modal fade" id="purchaseModal" tabindex="-1" aria-labelledby="purchaseModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="purchaseModalLabel">Nova Compra</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="purchaseForm">
+                        <input type="hidden" id="purchaseId">
+                        <div class="mb-3">
+                            <label for="purchaseSupplier" class="form-label">Fornecedor</label>
+                            <select class="form-select" id="purchaseSupplier" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="purchaseDate" class="form-label">Data da Compra</label>
+                            <input type="date" class="form-control" id="purchaseDate" required>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header">Produtos da Compra</div>
+                            <div class="card-body">
+                                <div id="purchaseProductsList" class="mb-2" style="max-height: 150px; overflow-y: auto;">
+                                    <p class="text-muted text-center m-0">Nenhum produto adicionado.</p>
+                                </div>
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-5">
+                                        <label for="purchaseProductSelect" class="form-label">Produto</label>
+                                        <select class="form-control" id="purchaseProductSelect" style="width: 100%;"></select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="purchaseProductQuantity" class="form-label">Qtd</label>
+                                        <input type="number" class="form-control" id="purchaseProductQuantity" value="1" min="1">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="purchaseProductCost" class="form-label">Preço Custo Unit.</label>
+                                        <input type="number" step="0.01" class="form-control" id="purchaseProductCost" placeholder="Custo" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-primary w-100" id="btnAddPurchaseProduct" title="Adicionar Produto">Adicionar</button>
+                                    </div>
+                                </div>
+                                <div id="purchaseProductDetailsDisplay" class="text-muted small mt-2 text-start"></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="purchaseTotalValueDisplay" class="form-label">Valor Total da Compra</label>
+                            <input type="text" class="form-control fw-bold" id="purchaseTotalValueDisplay" readonly value="R$ 0,00">
+                            <input type="hidden" id="purchaseTotalValue" value="0">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="purchaseStatus" class="form-label">Status</label>
+                            <select class="form-select" id="purchaseStatus">
+                                <option value="Concluída">Concluída</option>
+                                <option value="Pendente">Pendente</option>
+                                <option value="Cancelada">Cancelada</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="purchaseObservations" class="form-label">Observações</label>
+                            <textarea class="form-control" id="purchaseObservations" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Salvar Compra</button>
                     </form>
                 </div>
             </div>

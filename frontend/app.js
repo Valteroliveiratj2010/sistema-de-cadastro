@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
         bootstrapConfirmModal: new bootstrap.Modal(document.getElementById('confirmModal')),
         bootstrapProductModal: new bootstrap.Modal(document.getElementById('productModal')),
         bootstrapUserModal: new bootstrap.Modal(document.getElementById('userModal')),
+        bootstrapSupplierModal: new bootstrap.Modal(document.getElementById('supplierModal')),
+        // NOVO: Modal para gestão de compras
+        bootstrapPurchaseModal: new bootstrap.Modal(document.getElementById('purchaseModal')),
         chartInstance: null,
         confirmAction: null,
         userRole: null,
@@ -51,9 +54,31 @@ document.addEventListener('DOMContentLoaded', () => {
             total: 0,
             loaded: false
         },
+        suppliers: {
+            page: 1,
+            query: '',
+            limit: 10,
+            data: [],
+            total: 0,
+            loaded: false
+        },
+        // NOVO: Estado para a gestão de compras
+        purchases: {
+            page: 1,
+            query: '',
+            limit: 10,
+            data: [],
+            total: 0,
+            loaded: false
+        },
         selectedSaleProducts: [],
-        availableProducts: [],
-        currentSelectedProduct: null,
+        availableProducts: [], // Produtos disponíveis para vendas
+        currentSelectedProduct: null, // Produto selecionado no modal de venda
+        // NOVO: Produtos selecionados para a compra atual
+        selectedPurchaseProducts: [],
+        availableProductsForPurchase: [], // Produtos disponíveis para compra (mesmo que availableProducts, mas nome para clareza)
+        currentSelectedProductForPurchase: null, // Produto selecionado no modal de compra
+        availableSuppliers: [], // Fornecedores disponíveis para compras
     };
 
     // --- DOM SELECTORS ---
@@ -100,6 +125,32 @@ document.addEventListener('DOMContentLoaded', () => {
         userPasswordInput: document.getElementById('userPassword'),
         userRoleSelect: document.getElementById('userRole'),
         userModalLabel: document.getElementById('userModalLabel'),
+
+        supplierForm: document.getElementById('supplierForm'),
+        supplierIdInput: document.getElementById('supplierId'),
+        supplierNameInput: document.getElementById('supplierName'),
+        supplierContactInput: document.getElementById('supplierContact'),
+        supplierEmailInput: document.getElementById('supplierEmail'),
+        supplierCnpjInput: document.getElementById('supplierCnpj'),
+        supplierAddressInput: document.getElementById('supplierAddress'),
+        supplierModalLabel: document.getElementById('supplierModalLabel'),
+
+        // NOVO: Seletores para gestão de compras
+        purchaseForm: document.getElementById('purchaseForm'),
+        purchaseIdInput: document.getElementById('purchaseId'),
+        purchaseSupplierSelect: $('#purchaseSupplier'), // Select2
+        purchaseDateInput: document.getElementById('purchaseDate'),
+        purchaseProductsList: document.getElementById('purchaseProductsList'),
+        purchaseProductSelect: $('#purchaseProductSelect'), // Select2
+        purchaseProductQuantityInput: document.getElementById('purchaseProductQuantity'),
+        purchaseProductCostInput: document.getElementById('purchaseProductCost'),
+        btnAddPurchaseProduct: document.getElementById('btnAddPurchaseProduct'),
+        purchaseProductDetailsDisplay: document.getElementById('purchaseProductDetailsDisplay'),
+        purchaseTotalValueDisplay: document.getElementById('purchaseTotalValueDisplay'),
+        purchaseTotalValueHidden: document.getElementById('purchaseTotalValue'),
+        purchaseStatusSelect: document.getElementById('purchaseStatus'),
+        purchaseObservationsInput: document.getElementById('purchaseObservations'),
+        purchaseModalLabel: document.getElementById('purchaseModalLabel'),
     };
 
     // --- UTILITY FUNCTIONS ---
@@ -166,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             return total;
         },
-        renderSelectedProductsList: () => {
+        renderSelectedProductsList: () => { // Lista de produtos na VENDA
             if (state.selectedSaleProducts.length === 0) {
                 dom.saleProductsList.innerHTML = '<p class="text-muted text-center m-0">Nenhum produto adicionado.</p>';
                 dom.saleTotalValueDisplay.value = utils.formatCurrency(0);
@@ -192,6 +243,42 @@ document.addEventListener('DOMContentLoaded', () => {
             const total = utils.calculateSaleTotal();
             dom.saleTotalValueDisplay.value = utils.formatCurrency(total);
             dom.saleTotalValueHidden.value = total;
+        },
+        // NOVO: Função para calcular o total da Compra
+        calculatePurchaseTotal: () => {
+            let total = 0;
+            state.selectedPurchaseProducts.forEach(item => {
+                total += item.precoCustoUnitario * item.quantidade;
+            });
+            return total;
+        },
+        // NOVO: Função para renderizar a lista de produtos na COMPRA
+        renderSelectedPurchaseProductsList: () => {
+            if (state.selectedPurchaseProducts.length === 0) {
+                dom.purchaseProductsList.innerHTML = '<p class="text-muted text-center m-0">Nenhum produto adicionado.</p>';
+                dom.purchaseTotalValueDisplay.value = utils.formatCurrency(0);
+                dom.purchaseTotalValueHidden.value = 0;
+                return;
+            }
+
+            let listHtml = `<ul class="list-group list-group-flush">`;
+            state.selectedPurchaseProducts.forEach((item, index) => {
+                listHtml += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-1 ps-2 pe-1">
+                        <span>${item.nome} (${item.quantidade}x) - ${utils.formatCurrency(item.precoCustoUnitario)} cada</span>
+                        <span>
+                            ${utils.formatCurrency(item.precoCustoUnitario * item.quantidade)}
+                            <button type="button" class="btn btn-sm btn-outline-danger ms-2 btn-remove-purchase-product" data-index="${index}"><i class="bi bi-x-lg"></i></button>
+                        </span>
+                    </li>
+                `;
+            });
+            listHtml += `</ul>`;
+            dom.purchaseProductsList.innerHTML = listHtml;
+
+            const total = utils.calculatePurchaseTotal();
+            dom.purchaseTotalValueDisplay.value = utils.formatCurrency(total);
+            dom.purchaseTotalValueHidden.value = total;
         },
         togglePaymentFields: (formaPagamentoSelect, parcelasField, bandeiraCartaoField, bancoCrediarioField, parcelasInput, bandeiraCartaoInput, bancoCrediarioInput) => {
             const formaPagamento = formaPagamentoSelect.value;
@@ -460,6 +547,17 @@ document.addEventListener('DOMContentLoaded', () => {
         createUser: (data) => api.request('/users', { method: 'POST', body: JSON.stringify(data) }),
         updateUser: (id, data) => api.request(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
         deleteUser: (id) => api.request(`/users/${id}`, { method: 'DELETE' }),
+        getSuppliers: (page = 1, q = '', limit = 10) => api.request(`/suppliers?page=${page}&q=${q}&limit=${limit}`),
+        getSupplierById: (id) => api.request(`/suppliers/${id}`),
+        createSupplier: (data) => api.request('/suppliers', { method: 'POST', body: JSON.stringify(data) }),
+        updateSupplier: (id, data) => api.request(`/suppliers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+        deleteSupplier: (id) => api.request(`/suppliers/${id}`, { method: 'DELETE' }),
+        // NOVO: Funções API para compras
+        getPurchases: (page = 1, q = '', limit = 10) => api.request(`/purchases?page=${page}&q=${q}&limit=${limit}`),
+        getPurchaseById: (id) => api.request(`/purchases/${id}`),
+        createPurchase: (data) => api.request('/purchases', { method: 'POST', body: JSON.stringify(data) }),
+        updatePurchase: (id, data) => api.request(`/purchases/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+        deletePurchase: (id) => api.request(`/purchases/${id}`, { method: 'DELETE' }),
     };
 
     // --- UI AND RENDERING LOGIC ---
@@ -490,6 +588,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         break;
                     case 'usersSection':
                         if (!utils.hasPermission(['admin'])) {
+                            isVisible = false;
+                        }
+                        break;
+                    case 'suppliersSection':
+                    case 'purchasesSection': // NOVO: Controla visibilidade da seção de Compras
+                        if (!utils.hasPermission(['admin', 'gerente'])) { // Apenas admin e gerente podem ver Compras
                             isVisible = false;
                         }
                         break;
@@ -646,7 +750,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${sale.id}</td><td><strong>${sale.client?.nome || 'N/A'}</strong></td><td>${utils.formatDate(sale.dataVenda)}</td><td class="${statusClass}"><strong>${utils.formatCurrency(valorDevido)}</strong></td><td><span class="badge bg-primary">${sale.status}</span></td>
                     <td>
                         <button class="btn btn-sm btn-outline-info action-detail" data-type="sale" data-id="${sale.id}" title="Detalhes"><i class="bi bi-eye"></i></button>
-                        ${(utils.hasPermission(['admin', 'gerente']) || (utils.hasPermission(['vendedor']) && sale.userId === state.user.id)) ? // Admin/gerente editam todos; vendedor edita os seus
+                        ${(utils.hasPermission(['admin', 'gerente']) || (utils.hasPermission(['vendedor']) && sale.userId === state.user.id)) ?
                             `<button class="btn btn-sm btn-outline-primary action-edit" data-type="sale" data-id="${sale.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
                         ${utils.hasPermission(['admin', 'gerente']) ?
                             `<button class="btn btn-sm btn-outline-danger action-delete" data-type="sale" data-id="${sale.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
@@ -1001,6 +1105,91 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div id="paginationUsers"></div>`;
             
             ui.renderPagination('users', total, state.users.page, state.users.limit);
+        },
+        renderSuppliers: () => {
+            const { data, total } = state.suppliers;
+            const section = document.getElementById('suppliersSection');
+            const tableRows = data.map(supplier => `
+                <tr>
+                    <td>${supplier.id}</td>
+                    <td><strong>${supplier.nome}</strong></td>
+                    <td>${supplier.contato || 'N/A'}</td>
+                    <td>${supplier.email || 'N/A'}</td>
+                    <td>${supplier.cnpj || 'N/A'}</td>
+                    <td>${supplier.endereco || 'N/A'}</td>
+                    <td>
+                        ${utils.hasPermission(['admin', 'gerente']) ?
+                            `<button class="btn btn-sm btn-outline-primary action-edit" data-type="supplier" data-id="${supplier.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
+                        ${utils.hasPermission(['admin', 'gerente']) ?
+                            `<button class="btn btn-sm btn-outline-danger action-delete" data-type="supplier" data-id="${supplier.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
+                    </td>
+                </tr>`).join('');
+            
+            let newSupplierButtonHtml = '';
+            if (utils.hasPermission(['admin', 'gerente'])) {
+                newSupplierButtonHtml = `<button class="btn btn-primary" id="btnNewSupplier"><i class="bi bi-plus-circle me-2"></i>Novo Fornecedor</button>`;
+            }
+
+            section.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3><i class="bi bi-truck me-2"></i>Fornecedores (${total})</h3>
+                    <div>
+                        ${newSupplierButtonHtml}
+                    </div>
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control search-input" data-type="suppliers" placeholder="Buscar por nome, contato, email ou CNPJ..." value="${state.suppliers.query}">
+                </div>
+                <div class="table-responsive"><table class="table table-hover"><thead><tr><th>ID</th><th>Nome</th><th>Contato</th><th>Email</th><th>CNPJ</th><th>Endereço</th><th>Ações</th></tr></thead><tbody>
+                    ${data.length > 0 ? tableRows : '<tr><td colspan="7" class="text-center">Nenhum fornecedor encontrado.</td></tr>'}
+                </tbody></table></div>
+                <div id="paginationSuppliers"></div>`;
+            
+            ui.renderPagination('suppliers', total, state.suppliers.page, state.suppliers.limit);
+        },
+        // NOVO: Renderização da seção de Compras
+        renderPurchases: () => {
+            const { data, total } = state.purchases;
+            const section = document.getElementById('purchasesSection');
+            const tableRows = data.map(purchase => `
+                <tr>
+                    <td>${purchase.id}</td>
+                    <td><strong>${purchase.supplier?.nome || 'N/A'}</strong></td>
+                    <td>${utils.formatDate(purchase.dataCompra)}</td>
+                    <td>${utils.formatCurrency(purchase.valorTotal)}</td>
+                    <td><span class="badge bg-secondary">${purchase.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-info action-detail" data-type="purchase" data-id="${purchase.id}" title="Detalhes"><i class="bi bi-eye"></i></button>
+                        ${utils.hasPermission(['admin', 'gerente']) ? // Apenas admin e gerente podem editar
+                            `<button class="btn btn-sm btn-outline-primary action-edit" data-type="purchase" data-id="${purchase.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
+                        ${utils.hasPermission(['admin', 'gerente']) ? // Apenas admin e gerente podem excluir
+                            `<button class="btn btn-sm btn-outline-danger action-delete" data-type="purchase" data-id="${purchase.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
+                    </td>
+                </tr>`).join('');
+            
+            let newPurchaseButtonHtml = '';
+            if (utils.hasPermission(['admin', 'gerente'])) { // Apenas admin e gerente podem criar novas compras
+                newPurchaseButtonHtml = `<button class="btn btn-primary" id="btnNewPurchase"><i class="bi bi-plus-circle me-2"></i>Nova Compra</button>`;
+            }
+
+            section.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3><i class="bi bi-bag me-2"></i>Compras (${total})</h3>
+                    <div>
+                        ${newPurchaseButtonHtml}
+                    </div>
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control search-input" data-type="purchases" placeholder="Buscar por nome do fornecedor..." value="${state.purchases.query}">
+                </div>
+                <div class="table-responsive"><table class="table table-hover"><thead><tr><th>ID</th><th>Fornecedor</th><th>Data Compra</th><th>Valor Total</th><th>Status</th><th>Ações</th></tr></thead><tbody>
+                    ${data.length > 0 ? tableRows : '<tr><td colspan="6" class="text-center">Nenhuma compra encontrada.</td></tr>'}
+                </tbody></table></div>
+                <div id="paginationPurchases"></div>`;
+            
+            ui.renderPagination('purchases', total, state.purchases.page, state.purchases.limit);
         }
     };
 
@@ -1188,6 +1377,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (type === 'sales') handlers.loadSales(true);
             if (type === 'products') handlers.loadProducts(true);
             if (type === 'users') handlers.loadUsers(true);
+            if (type === 'suppliers') handlers.loadSuppliers(true);
+            if (type === 'purchases') handlers.loadPurchases(true); // NOVO: Busca de compras
         },
         handlePageChange: (type, newPage) => {
             state[type].page = newPage;
@@ -1195,6 +1386,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (type === 'sales') handlers.loadSales(true);
             if (type === 'products') handlers.loadProducts(true);
             if (type === 'users') handlers.loadUsers(true);
+            if (type === 'suppliers') handlers.loadSuppliers(true);
+            if (type === 'purchases') handlers.loadPurchases(true); // NOVO: Paginação de compras
         },
         openClientModal: async (clientId = null) => {
             if (clientId && !utils.hasPermission(['admin', 'gerente'])) {
@@ -1349,21 +1542,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     modalLabel.textContent = 'Editar Venda';
                     const sale = await api.getSaleById(saleId);
 
-                    // Lógica de permissão refinada para edição de vendas existentes
-                    // Gerente e Admin podem editar qualquer venda.
-                    // Vendedor só pode editar suas próprias vendas.
                     if (!utils.hasPermission(['admin', 'gerente'])) { 
                         if (utils.hasPermission(['vendedor']) && sale.userId !== state.user.id) {
                             utils.showToast('Você não tem permissão para editar esta venda.', 'error');
-                            return; // Impede a abertura do modal se não tiver permissão
-                        } else if (!utils.hasPermission(['vendedor'])) { // Se não for admin, gerente, E não for vendedor ou não for o dono da venda
+                            return;
+                        } else if (!utils.hasPermission(['vendedor'])) {
                              utils.showToast('Você não tem permissão para editar vendas.', 'error');
                              return;
                         }
                     }
                     
                     document.getElementById('saleId').value = sale.id;
-                    // Adicionado verificação para dataVencimento antes de usar split
                     document.getElementById('saleDueDate').value = sale.dataVencimento ? sale.dataVencimento.split('T')[0] : '';
                     
                     if (sale.products && sale.products.length > 0) {
@@ -1376,18 +1565,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         }));
                         utils.renderSelectedProductsList();
                     }
-                    // Define o cliente no Select2 se estiver usando jQuery e Select2
                     $('#saleClient').val(sale.clientId).trigger('change');
-                } else { // Criando uma nova venda
+                } else {
                     if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
                         utils.showToast('Você não tem permissão para criar vendas.', 'error');
-                        return; // Impede a abertura do modal se não tiver permissão
+                        return;
                     }
                 }
                 
                 state.bootstrapSaleModal.show();
             } catch(error) {
-                // Aqui capturamos erros da requisição API.getSaleById(saleId)
                 utils.showToast(error.message, 'error');
             }
         },
@@ -1817,7 +2004,386 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     await api.deleteUser(userId);
                     utils.showToast('Usuário excluído!', 'success');
-                    handlers.loadUsers(true);
+                    setTimeout(() => { // Pequeno delay para o modal fechar suavemente
+                        handlers.loadUsers(true);
+                    }, 50);
+                } catch (error) {
+                    utils.showToast(error.message, 'error');
+                }
+            });
+        },
+        loadSuppliers: async (force = false) => {
+            if (!utils.hasPermission(['admin', 'gerente'])) {
+                utils.showToast('Você não tem permissão para ver os fornecedores.', 'error');
+                document.getElementById('suppliersSection').innerHTML = `
+                    <div class="alert alert-danger text-center" role="alert">
+                        <i class="bi bi-lock-fill me-2"></i>Acesso Negado: Você não tem permissão para visualizar esta seção.
+                    </div>
+                `;
+                return;
+            }
+            if (state.suppliers.loaded && !force) {
+                ui.renderSuppliers();
+                return;
+            }
+            try {
+                const { page, query, limit } = state.suppliers;
+                const apiData = await api.getSuppliers(page, query, limit);
+                state.suppliers.data = apiData.data;
+                state.suppliers.total = apiData.total;
+                state.suppliers.loaded = true;
+                ui.renderSuppliers();
+            } catch (error) { utils.showToast(error.message, 'error'); }
+        },
+        openSupplierModal: async (supplierId = null) => {
+            if (!utils.hasPermission(['admin', 'gerente'])) {
+                utils.showToast('Você não tem permissão para gerenciar fornecedores.', 'error');
+                return;
+            }
+            dom.supplierForm.reset();
+            dom.supplierIdInput.value = '';
+            dom.supplierEmailInput.removeAttribute('required');
+
+            if (supplierId) {
+                dom.supplierModalLabel.textContent = 'Editar Fornecedor';
+                try {
+                    const supplier = await api.getSupplierById(supplierId);
+                    dom.supplierIdInput.value = supplier.id;
+                    dom.supplierNameInput.value = supplier.nome;
+                    dom.supplierContactInput.value = supplier.contato || '';
+                    dom.supplierEmailInput.value = supplier.email || '';
+                    dom.supplierCnpjInput.value = supplier.cnpj || '';
+                    dom.supplierAddressInput.value = supplier.endereco || '';
+                } catch (error) {
+                    utils.showToast(error.message, 'error');
+                    return;
+                }
+            } else {
+                dom.supplierModalLabel.textContent = 'Novo Fornecedor';
+            }
+            state.bootstrapSupplierModal.show();
+        },
+        handleSaveSupplier: async (e) => {
+            e.preventDefault();
+            if (!utils.hasPermission(['admin', 'gerente'])) {
+                utils.showToast('Você não tem permissão para salvar fornecedores.', 'error');
+                return;
+            }
+
+            const id = dom.supplierIdInput.value;
+            const data = {
+                nome: dom.supplierNameInput.value,
+                contato: dom.supplierContactInput.value || null,
+                email: dom.supplierEmailInput.value || null,
+                cnpj: dom.supplierCnpjInput.value || null,
+                endereco: dom.supplierAddressInput.value || null,
+            };
+
+            try {
+                if (id) {
+                    await api.updateSupplier(id, data);
+                    utils.showToast('Fornecedor atualizado!', 'success');
+                } else {
+                    await api.createSupplier(data);
+                    utils.showToast('Fornecedor criado!', 'success');
+                }
+                state.bootstrapSupplierModal.hide();
+                handlers.loadSuppliers(true);
+            } catch (error) {
+                utils.showToast(error.message, 'error');
+            }
+        },
+        handleDeleteSupplier: async (supplierId) => {
+            if (!utils.hasPermission(['admin', 'gerente'])) {
+                utils.showToast('Você não tem permissão para excluir fornecedores.', 'error');
+                return;
+            }
+            utils.showConfirm('Deseja realmente excluir este fornecedor?', async () => {
+                try {
+                    await api.deleteSupplier(supplierId); 
+                    utils.showToast('Fornecedor excluído!', 'success');
+                    setTimeout(() => { // Pequeno delay para garantir que o modal de confirmação do Bootstrap tenha tempo de fechar
+                        handlers.loadSuppliers(true);
+                    }, 50); 
+                } catch (error) {
+                    utils.showToast(error.message, 'error');
+                }
+            });
+        },
+        // NOVO: Handlers para gestão de Compras
+        loadPurchases: async (force = false) => {
+            if (!utils.hasPermission(['admin', 'gerente'])) { // Apenas admin e gerente podem ver compras
+                utils.showToast('Você não tem permissão para ver as compras.', 'error');
+                document.getElementById('purchasesSection').innerHTML = `
+                    <div class="alert alert-danger text-center" role="alert">
+                        <i class="bi bi-lock-fill me-2"></i>Acesso Negado: Você não tem permissão para visualizar esta seção.
+                    </div>
+                `;
+                return;
+            }
+            if (state.purchases.loaded && !force) {
+                ui.renderPurchases();
+                return;
+            }
+            try {
+                const { page, query, limit } = state.purchases;
+                const apiData = await api.getPurchases(page, query, limit);
+                state.purchases.data = apiData.data;
+                state.purchases.total = apiData.total;
+                state.purchases.loaded = true;
+                ui.renderPurchases();
+            } catch (error) { utils.showToast(error.message, 'error'); }
+        },
+        openPurchaseModal: async (purchaseId = null) => {
+            if (!utils.hasPermission(['admin', 'gerente'])) { // Apenas admin e gerente podem gerenciar compras
+                utils.showToast('Você não tem permissão para gerenciar compras.', 'error');
+                return;
+            }
+            dom.purchaseForm.reset();
+            dom.purchaseIdInput.value = '';
+            state.selectedPurchaseProducts = []; // Limpa produtos da compra anterior
+            utils.renderSelectedPurchaseProductsList();
+            dom.purchaseProductDetailsDisplay.innerHTML = '';
+            dom.purchaseProductQuantityInput.value = '1';
+            dom.purchaseProductCostInput.value = '';
+
+            const modalLabel = document.getElementById('purchaseModalLabel');
+            const supplierSelect = dom.purchaseSupplierSelect;
+            supplierSelect.empty().append($('<option value="">Carregando fornecedores...</option>')).select2({
+                placeholder: "Buscar fornecedor...",
+                dropdownParent: $('#purchaseModal'),
+                data: [], // Será preenchido após a requisição
+            });
+
+            const productSelect = dom.purchaseProductSelect;
+            productSelect.empty().append($('<option value="">Selecione um produto</option>')).select2({
+                placeholder: "Buscar produto...",
+                dropdownParent: $('#purchaseModal'),
+                templateResult: (product) => {
+                    if (!product.id) { return product.text; }
+                    const p = state.availableProductsForPurchase.find(item => String(item.id) === String(product.id));
+                    if (!p) return product.text;
+                    return $(`<span>${p.nome} (Estoque atual: ${p.estoque}, Preço venda: ${utils.formatCurrency(p.precoVenda)})</span>`);
+                },
+                templateSelection: (product) => {
+                    if (!product.id) { return product.text; }
+                    const p = state.availableProductsForPurchase.find(item => String(item.id) === String(product.id));
+                    if (!p) return product.text;
+                    return p.nome;
+                },
+                data: [], // Será preenchido após a requisição
+            });
+
+            try {
+                // Carregar fornecedores
+                const { data: suppliers } = await api.getSuppliers(1, '', 1000);
+                state.availableSuppliers = suppliers;
+                supplierSelect.empty().append($('<option value="">Selecione um fornecedor</option>')).select2({
+                    data: state.availableSuppliers.map(s => ({ id: String(s.id), text: s.nome })),
+                    placeholder: "Buscar fornecedor...",
+                    dropdownParent: $('#purchaseModal'),
+                });
+
+                // Carregar produtos (todos os produtos para compra)
+                const { data: products } = await api.getProducts(1, '', 1000);
+                state.availableProductsForPurchase = products;
+                productSelect.empty().append($('<option value="">Selecione um produto</option>')).select2({
+                    data: state.availableProductsForPurchase.map(p => ({ id: String(p.id), text: p.nome })),
+                    placeholder: "Buscar produto...",
+                    dropdownParent: $('#purchaseModal'),
+                    templateResult: (productData) => {
+                        if (!productData.id) { return productData.text; }
+                        const product = state.availableProductsForPurchase.find(item => String(item.id) === String(productData.id));
+                        if (!product) return productData.text;
+                        return $(`<span>${product.nome} (Estoque atual: ${product.estoque}, Preço venda: ${utils.formatCurrency(product.precoVenda)})</span>`);
+                    },
+                    templateSelection: (productData) => {
+                        if (!productData.id) { return productData.text; }
+                        const product = state.availableProductsForPurchase.find(item => String(item.id) === String(productData.id));
+                        if (!product) return productData.text;
+                        return product.nome;
+                    }
+                });
+
+                // Listener para exibir detalhes do produto selecionado no modal de compra
+                productSelect.off('select2:select').on('select2:select', (e) => {
+                    const productId = String(e.params.data.id);
+                    const product = state.availableProductsForPurchase.find(p => String(p.id) === productId);
+                    if (product) {
+                        state.currentSelectedProductForPurchase = product;
+                        dom.purchaseProductDetailsDisplay.innerHTML = `Estoque atual: ${product.estoque}, Preço de Venda: ${utils.formatCurrency(product.precoVenda)}`;
+                        dom.purchaseProductCostInput.value = product.precoCusto ? product.precoCusto.toFixed(2) : product.precoVenda.toFixed(2); // Sugere o último custo ou preço de venda
+                        dom.purchaseProductQuantityInput.value = '1';
+                    } else {
+                        state.currentSelectedProductForPurchase = null;
+                        dom.purchaseProductDetailsDisplay.innerHTML = '';
+                        dom.purchaseProductCostInput.value = '';
+                    }
+                });
+                productSelect.off('select2:unselect').on('select2:unselect', () => {
+                    state.currentSelectedProductForPurchase = null;
+                    dom.purchaseProductDetailsDisplay.innerHTML = '';
+                    dom.purchaseProductCostInput.value = '';
+                });
+
+
+                modalLabel.textContent = 'Nova Compra';
+                if (purchaseId) {
+                    modalLabel.textContent = 'Editar Compra';
+                    const purchase = await api.getPurchaseById(purchaseId);
+
+                    // Permissões para editar compra (apenas admin/gerente podem editar qualquer compra)
+                    if (!utils.hasPermission(['admin', 'gerente'])) {
+                        utils.showToast('Você não tem permissão para editar esta compra.', 'error');
+                        return;
+                    }
+                    
+                    dom.purchaseIdInput.value = purchase.id;
+                    dom.purchaseDateInput.value = purchase.dataCompra ? new Date(purchase.dataCompra).toISOString().split('T')[0] : '';
+                    dom.purchaseStatusSelect.value = purchase.status;
+                    dom.purchaseObservationsInput.value = purchase.observacoes || '';
+                    supplierSelect.val(purchase.supplierId).trigger('change'); // Seleciona o fornecedor
+
+                    if (purchase.products && purchase.products.length > 0) {
+                        state.selectedPurchaseProducts = purchase.products.map(p => ({
+                            id: p.id,
+                            nome: p.nome,
+                            precoCustoUnitario: p.PurchaseProduct.precoCustoUnitario,
+                            quantidade: p.PurchaseProduct.quantidade,
+                        }));
+                        utils.renderSelectedPurchaseProductsList();
+                    }
+                } else {
+                    dom.purchaseDateInput.valueAsDate = new Date(); // Define a data atual para novas compras
+                }
+                
+                state.bootstrapPurchaseModal.show();
+            } catch(error) {
+                utils.showToast(error.message, 'error');
+            }
+        },
+        handleAddPurchaseProduct: () => {
+            if (!utils.hasPermission(['admin', 'gerente'])) { // Apenas admin e gerente podem adicionar produtos a compras
+                utils.showToast('Você não tem permissão para adicionar produtos a compras.', 'error');
+                return;
+            }
+
+            const productId = dom.purchaseProductSelect.val();
+            const quantity = parseInt(dom.purchaseProductQuantityInput.value);
+            const unitCost = parseFloat(dom.purchaseProductCostInput.value);
+
+            if (!productId) {
+                utils.showToast('Selecione um produto.', 'error');
+                return;
+            }
+            if (isNaN(quantity) || quantity <= 0) {
+                utils.showToast('Quantidade inválida.', 'error');
+                return;
+            }
+            if (isNaN(unitCost) || unitCost < 0) {
+                utils.showToast('Preço de custo unitário inválido.', 'error');
+                return;
+            }
+
+            const product = state.availableProductsForPurchase.find(p => String(p.id) === productId);
+            if (!product) {
+                utils.showToast('Produto não encontrado.', 'error');
+                return;
+            }
+
+            const existingItem = state.selectedPurchaseProducts.find(item => String(item.id) === productId);
+            if (existingItem) {
+                existingItem.quantidade += quantity;
+                existingItem.precoCustoUnitario = unitCost; // Atualiza o preço de custo unitário para o último adicionado
+            } else {
+                state.selectedPurchaseProducts.push({
+                    id: product.id,
+                    nome: product.nome,
+                    precoCustoUnitario: unitCost,
+                    quantidade: quantity,
+                });
+            }
+            utils.renderSelectedPurchaseProductsList();
+            dom.purchaseProductSelect.val(null).trigger('change'); // Limpa a seleção do produto
+            dom.purchaseProductQuantityInput.value = '1';
+            dom.purchaseProductCostInput.value = '';
+            dom.purchaseProductDetailsDisplay.innerHTML = '';
+            state.currentSelectedProductForPurchase = null;
+        },
+        handleRemovePurchaseProduct: (index) => {
+            if (!utils.hasPermission(['admin', 'gerente'])) { // Apenas admin e gerente podem remover produtos de compras
+                utils.showToast('Você não tem permissão para remover produtos de compras.', 'error');
+                return;
+            }
+            state.selectedPurchaseProducts.splice(index, 1);
+            utils.renderSelectedPurchaseProductsList();
+        },
+        handleSavePurchase: async (e) => {
+            e.preventDefault();
+            if (!utils.hasPermission(['admin', 'gerente'])) { // Apenas admin e gerente podem salvar compras
+                utils.showToast('Você não tem permissão para salvar compras.', 'error');
+                return;
+            }
+
+            const id = dom.purchaseIdInput.value;
+            const supplierId = dom.purchaseSupplierSelect.val();
+            const dataCompra = dom.purchaseDateInput.value;
+            const valorTotal = utils.calculatePurchaseTotal();
+            const status = dom.purchaseStatusSelect.value;
+            const observacoes = dom.purchaseObservationsInput.value;
+
+            if (!supplierId) {
+                utils.showToast('Selecione um fornecedor para a compra.', 'error');
+                return;
+            }
+            if (state.selectedPurchaseProducts.length === 0) {
+                utils.showToast('Adicione pelo menos um produto à compra.', 'error');
+                return;
+            }
+            
+            const purchaseData = {
+                supplierId: supplierId,
+                dataCompra: dataCompra,
+                valorTotal: valorTotal,
+                status: status,
+                observacoes: observacoes,
+                products: state.selectedPurchaseProducts.map(item => ({
+                    productId: item.id,
+                    quantidade: item.quantidade,
+                    precoCustoUnitario: item.precoCustoUnitario
+                }))
+            };
+
+            try {
+                if (id) {
+                    await api.updatePurchase(id, purchaseData);
+                    utils.showToast('Compra atualizada!', 'success');
+                } else {
+                    await api.createPurchase(purchaseData);
+                    utils.showToast('Compra registrada com sucesso!', 'success');
+                }
+                state.bootstrapPurchaseModal.hide();
+                handlers.loadPurchases(true); // Recarrega a lista de compras
+                handlers.loadProducts(true); // Recarrega a lista de produtos (estoque pode ter mudado)
+                handlers.loadDashboard(); // Recarrega o dashboard (KPIs podem ter mudado)
+            } catch (error) {
+                utils.showToast(error.message, 'error');
+            }
+        },
+        handleDeletePurchase: async (purchaseId) => {
+            if (!utils.hasPermission(['admin', 'gerente'])) { // Apenas admin e gerente podem deletar compras
+                utils.showToast('Você não tem permissão para excluir compras.', 'error');
+                return;
+            }
+            utils.showConfirm('Deseja realmente excluir esta compra? O estoque dos produtos será revertido.', async () => {
+                try {
+                    await api.deletePurchase(purchaseId);
+                    utils.showToast('Compra excluída e estoque revertido!', 'success');
+                    setTimeout(() => { // Pequeno delay para o modal fechar suavemente
+                        handlers.loadPurchases(true); // Recarrega a lista de compras
+                        handlers.loadProducts(true); // Recarrega a lista de produtos (estoque pode ter mudado)
+                        handlers.loadDashboard(); // Recarrega o dashboard (KPIs podem ter mudado)
+                    }, 50);
                 } catch (error) {
                     utils.showToast(error.message, 'error');
                 }
@@ -1874,6 +2440,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     case 'usersSection':
                         if (!utils.hasPermission(['admin'])) hasPermission = false;
                         break;
+                    case 'suppliersSection':
+                    case 'purchasesSection': // NOVO: Permissão para acessar seção de compras
+                        if (!utils.hasPermission(['admin', 'gerente'])) hasPermission = false;
+                        break;
                     case 'logoutSection':
                         break;
                     default:
@@ -1898,6 +2468,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 if (sectionId === 'productsSection') handlers.loadProducts();
                 if (sectionId === 'usersSection') handlers.loadUsers();
+                if (sectionId === 'suppliersSection') handlers.loadSuppliers();
+                if (sectionId === 'purchasesSection') handlers.loadPurchases(); // NOVO: Carregar compras
             });
         });
 
@@ -1914,6 +2486,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (button.classList.contains('btn-remove-product')) {
                     const index = parseInt(button.dataset.index);
                     handlers.handleRemoveProductFromSale(index);
+                }
+                // NOVO: Botão para remover produto da compra
+                if (button.classList.contains('btn-remove-purchase-product')) {
+                    const index = parseInt(button.dataset.index);
+                    handlers.handleRemovePurchaseProduct(index);
                 }
                 if (button.id === 'btnShareWhatsapp') {
                     const saleId = button.dataset.saleId;
@@ -1958,6 +2535,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 if (button.id === 'btnNewUser') handlers.openUserModal();
+                if (button.id === 'btnNewSupplier') handlers.openSupplierModal();
+                if (button.id === 'btnNewPurchase') handlers.openPurchaseModal(); // NOVO: Botão para nova compra
+                if (button.id === 'btnAddPurchaseProduct') handlers.handleAddPurchaseProduct(); // NOVO: Adicionar produto à compra
 
                 const { type, id } = button.dataset;
                 if (button.classList.contains('action-delete')) {
@@ -1965,16 +2545,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (type === 'sale') handlers.handleDeleteSale(id);
                     if (type === 'product') handlers.handleDeleteProduct(id);
                     if (type === 'user') handlers.handleDeleteUser(id);
+                    if (type === 'supplier') handlers.handleDeleteSupplier(id);
+                    if (type === 'purchase') handlers.handleDeletePurchase(id); // NOVO: Deletar compra
                 }
                 if (button.classList.contains('action-detail')) {
                     if (type === 'sale') handlers.loadSaleDetail(id);
+                    // NOVO: Detalhe da compra (se necessário, pode ser uma modal ou seção diferente)
+                    // if (type === 'purchase') handlers.loadPurchaseDetail(id);
                 }
-                // Adicionado a chamada para openSaleModal aqui
                 if(button.classList.contains('action-edit')) {
                     if (type === 'client') handlers.openClientModal(id);
                     if (type === 'product') handlers.openProductModal(id);
-                    if (type === 'sale') handlers.openSaleModal(id); // <--- Chama o openSaleModal para edição
+                    if (type === 'sale') handlers.openSaleModal(id);
                     if (type === 'user') handlers.openUserModal(id);
+                    if (type === 'supplier') handlers.openSupplierModal(id);
+                    if (type === 'purchase') handlers.openPurchaseModal(id); // NOVO: Editar compra
                 }
             }
 
@@ -2000,6 +2585,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (dom.userForm) {
             dom.userForm.addEventListener('submit', handlers.handleSaveUser);
+        }
+        if (dom.supplierForm) {
+            dom.supplierForm.addEventListener('submit', handlers.handleSaveSupplier);
+        }
+        if (dom.purchaseForm) { // NOVO: Event listener para o formulário de compra
+            dom.purchaseForm.addEventListener('submit', handlers.handleSavePurchase);
         }
 
         if (dom.reportPeriodForm) {
@@ -2050,7 +2641,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (dom.confirmModalButton) {
             dom.confirmModalButton.addEventListener('click', () => {
                 if (state.confirmAction) state.confirmAction();
-                state.bootstrapConfirmModal.hide();
+                setTimeout(() => {
+                    state.bootstrapConfirmModal.hide();
+                }, 50); 
             });
         }
 
