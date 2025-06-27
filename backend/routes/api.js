@@ -76,7 +76,7 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
 
         // NOVO: KPIs de Compras
         // Contas a Pagar (todas as compras)
-        const totalPurchasesAmount = await Purchase.sum('valorTotal', { where: {} }) || 0; // Contas a pagar não são por vendedor
+        const totalPurchasesAmount = await Purchase.sum('valorTotal', { where: { status: 'Pendente' } }) || 0; // Contas a pagar não são por vendedor
         // Contas a Pagar Vencidas (status 'Pendente' e data de compra no passado, ou vencimento explícito se adicionarmos)
         const overduePurchases = await Purchase.sum('valorTotal', {
             where: {
@@ -109,6 +109,83 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
         res.status(500).json({ message: error.message });
     }
 });
+
+// --- NOVO: ROTAS PARA VENCIMENTOS DETALHADOS NO DASHBOARD ---
+router.get('/dashboard/due-dates', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
+    console.log(`[API Route Log] ${new Date().toISOString()} - Due Dates report route accessed by ${req.user.username}.`);
+    try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Começo do dia
+        
+        const thirtyDaysFromNow = new Date(); 
+        thirtyDaysFromNow.setDate(today.getDate() + 30);
+        thirtyDaysFromNow.setHours(23, 59, 59, 999); // Fim do dia
+
+        let saleWhereClause = { status: 'Pendente' };
+        if (req.user.role === 'vendedor') {
+            saleWhereClause.userId = req.user.id;
+        }
+
+        let purchaseWhereClause = { status: 'Pendente' };
+
+        // Contas a Receber Vencidas (Sales)
+        const overdueReceivables = await Sale.findAll({
+            where: {
+                ...saleWhereClause,
+                dataVencimento: { [Op.lt]: today }
+            },
+            include: [{ model: Client, as: 'client', attributes: ['nome'] }],
+            order: [['dataVencimento', 'ASC']]
+        });
+
+        // Contas a Receber Próximas (Sales - próximos 30 dias)
+        const upcomingReceivables = await Sale.findAll({
+            where: {
+                ...saleWhereClause,
+                dataVencimento: { [Op.between]: [today, thirtyDaysFromNow] }
+            },
+            include: [{ model: Client, as: 'client', attributes: ['nome'] }],
+            order: [['dataVencimento', 'ASC']]
+        });
+
+        // Contas a Pagar Vencidas (Purchases) - Apenas para Admin/Gerente
+        let overduePayables = [];
+        // Contas a Pagar Próximas (Purchases - próximos 30 dias) - Apenas para Admin/Gerente
+        let upcomingPayables = [];
+
+        if (req.user.role === 'admin' || req.user.role === 'gerente') {
+            overduePayables = await Purchase.findAll({
+                where: {
+                    ...purchaseWhereClause,
+                    dataCompra: { [Op.lt]: today } 
+                },
+                include: [{ model: Supplier, as: 'supplier', attributes: ['nome'] }],
+                order: [['dataCompra', 'ASC']]
+            });
+
+            upcomingPayables = await Purchase.findAll({
+                where: {
+                    ...purchaseWhereClause,
+                    dataCompra: { [Op.between]: [today, thirtyDaysFromNow] } 
+                },
+                include: [{ model: Supplier, as: 'supplier', attributes: ['nome'] }],
+                order: [['dataCompra', 'ASC']]
+            });
+        }
+        
+        res.json({
+            overdueReceivables,
+            upcomingReceivables,
+            overduePayables,
+            upcomingPayables
+        });
+
+    } catch (error) {
+        console.error('❌ ERRO AO GERAR RELATÓRIO DE VENCIMENTOS DETALHADOS:', error);
+        res.status(500).json({ message: 'Erro ao gerar o relatório de vencimentos detalhados.' });
+    }
+});
+
 
 // --- ROTAS DE CLIENTES ---
 router.get('/clients/export-csv', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
@@ -1072,6 +1149,175 @@ router.delete('/purchases/:id', authorizeRole(['admin', 'gerente']), async (req,
         }
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+});
+
+// --- ROTAS DE RELATÓRIOS FINANCEIROS ---
+router.get('/finance/cash-flow', authorizeRole(['admin', 'gerente']), async (req, res) => {
+    console.log(`[API Route Log] ${new Date().toISOString()} - Cash Flow report route accessed by ${req.user.username}.`);
+    try {
+        let { startDate, endDate } = req.query;
+
+        if (!startDate || !endDate) {
+            return res.status(400).json({ message: 'Parâmetros startDate e endDate são obrigatórios.' });
+        }
+
+        // Ajustar as datas para cobrir o dia inteiro
+        const start = new Date(startDate + 'T00:00:00.000Z');
+        const end = new Date(endDate + 'T23:59:59.999Z');
+
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            return res.status(400).json({ message: 'Formato de data inválido. Use AAAA-MM-DD.' });
+        }
+
+        // Calcular Entradas (Recebimentos de Vendas)
+        // Somar o valor dos pagamentos de vendas dentro do período
+        const totalReceipts = await Payment.sum('valor', {
+            where: {
+                dataPagamento: {
+                    [Op.between]: [start, end]
+                }
+            }
+        }) || 0;
+
+        // Calcular Saídas (Pagamentos de Compras)
+        // Somar o valor total das compras 'Concluídas' dentro do período
+        const totalPayments = await Purchase.sum('valorTotal', {
+            where: {
+                dataCompra: {
+                    [Op.between]: [start, end]
+                },
+                status: 'Concluída' // Considera apenas compras que foram concluídas (pagas)
+            }
+        }) || 0;
+
+        const netCashFlow = totalReceipts - totalPayments;
+
+        res.json({
+            startDate: startDate,
+            endDate: endDate,
+            totalReceipts: totalReceipts,
+            totalPayments: totalPayments,
+            netCashFlow: netCashFlow
+        });
+
+    } catch (error) {
+        console.error('❌ ERRO AO GERAR RELATÓRIO DE FLUXO DE CAIXA:', error);
+        res.status(500).json({ message: 'Erro ao gerar o relatório de fluxo de caixa.' });
+    }
+});
+
+// NOVO: Endpoint para exportar CSV Contábil Consolidado
+router.get('/finance/accounting-csv', authorizeRole(['admin', 'gerente']), async (req, res) => {
+    console.log(`[API Route Log] ${new Date().toISOString()} - Accounting CSV export route accessed by ${req.user.username}.`);
+    try {
+        let { startDate, endDate } = req.query;
+
+        // Se datas não forem fornecidas, define um período padrão (ex: último mês ou todo o histórico)
+        if (!startDate || !endDate) {
+            // Exemplo: Últimos 30 dias se não especificado
+            const today = new Date();
+            startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30).toISOString().split('T')[0];
+            endDate = today.toISOString().split('T')[0];
+        }
+
+        const start = new Date(startDate + 'T00:00:00.000Z');
+        const end = new Date(endDate + 'T23:59:59.999Z');
+
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            return res.status(400).json({ message: 'Formato de data inválido. Use AAAA-MM-DD.' });
+        }
+
+        // Buscar todos os pagamentos de vendas (entradas)
+        const payments = await Payment.findAll({
+            where: {
+                dataPagamento: { [Op.between]: [start, end] }
+            },
+            include: [{ model: Sale, as: 'sale', include: [{ model: Client, as: 'client', attributes: ['nome'] }] }]
+        });
+
+        // Buscar todas as compras (saídas) que estão 'Concluídas'
+        const purchases = await Purchase.findAll({
+            where: {
+                dataCompra: { [Op.between]: [start, end] },
+                status: 'Concluída' 
+            },
+            include: [{ model: Supplier, as: 'supplier', attributes: ['nome'] }]
+        });
+
+        let transactions = [];
+
+        // Adicionar pagamentos (entradas)
+        payments.forEach(p => {
+            transactions.push({
+                date: p.dataPagamento,
+                type: 'ENTRADA',
+                description: `Pagamento de Venda #${p.saleId}`,
+                amount: parseFloat(p.valor),
+                entity: p.sale && p.sale.client ? p.sale.client.nome : 'N/A',
+                payment_method: p.formaPagamento,
+                ref_id: p.saleId
+            });
+        });
+
+        // Adicionar compras (saídas)
+        purchases.forEach(pr => {
+            transactions.push({
+                date: pr.dataCompra,
+                type: 'SAÍDA',
+                description: `Pagamento de Compra #${pr.id}`,
+                amount: parseFloat(pr.valorTotal),
+                entity: pr.supplier ? pr.supplier.nome : 'N/A',
+                payment_method: 'N/A', // O modelo Purchase não tem forma de pagamento detalhada
+                ref_id: pr.id
+            });
+        });
+
+        // Ordenar transações por data cronologicamente
+        transactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        // Cabeçalhos do CSV
+        const headers = [
+            'Data', 
+            'Tipo de Movimento', 
+            'Descricao', 
+            'Valor', 
+            'Origem/Destino', 
+            'Forma de Pagamento/Recebimento', 
+            'ID de Referencia'
+        ];
+
+        // Linhas do CSV
+        const csvRows = transactions.map(t => {
+            const escapeCsv = (value) => {
+                if (value === null || value === undefined) return '';
+                const stringValue = String(value).replace(/"/g, '""');
+                if (stringValue.includes(',') || stringValue.includes('\n') || stringValue.includes('"') || stringValue.includes(';')) { // Inclui ; para CSV separado por ;
+                    return `"${stringValue}"`;
+                }
+                return stringValue;
+            };
+
+            return [
+                escapeCsv(new Date(t.date).toLocaleDateString('pt-BR')),
+                escapeCsv(t.type),
+                escapeCsv(t.description),
+                escapeCsv(t.amount.toFixed(2).replace('.', ',')), // Formato monetário com vírgula para decimal
+                escapeCsv(t.entity),
+                escapeCsv(t.payment_method),
+                escapeCsv(t.ref_id)
+            ].join(';'); // Separador por ponto e vírgula
+        });
+
+        const csvContent = [headers.join(';'), ...csvRows].join('\n');
+
+        res.setHeader('Content-Type', 'text/csv; charset=UTF-8');
+        res.setHeader('Content-Disposition', `attachment; filename="relatorio_contabil_${startDate}_${endDate}.csv"`);
+        res.status(200).send(csvContent);
+
+    } catch (error) {
+        console.error('❌ ERRO AO GERAR CSV CONTÁBIL:', error);
+        res.status(500).json({ message: 'Erro ao gerar o relatório CSV contábil.' });
     }
 });
 

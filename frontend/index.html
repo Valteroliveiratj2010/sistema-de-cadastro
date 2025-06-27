@@ -66,6 +66,55 @@
                         <div id="reportResults">
                             <p class="text-center text-muted">Selecione um período e clique em "Gerar Relatório" para ver os resultados.</p>
                         </div>
+
+                        <hr class="my-5"> <!-- Separador -->
+
+                        <!-- Relatório de Fluxo de Caixa Simples -->
+                        <h3><i class="bi bi-cash-coin me-2"></i>Relatório de Fluxo de Caixa</h3>
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-body">
+                                <form id="cashFlowReportForm" class="row g-3 align-items-end">
+                                    <div class="col-md-5">
+                                        <label for="cashFlowStartDate" class="form-label">Data Inicial</label>
+                                        <input type="date" class="form-control" id="cashFlowStartDate" required>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label for="cashFlowEndDate" class="form-label">Data Final</label>
+                                        <input type="date" class="form-control" id="cashFlowEndDate" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="submit" class="btn btn-success w-100"><i class="bi bi-cash-stack me-2"></i>Gerar Fluxo</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <div id="cashFlowReportResults" class="mt-3">
+                            <p class="text-center text-muted">Selecione um período e clique em "Gerar Fluxo" para ver o fluxo de caixa.</p>
+                        </div>
+
+                        <hr class="my-5"> <!-- Separador -->
+
+                        <!-- NOVO: Relatório Contábil Consolidado CSV -->
+                        <h3><i class="bi bi-file-earmark-bar-graph me-2"></i>Relatório Contábil Consolidado</h3>
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-body">
+                                <p class="text-muted">Gere um relatório completo das movimentações financeiras (recebimentos e pagamentos) em formato CSV, ideal para contabilidade.</p>
+                                <form id="accountingReportForm" class="row g-3 align-items-end">
+                                    <div class="col-md-5">
+                                        <label for="accountingStartDate" class="form-label">Data Inicial</label>
+                                        <input type="date" class="form-control" id="accountingStartDate" required>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label for="accountingEndDate" class="form-label">Data Final</label>
+                                        <input type="date" class="form-control" id="accountingEndDate" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="submit" class="btn btn-info text-white w-100"><i class="bi bi-download me-2"></i>Exportar CSV</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
                     </div>
                 </section>
                 <section id="productsSection" class="content-section" style="display: none;"></section>
@@ -154,7 +203,7 @@
                                         <button type="button" class="btn btn-primary w-100" id="btnAddProduct" title="Adicionar Produto">Adicionar</button>
                                     </div>
                                 </div>
-                                   <div id="productDetailsDisplay" class="text-muted small mt-2 text-start"></div>
+                                    <div id="productDetailsDisplay" class="text-muted small mt-2 text-start"></div>
                             </div>
                         </div>
                         <div class="row">

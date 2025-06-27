@@ -10,7 +10,9 @@ module.exports = (sequelize) => {
             primaryKey: true
         },
         valor: {
-            type: DataTypes.FLOAT,
+            // CORREÇÃO: Alterado de DataTypes.FLOAT para DataTypes.DECIMAL(10, 2)
+            // DECIMAL é mais preciso para valores monetários, evitando problemas de ponto flutuante.
+            type: DataTypes.DECIMAL(10, 2), 
             allowNull: false
         },
         dataPagamento: {

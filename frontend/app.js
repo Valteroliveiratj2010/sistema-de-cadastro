@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
         bootstrapProductModal: new bootstrap.Modal(document.getElementById('productModal')),
         bootstrapUserModal: new bootstrap.Modal(document.getElementById('userModal')),
         bootstrapSupplierModal: new bootstrap.Modal(document.getElementById('supplierModal')),
-        // NOVO: Modal para gestão de compras
         bootstrapPurchaseModal: new bootstrap.Modal(document.getElementById('purchaseModal')),
         chartInstance: null,
         confirmAction: null,
@@ -38,6 +37,17 @@ document.addEventListener('DOMContentLoaded', () => {
             data: [],
             summary: null,
         },
+        cashFlowReport: {
+            startDate: null,
+            endDate: null,
+            data: null,
+        },
+        dueDates: {
+            overdueReceivables: [],
+            upcomingReceivables: [],
+            overduePayables: [],
+            upcomingPayables: [],
+        },
         products: {
             page: 1,
             query: '',
@@ -62,7 +72,6 @@ document.addEventListener('DOMContentLoaded', () => {
             total: 0,
             loaded: false
         },
-        // NOVO: Estado para a gestão de compras
         purchases: {
             page: 1,
             query: '',
@@ -72,16 +81,15 @@ document.addEventListener('DOMContentLoaded', () => {
             loaded: false
         },
         selectedSaleProducts: [],
-        availableProducts: [], // Produtos disponíveis para vendas
-        currentSelectedProduct: null, // Produto selecionado no modal de venda
-        // NOVO: Produtos selecionados para a compra atual
+        availableProducts: [],
+        currentSelectedProduct: null,
         selectedPurchaseProducts: [],
-        availableProductsForPurchase: [], // Produtos disponíveis para compra (mesmo que availableProducts, mas nome para clareza)
-        currentSelectedProductForPurchase: null, // Produto selecionado no modal de compra
-        availableSuppliers: [], // Fornecedores disponíveis para compras
+        availableProductsForPurchase: [],
+        currentSelectedProductForPurchase: null,
+        availableSuppliers: [],
     };
 
-    // --- DOM SELECTORS ---
+    // --- DOM SELECTORS (Alguns serão acessados dentro das funções para evitar nulls em modais) ---
     const dom = {
         navLinks: document.querySelectorAll('.sidebar .nav-link'),
         clientForm: document.getElementById('clientForm'),
@@ -93,9 +101,18 @@ document.addEventListener('DOMContentLoaded', () => {
         reportResults: document.getElementById('reportResults'),
         startDateInput: document.getElementById('startDate'),
         endDateInput: document.getElementById('endDate'),
+        cashFlowReportForm: document.getElementById('cashFlowReportForm'),
+        cashFlowStartDateInput: document.getElementById('cashFlowStartDate'),
+        cashFlowEndDateInput: document.getElementById('cashFlowEndDate'),
+        cashFlowReportResults: document.getElementById('cashFlowReportResults'),
         productForm: document.getElementById('productForm'),
-        
+
+        // Estes Select2 são instanciados por jQuery, então a referência pode ser mantida
         productSelect: $('#productSelect'),
+        purchaseSupplierSelect: $('#purchaseSupplier'),
+        purchaseProductSelect: $('#purchaseProductSelect'),
+
+        // Estes elementos estão sempre presentes no DOM principal ou são acessados no momento de uso
         productQuantityInput: document.getElementById('productQuantity'),
         productUnitPriceInput: document.getElementById('productUnitPrice'),
         btnAddProduct: document.getElementById('btnAddProduct'),
@@ -104,15 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
         saleTotalValueHidden: document.getElementById('saleTotalValue'),
         productDetailsDisplay: document.getElementById('productDetailsDisplay'),
 
-        paymentFormaSelect: document.getElementById('paymentForma'),
-        paymentParcelasField: document.getElementById('parcelasField'),
-        paymentParcelasInput: document.getElementById('paymentParcelas'),
-        paymentBandeiraCartaoField: document.getElementById('bandeiraCartaoField'),
-        paymentBandeiraCartaoInput: document.getElementById('paymentBandeiraCartao'),
-        paymentBancoCrediarioField: document.getElementById('bancoCrediarioField'),
-        paymentBancoCrediarioInput: document.getElementById('paymentBancoCrediario'),
-        salePaidValueInitialInput: document.getElementById('salePaidValueInitial'),
-        
         sidebar: document.querySelector('.sidebar'),
         sidebarToggle: document.getElementById('sidebarToggle'),
         sidebarOverlay: document.getElementById('sidebar-overlay'),
@@ -135,13 +143,10 @@ document.addEventListener('DOMContentLoaded', () => {
         supplierAddressInput: document.getElementById('supplierAddress'),
         supplierModalLabel: document.getElementById('supplierModalLabel'),
 
-        // NOVO: Seletores para gestão de compras
         purchaseForm: document.getElementById('purchaseForm'),
         purchaseIdInput: document.getElementById('purchaseId'),
-        purchaseSupplierSelect: $('#purchaseSupplier'), // Select2
         purchaseDateInput: document.getElementById('purchaseDate'),
         purchaseProductsList: document.getElementById('purchaseProductsList'),
-        purchaseProductSelect: $('#purchaseProductSelect'), // Select2
         purchaseProductQuantityInput: document.getElementById('purchaseProductQuantity'),
         purchaseProductCostInput: document.getElementById('purchaseProductCost'),
         btnAddPurchaseProduct: document.getElementById('btnAddPurchaseProduct'),
@@ -151,6 +156,16 @@ document.addEventListener('DOMContentLoaded', () => {
         purchaseStatusSelect: document.getElementById('purchaseStatus'),
         purchaseObservationsInput: document.getElementById('purchaseObservations'),
         purchaseModalLabel: document.getElementById('purchaseModalLabel'),
+
+        overdueReceivablesSection: document.getElementById('overdueReceivablesSection'),
+        upcomingReceivablesSection: document.getElementById('upcomingReceivablesSection'),
+        overduePayablesSection: document.getElementById('overduePayablesSection'),
+        upcomingPayablesSection: document.getElementById('upcomingPayablesSection'),
+
+        accountingReportForm: document.getElementById('accountingReportForm'),
+        accountingStartDateInput: document.getElementById('accountingStartDate'),
+        accountingEndDateInput: document.getElementById('accountingEndDate'),
+        btnExportAccountingCsv: document.getElementById('btnExportAccountingCsv'),
     };
 
     // --- UTILITY FUNCTIONS ---
@@ -158,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
         formatCurrency: (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0),
         formatDate: (dateString) => dateString ? new Date(dateString).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'N/A',
         showToast: (message, type = 'success') => {
-            Toastify({ text: message, duration: 3000, gravity: "top", position: "right", style: { background: type === 'success' ? '#4f46e5' : '#ef4444' } }).showToast();
+            Toastify({ text: message, duration: 3000, gravity: "top", position: "right", style: { background: type === 'success' ? 'var(--primary-color)' : 'var(--danger-color)' } }).showToast();
         },
         showConfirm: (message, onConfirm) => {
             dom.confirmModalMessage.textContent = message;
@@ -217,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             return total;
         },
-        renderSelectedProductsList: () => { // Lista de produtos na VENDA
+        renderSelectedProductsList: () => {
             if (state.selectedSaleProducts.length === 0) {
                 dom.saleProductsList.innerHTML = '<p class="text-muted text-center m-0">Nenhum produto adicionado.</p>';
                 dom.saleTotalValueDisplay.value = utils.formatCurrency(0);
@@ -244,7 +259,6 @@ document.addEventListener('DOMContentLoaded', () => {
             dom.saleTotalValueDisplay.value = utils.formatCurrency(total);
             dom.saleTotalValueHidden.value = total;
         },
-        // NOVO: Função para calcular o total da Compra
         calculatePurchaseTotal: () => {
             let total = 0;
             state.selectedPurchaseProducts.forEach(item => {
@@ -252,7 +266,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             return total;
         },
-        // NOVO: Função para renderizar a lista de produtos na COMPRA
         renderSelectedPurchaseProductsList: () => {
             if (state.selectedPurchaseProducts.length === 0) {
                 dom.purchaseProductsList.innerHTML = '<p class="text-muted text-center m-0">Nenhum produto adicionado.</p>';
@@ -552,12 +565,15 @@ document.addEventListener('DOMContentLoaded', () => {
         createSupplier: (data) => api.request('/suppliers', { method: 'POST', body: JSON.stringify(data) }),
         updateSupplier: (id, data) => api.request(`/suppliers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
         deleteSupplier: (id) => api.request(`/suppliers/${id}`, { method: 'DELETE' }),
-        // NOVO: Funções API para compras
         getPurchases: (page = 1, q = '', limit = 10) => api.request(`/purchases?page=${page}&q=${q}&limit=${limit}`),
         getPurchaseById: (id) => api.request(`/purchases/${id}`),
         createPurchase: (data) => api.request('/purchases', { method: 'POST', body: JSON.stringify(data) }),
         updatePurchase: (id, data) => api.request(`/purchases/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
         deletePurchase: (id) => api.request(`/purchases/${id}`, { method: 'DELETE' }),
+        getCashFlow: (startDate, endDate) => api.request(`/finance/cash-flow?startDate=${startDate}&endDate=${endDate}`),
+        getDueDates: () => api.request('/dashboard/due-dates'),
+        // NOVO: API para obter o CSV contábil consolidado
+        exportAccountingCsv: (startDate, endDate) => api.request(`/finance/accounting-csv?startDate=${startDate}&endDate=${endDate}`, { isFileDownload: true }),
     };
 
     // --- UI AND RENDERING LOGIC ---
@@ -592,8 +608,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                         break;
                     case 'suppliersSection':
-                    case 'purchasesSection': // NOVO: Controla visibilidade da seção de Compras
-                        if (!utils.hasPermission(['admin', 'gerente'])) { // Apenas admin e gerente podem ver Compras
+                    case 'purchasesSection':
+                        if (!utils.hasPermission(['admin', 'gerente'])) {
                             isVisible = false;
                         }
                         break;
@@ -607,9 +623,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 link.style.display = isVisible ? '' : 'none';
             });
         },
-        renderDashboard: ({ totalClients, salesThisMonth, totalReceivable, overdueSales, salesByMonth, lowStockProducts, salesToday, averageTicket }) => {
+        // FUNÇÃO ATUALIZADA: renderDashboard
+        renderDashboard: ({ totalClients, salesThisMonth, totalReceivable, overdueSales, salesByMonth, lowStockProducts, salesToday, averageTicket, totalAccountsPayable, overdueAccountsPayable }) => {
             const section = document.getElementById('dashboardSection');
-            
+
             let lowStockAlertHtml = '';
             if (lowStockProducts && lowStockProducts.length > 0) {
                 const productItems = lowStockProducts.map(p =>
@@ -630,16 +647,66 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             }
 
+            let accountsPayableHtml = '';
+            // Usa classes CSS customizadas para os cartões KPI de contas a pagar
+            if (utils.hasPermission(['admin', 'gerente'])) {
+                accountsPayableHtml = `
+                    <div class="col-lg-2 col-md-4 col-sm-6">
+                        <div class="kpi-card">
+                            <h6>A Pagar</h6>
+                            <p class="fs-2 fw-bold">${utils.formatCurrency(totalAccountsPayable)}</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6">
+                        <div class="kpi-card kpi-warning">
+                            <h6>Contas Pagar Venc.</h6>
+                            <p class="fs-2 fw-bold">${utils.formatCurrency(overdueAccountsPayable)}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
             section.innerHTML = `
                 <h3>Dashboard</h3>
                 ${lowStockAlertHtml}
                 <div class="row g-4 mb-4">
-                    <div class="col-lg-2 col-md-4 col-sm-6"><div class="card p-3"><h6>Clientes</h6><p class="fs-2 fw-bold">${totalClients}</p></div></div>
-                    <div class="col-lg-2 col-md-4 col-sm-6"><div class="card p-3"><h6>Vendas Hoje</h6><p class="fs-2 fw-bold">${utils.formatCurrency(salesToday)}</p></div></div>
-                    <div class="col-lg-2 col-md-4 col-sm-6"><div class="card p-3"><h6>Vendas Mês</h6><p class="fs-2 fw-bold">${utils.formatCurrency(salesThisMonth)}</p></div></div>
-                    <div class="col-lg-2 col-md-4 col-sm-6"><div class="card p-3"><h6>Ticket Médio</h6><p class="fs-2 fw-bold">${utils.formatCurrency(averageTicket)}</p></div></div>
-                    <div class="col-lg-2 col-md-4 col-sm-6"><div class="card p-3"><h6>A Receber</h6><p class="fs-2 fw-bold">${utils.formatCurrency(totalReceivable)}</p></div></div>
-                    <div class="col-lg-2 col-md-4 col-sm-6"><div class="card p-3 bg-danger text-white"><h6>Vencido</h6><p class="fs-2 fw-bold">${utils.formatCurrency(overdueSales)}</p></div></div>
+                    <div class="col-lg-2 col-md-4 col-sm-6">
+                        <div class="kpi-card">
+                            <h6>Clientes</h6>
+                            <p class="fs-2 fw-bold">${totalClients}</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6">
+                        <div class="kpi-card">
+                            <h6>Vendas Hoje</h6>
+                            <p class="fs-2 fw-bold">${utils.formatCurrency(salesToday)}</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6">
+                        <div class="kpi-card">
+                            <h6>Vendas Mês</h6>
+                            <p class="fs-2 fw-bold">${utils.formatCurrency(salesThisMonth)}</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6">
+                        <div class="kpi-card">
+                            <h6>Ticket Médio</h6>
+                            <p class="fs-2 fw-bold">${utils.formatCurrency(averageTicket)}</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6">
+                        <div class="kpi-card">
+                            <h6>A Receber</h6>
+                            <p class="fs-2 fw-bold">${utils.formatCurrency(totalReceivable)}</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6">
+                        <div class="kpi-card kpi-danger">
+                            <h6>Vencido</h6>
+                            <p class="fs-2 fw-bold">${utils.formatCurrency(overdueSales)}</p>
+                        </div>
+                    </div>
+                    ${accountsPayableHtml}
                 </div>
                 <div class="card p-3 mb-4"><canvas id="salesChart"></canvas></div>
                 <div class="row g-4 mt-4">
@@ -674,6 +741,50 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>
                 </div>
+                <hr class="my-5">
+                <h4><i class="bi bi-calendar-x-fill me-2"></i>Vencimentos Financeiros</h4>
+                <div class="row g-4 mt-4">
+                    <div class="col-md-6">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-danger text-white">
+                                <h5 class="mb-0"><i class="bi bi-arrow-down-circle me-2"></i>Contas a Receber Vencidas</h5>
+                            </div>
+                            <div class="card-body" id="overdueReceivablesList">
+                                <p class="text-center text-muted">Carregando...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0"><i class="bi bi-arrow-down-right-circle me-2"></i>Contas a Receber Próximas (30 dias)</h5>
+                            </div>
+                            <div class="card-body" id="upcomingReceivablesList">
+                                <p class="text-center text-muted">Carregando...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6" id="overduePayablesCard">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-danger text-white">
+                                <h5 class="mb-0"><i class="bi bi-arrow-up-circle me-2"></i>Contas a Pagar Vencidas</h5>
+                            </div>
+                            <div class="card-body" id="overduePayablesList">
+                                <p class="text-center text-muted">Carregando...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6" id="upcomingPayablesCard">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0"><i class="bi bi-arrow-up-right-circle me-2"></i>Contas a Pagar Próximas (30 dias)</h5>
+                            </div>
+                            <div class="card-body" id="upcomingPayablesList">
+                                <p class="text-center text-muted">Carregando...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             `;
             const ctx = document.getElementById('salesChart').getContext('2d');
             if (state.chartInstance) state.chartInstance.destroy();
@@ -681,7 +792,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 type: 'bar',
                 data: {
                     labels: salesByMonth.map(item => item.month),
-                    datasets: [{ label: 'Vendas por Mês', data: salesByMonth.map(item => item.total), backgroundColor: 'rgba(79, 70, 229, 0.8)' }]
+                    datasets: [{ label: 'Vendas por Mês', data: salesByMonth.map(item => item.total), backgroundColor: 'var(--primary-color)' }] // Usa variável CSS
                 },
                 options: {
                     responsive: true,
@@ -694,11 +805,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (rankingVendedoresCard) {
                     rankingVendedoresCard.style.display = 'none';
                 }
+                document.getElementById('overduePayablesCard').style.display = 'none';
+                document.getElementById('upcomingPayablesCard').style.display = 'none';
             } else {
                 const rankingVendedoresCard = document.getElementById('rankingVendedoresCard');
                 if (rankingVendedoresCard) {
                     rankingVendedoresCard.style.display = 'block';
                 }
+                document.getElementById('overduePayablesCard').style.display = 'block';
+                document.getElementById('upcomingPayablesCard').style.display = 'block';
             }
         },
         renderClients: () => {
@@ -714,7 +829,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             `<button class="btn btn-sm btn-outline-danger action-delete" data-type="client" data-id="${client.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
                     </td>
                 </tr>`).join('');
-            
+
             let actionButtonsHtml = '';
             if (utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
                 actionButtonsHtml += `<button class="btn btn-outline-success me-2" id="btnExportClientsCsv"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Exportar CSV</button>`;
@@ -736,7 +851,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${data.length > 0 ? tableRows : '<tr><td colspan="5" class="text-center">Nenhum cliente encontrado.</td></tr>'}
                 </tbody></table></div>
                 <div id="paginationClients"></div>`;
-            
+
             ui.renderPagination('clients', total, state.clients.page, state.clients.limit);
         },
         renderSales: () => {
@@ -783,14 +898,14 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPagination: (type, totalItems, currentPage, limit) => {
             const totalPages = Math.ceil(totalItems / limit);
             const container = document.getElementById(`pagination${type.charAt(0).toUpperCase() + type.slice(1)}`);
-            
+
             if (!container || totalPages <= 1) {
                 if(container) container.innerHTML = '';
                 return;
             }
 
             let paginationHTML = '<nav><ul class="pagination justify-content-end">';
-            
+
             paginationHTML += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${currentPage - 1}" data-type="${type}">Anterior</a></li>`;
 
             const maxPagesToShow = 5;
@@ -845,7 +960,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 let exportButtonHtml = '';
                 if (utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
-                     exportButtonHtml = `
+                    exportButtonHtml = `
                         <div class="d-flex justify-content-end mb-3">
                             <button class="btn btn-success" id="btnExportPeriodReportCsv"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Exportar Relatório CSV</button>
                         </div>
@@ -891,6 +1006,123 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             }
             reportResultsDiv.innerHTML = resultsHtml;
+        },
+        renderCashFlowReport: ({ startDate, endDate, totalReceipts, totalPayments, netCashFlow }) => {
+            const cashFlowResultsDiv = dom.cashFlowReportResults;
+            let resultsHtml = '';
+
+            if (totalReceipts === 0 && totalPayments === 0) {
+                resultsHtml = `<div class="alert alert-info text-center" role="alert">Nenhum dado de fluxo de caixa encontrado para o período de ${utils.formatDate(startDate)} a ${utils.formatDate(endDate)}.</div>`;
+            } else {
+                const netCashFlowClass = netCashFlow >= 0 ? 'text-success' : 'text-danger';
+                resultsHtml = `
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="bi bi-bar-chart-fill me-2"></i>Resumo do Fluxo de Caixa</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>Período: <strong>${utils.formatDate(startDate)}</strong> a <strong>${utils.formatDate(endDate)}</strong></p>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="card p-3 bg-success text-white">
+                                        <h6>Entradas (Recebimentos)</h6>
+                                        <p class="fs-4 fw-bold">${utils.formatCurrency(totalReceipts)}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card p-3 bg-danger text-white">
+                                        <h6>Saídas (Pagamentos)</h6>
+                                        <p class="fs-4 fw-bold">${utils.formatCurrency(totalPayments)}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card p-3 ${netCashFlowClass} bg-light">
+                                        <h6>Fluxo de Caixa Líquido</h6>
+                                        <p class="fs-4 fw-bold">${utils.formatCurrency(netCashFlow)}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            cashFlowResultsDiv.innerHTML = resultsHtml;
+        },
+        renderDetailedDueDates: ({ overdueReceivables, upcomingReceivables, overduePayables, upcomingPayables }) => {
+            // Render Contas a Receber Vencidas
+            const renderReceivablesTable = (data, elementId) => {
+                const listEl = document.getElementById(elementId);
+                if (data.length === 0) {
+                    listEl.innerHTML = '<p class="text-center text-muted m-0">Nenhuma venda pendente encontrada.</p>';
+                    return;
+                }
+                const tableRows = data.map(item => `
+                    <tr>
+                        <td>${item.id}</td>
+                        <td>${item.client?.nome || 'N/A'}</td>
+                        <td class="text-danger">${utils.formatDate(item.dataVencimento)}</td>
+                        <td>${utils.formatCurrency(item.valorTotal - item.valorPago)}</td>
+                    </tr>
+                `).join('');
+                listEl.innerHTML = `
+                    <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Cliente</th>
+                                    <th>Vencimento</th>
+                                    <th>Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody>${tableRows}</tbody>
+                        </table>
+                    </div>
+                `;
+            };
+
+            // Render Contas a Pagar Vencidas/Próximas
+            const renderPayablesTable = (data, elementId) => {
+                const listEl = document.getElementById(elementId);
+                if (data.length === 0) {
+                    listEl.innerHTML = '<p class="text-center text-muted m-0">Nenhuma compra pendente encontrada.</p>';
+                    return;
+                }
+                const tableRows = data.map(item => `
+                    <tr>
+                        <td>${item.id}</td>
+                        <td>${item.supplier?.nome || 'N/A'}</td>
+                        <td class="text-danger">${utils.formatDate(item.dataCompra)}</td>
+                        <td>${utils.formatCurrency(item.valorTotal)}</td>
+                    </tr>
+                `).join('');
+                listEl.innerHTML = `
+                    <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Fornecedor</th>
+                                    <th>Vencimento</th>
+                                    <th>Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody>${tableRows}</tbody>
+                        </table>
+                    </div>
+                `;
+            };
+
+            renderReceivablesTable(overdueReceivables, 'overdueReceivablesList');
+            renderReceivablesTable(upcomingReceivables, 'upcomingReceivablesList');
+
+            if (utils.hasPermission(['admin', 'gerente'])) {
+                renderPayablesTable(overduePayables, 'overduePayablesList');
+                renderPayablesTable(upcomingPayables, 'upcomingPayablesList');
+            } else {
+                document.getElementById('overduePayablesList').innerHTML = '<p class="text-center text-muted m-0">Acesso restrito.</p>';
+                document.getElementById('upcomingPayablesList').innerHTML = '<p class="text-center text-muted m-0">Acesso restrito.</p>';
+            }
         },
         renderSaleDetail: (sale) => {
             const section = document.getElementById('saleDetailSection');
@@ -1042,7 +1274,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             `<button class="btn btn-sm btn-outline-danger action-delete" data-type="product" data-id="${product.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
                     </td>
                 </tr>`).join('');
-            
+
             let newProductButtonHtml = '';
             if (utils.hasPermission(['admin', 'gerente'])) {
                 newProductButtonHtml = `<button class="btn btn-primary" id="btnNewProduct"><i class="bi bi-plus-circle me-2"></i>Novo Produto</button>`;
@@ -1063,7 +1295,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${data.length > 0 ? tableRows : '<tr><td colspan="6" class="text-center">Nenhum produto encontrado.</td></tr>'}
                 </tbody></table></div>
                 <div id="paginationProducts"></div>`;
-            
+
             ui.renderPagination('products', total, state.products.page, state.products.limit);
         },
         renderUsers: () => {
@@ -1082,7 +1314,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             `<button class="btn btn-sm btn-outline-danger action-delete" data-type="user" data-id="${user.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
                     </td>
                 </tr>`).join('');
-            
+
             let newUsersButtonHtml = '';
             if (utils.hasPermission(['admin'])) {
                 newUsersButtonHtml = `<button class="btn btn-primary" id="btnNewUser"><i class="bi bi-plus-circle me-2"></i>Novo Usuário</button>`;
@@ -1103,7 +1335,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${data.length > 0 ? tableRows : '<tr><td colspan="5" class="text-center">Nenhum usuário encontrado.</td></tr>'}
                 </tbody></table></div>
                 <div id="paginationUsers"></div>`;
-            
+
             ui.renderPagination('users', total, state.users.page, state.users.limit);
         },
         renderSuppliers: () => {
@@ -1124,7 +1356,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             `<button class="btn btn-sm btn-outline-danger action-delete" data-type="supplier" data-id="${supplier.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
                     </td>
                 </tr>`).join('');
-            
+
             let newSupplierButtonHtml = '';
             if (utils.hasPermission(['admin', 'gerente'])) {
                 newSupplierButtonHtml = `<button class="btn btn-primary" id="btnNewSupplier"><i class="bi bi-plus-circle me-2"></i>Novo Fornecedor</button>`;
@@ -1145,10 +1377,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${data.length > 0 ? tableRows : '<tr><td colspan="7" class="text-center">Nenhum fornecedor encontrado.</td></tr>'}
                 </tbody></table></div>
                 <div id="paginationSuppliers"></div>`;
-            
+
             ui.renderPagination('suppliers', total, state.suppliers.page, state.suppliers.limit);
         },
-        // NOVO: Renderização da seção de Compras
         renderPurchases: () => {
             const { data, total } = state.purchases;
             const section = document.getElementById('purchasesSection');
@@ -1161,15 +1392,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td><span class="badge bg-secondary">${purchase.status}</span></td>
                     <td>
                         <button class="btn btn-sm btn-outline-info action-detail" data-type="purchase" data-id="${purchase.id}" title="Detalhes"><i class="bi bi-eye"></i></button>
-                        ${utils.hasPermission(['admin', 'gerente']) ? // Apenas admin e gerente podem editar
+                        ${utils.hasPermission(['admin', 'gerente']) ?
                             `<button class="btn btn-sm btn-outline-primary action-edit" data-type="purchase" data-id="${purchase.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
-                        ${utils.hasPermission(['admin', 'gerente']) ? // Apenas admin e gerente podem excluir
+                        ${utils.hasPermission(['admin', 'gerente']) ?
                             `<button class="btn btn-sm btn-outline-danger action-delete" data-type="purchase" data-id="${purchase.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
                     </td>
                 </tr>`).join('');
-            
+
             let newPurchaseButtonHtml = '';
-            if (utils.hasPermission(['admin', 'gerente'])) { // Apenas admin e gerente podem criar novas compras
+            if (utils.hasPermission(['admin', 'gerente'])) {
                 newPurchaseButtonHtml = `<button class="btn btn-primary" id="btnNewPurchase"><i class="bi bi-plus-circle me-2"></i>Nova Compra</button>`;
             }
 
@@ -1188,7 +1419,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${data.length > 0 ? tableRows : '<tr><td colspan="6" class="text-center">Nenhuma compra encontrada.</td></tr>'}
                 </tbody></table></div>
                 <div id="paginationPurchases"></div>`;
-            
+
             ui.renderPagination('purchases', total, state.purchases.page, state.purchases.limit);
         }
     };
@@ -1199,7 +1430,11 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const dashboardData = await api.getDashboardStats();
                 const lowStockProducts = await api.getLowStockProducts();
+                const dueDatesData = await api.getDueDates();
+
                 ui.renderDashboard({ ...dashboardData, lowStockProducts });
+                ui.renderDetailedDueDates(dueDatesData);
+
                 ui.showSection('dashboardSection');
                 handlers.loadRankings();
             } catch (error) { utils.showToast(error.message, 'error'); }
@@ -1209,10 +1444,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const ulProdutos = document.getElementById('produtosMaisVendidos');
                 const ulClientes = document.getElementById('clientesMaisCompraram');
                 const ulVendedores = document.getElementById('vendedoresMaisVenderam');
-                
+
                 const produtos = await api.getRankingsProdutos();
                 const clientes = await api.getRankingsClientes();
-                
+
                 if (produtos && produtos.length > 0) {
                     ulProdutos.innerHTML = produtos.map(p => `
                         <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -1223,7 +1458,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     ulProdutos.innerHTML = '<li class="list-group-item text-center text-muted">Nenhum produto vendido.</li>';
                 }
-                
+
                 if (clientes && clientes.length > 0) {
                     ulClientes.innerHTML = clientes.map(c => `
                         <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -1234,7 +1469,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     ulClientes.innerHTML = '<li class="list-group-item text-center text-muted">Nenhum cliente com compras.</li>';
                 }
-                
+
                 if (utils.hasPermission(['admin', 'gerente'])) {
                     const vendedores = await api.getRankingsVendedores();
                     if (vendedores && vendedores.length > 0) {
@@ -1351,6 +1586,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 utils.showToast(error.message || 'Falha ao gerar relatório de vendas.', 'error');
             }
         },
+        handleGenerateCashFlowReport: async (e) => {
+            e.preventDefault();
+            if (!utils.hasPermission(['admin', 'gerente'])) {
+                utils.showToast('Você não tem permissão para gerar relatórios de fluxo de caixa.', 'error');
+                return;
+            }
+            const startDate = dom.cashFlowStartDateInput.value;
+            const endDate = dom.cashFlowEndDateInput.value;
+
+            if (!startDate || !endDate) {
+                utils.showToast('Por favor, selecione as datas inicial e final para o relatório de fluxo de caixa.', 'error');
+                return;
+            }
+            if (new Date(startDate) > new Date(endDate)) {
+                utils.showToast('A data inicial não pode ser maior que a data final para o fluxo de caixa.', 'error');
+                return;
+            }
+
+            utils.showToast('Gerando relatório de fluxo de caixa...', 'info');
+            try {
+                const reportData = await api.getCashFlow(startDate, endDate);
+                state.cashFlowReport.startDate = startDate;
+                state.cashFlowReport.endDate = endDate;
+                state.cashFlowReport.data = reportData;
+                ui.renderCashFlowReport(reportData);
+                ui.showSection('reportsSection');
+                utils.showToast('Relatório de fluxo de caixa gerado com sucesso!', 'success');
+            } catch (error) {
+                console.error('Erro ao gerar relatório de fluxo de caixa:', error);
+                utils.showToast(error.message || 'Falha ao gerar relatório de fluxo de caixa.', 'error');
+            }
+        },
         handleExportPeriodReportCsv: async () => {
             if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
                 utils.showToast('Você não tem permissão para exportar relatórios por período.', 'error');
@@ -1370,6 +1637,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 utils.showToast(error.message || 'Falha ao exportar relatório CSV de vendas.', 'error');
             }
         },
+        // NOVO: Handler para exportar o CSV contábil
+        handleExportAccountingCsv: async (e) => {
+            e.preventDefault();
+            if (!utils.hasPermission(['admin', 'gerente'])) {
+                utils.showToast('Você não tem permissão para exportar o relatório contábil.', 'error');
+                return;
+            }
+
+            const startDate = dom.accountingStartDateInput.value;
+            const endDate = dom.accountingEndDateInput.value;
+
+            if (!startDate || !endDate) {
+                utils.showToast('Por favor, selecione as datas inicial e final para o relatório contábil.', 'error');
+                return;
+            }
+            if (new Date(startDate) > new Date(endDate)) {
+                utils.showToast('A data inicial não pode ser maior que a data final para o relatório contábil.', 'error');
+                return;
+            }
+
+            utils.showToast('Gerando relatório CSV contábil...', 'info');
+            try {
+                const response = await api.exportAccountingCsv(startDate, endDate);
+                utils.downloadFile(response);
+                utils.showToast('Relatório CSV contábil exportado com sucesso!', 'success');
+            } catch (error) {
+                console.error('Erro ao exportar CSV contábil:', error);
+                utils.showToast(error.message || 'Falha ao exportar relatório CSV contábil.', 'error');
+            }
+        },
         handleSearch: (type, query) => {
             state[type].query = query;
             state[type].page = 1;
@@ -1378,7 +1675,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (type === 'products') handlers.loadProducts(true);
             if (type === 'users') handlers.loadUsers(true);
             if (type === 'suppliers') handlers.loadSuppliers(true);
-            if (type === 'purchases') handlers.loadPurchases(true); // NOVO: Busca de compras
+            if (type === 'purchases') handlers.loadPurchases(true);
         },
         handlePageChange: (type, newPage) => {
             state[type].page = newPage;
@@ -1387,7 +1684,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (type === 'products') handlers.loadProducts(true);
             if (type === 'users') handlers.loadUsers(true);
             if (type === 'suppliers') handlers.loadSuppliers(true);
-            if (type === 'purchases') handlers.loadPurchases(true); // NOVO: Paginação de compras
+            if (type === 'purchases') handlers.loadPurchases(true);
         },
         openClientModal: async (clientId = null) => {
             if (clientId && !utils.hasPermission(['admin', 'gerente'])) {
@@ -1470,7 +1767,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const modalLabel = document.getElementById('saleModalLabel');
             const clientSelect = document.getElementById('saleClient');
             clientSelect.innerHTML = '<option value="">Carregando clientes...</option>';
-            
+
             dom.productSelect.empty().append($('<option value="">Selecione um produto</option>')).select2({
                 placeholder: "Buscar produto...",
                 dropdownParent: $('#saleModal'),
@@ -1493,7 +1790,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const { data: clients } = await api.getClients(1, '', 1000);
                 clientSelect.innerHTML = '<option value="">Selecione um cliente</option>';
                 clients.forEach(c => clientSelect.add(new Option(c.nome, c.id)));
-                
+
                 const { data: products } = await api.getProducts(1, '', 1000);
                 state.availableProducts = products;
                 dom.productSelect.empty().append($('<option value="">Selecione um produto</option>')).select2({
@@ -1533,28 +1830,40 @@ document.addEventListener('DOMContentLoaded', () => {
                     dom.productUnitPriceInput.value = '';
                 });
 
-                dom.paymentFormaSelect.value = 'Dinheiro';
-                utils.togglePaymentFields(dom.paymentFormaSelect, dom.paymentParcelasField, dom.paymentBandeiraCartaoField, dom.paymentBancoCrediarioField, dom.paymentParcelasInput, dom.paymentBandeiraCartaoInput, dom.paymentBancoCrediarioInput);
-                dom.salePaidValueInitialInput.value = '0';
+                // Acessar elementos do modal de venda diretamente na função
+                const paymentFormaSelect = document.getElementById('paymentForma');
+                const paymentParcelasField = document.getElementById('parcelasField');
+                const paymentBandeiraCartaoField = document.getElementById('bandeiraCartaoField');
+                const paymentBancoCrediarioField = document.getElementById('bancoCrediarioField');
+                const paymentParcelasInput = document.getElementById('paymentParcelas');
+                const paymentBandeiraCartaoInput = document.getElementById('paymentBandeiraCartao');
+                const paymentBancoCrediarioInput = document.getElementById('paymentBancoCrediario');
+
+                if (paymentFormaSelect) paymentFormaSelect.value = 'Dinheiro';
+                utils.togglePaymentFields(paymentFormaSelect, paymentParcelasField, paymentBandeiraCartaoField, paymentBancoCrediarioField, paymentParcelasInput, paymentBandeiraCartaoInput, paymentBancoCrediarioInput);
+                if (document.getElementById('salePaidValueInitial')) { // Check if element exists before accessing
+                    document.getElementById('salePaidValueInitial').value = '0';
+                }
+
 
                 modalLabel.textContent = 'Nova Venda';
                 if (saleId) {
                     modalLabel.textContent = 'Editar Venda';
                     const sale = await api.getSaleById(saleId);
 
-                    if (!utils.hasPermission(['admin', 'gerente'])) { 
+                    if (!utils.hasPermission(['admin', 'gerente'])) {
                         if (utils.hasPermission(['vendedor']) && sale.userId !== state.user.id) {
                             utils.showToast('Você não tem permissão para editar esta venda.', 'error');
                             return;
                         } else if (!utils.hasPermission(['vendedor'])) {
-                             utils.showToast('Você não tem permissão para editar vendas.', 'error');
-                             return;
+                            utils.showToast('Você não tem permissão para editar vendas.', 'error');
+                            return;
                         }
                     }
-                    
+
                     document.getElementById('saleId').value = sale.id;
                     document.getElementById('saleDueDate').value = sale.dataVencimento ? sale.dataVencimento.split('T')[0] : '';
-                    
+
                     if (sale.products && sale.products.length > 0) {
                         state.selectedSaleProducts = sale.products.map(p => ({
                             id: p.id,
@@ -1572,7 +1881,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         return;
                     }
                 }
-                
+
                 state.bootstrapSaleModal.show();
             } catch(error) {
                 utils.showToast(error.message, 'error');
@@ -1652,12 +1961,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const clientId = document.getElementById('saleClient').value;
             const dataVencimento = document.getElementById('saleDueDate').value;
             const valorTotal = utils.calculateSaleTotal();
-            const valorPagoInitial = parseFloat(dom.salePaidValueInitialInput.value) || 0;
-            const formaPagamento = dom.paymentFormaSelect.value;
-            const parcelas = parseInt(dom.paymentParcelasInput.value) || 1;
-            const bandeiraCartao = dom.paymentBandeiraCartaoInput.value || null;
-            const bancoCrediario = dom.paymentBancoCrediarioInput.value || null;
-            
+
+            // Acessar elementos do modal de venda diretamente na função
+            const salePaidValueInitialInput = document.getElementById('salePaidValueInitial');
+            const paymentFormaSelect = document.getElementById('paymentForma');
+            const paymentParcelasInput = document.getElementById('paymentParcelas');
+            const paymentBandeiraCartaoInput = document.getElementById('paymentBandeiraCartao');
+            const paymentBancoCrediarioInput = document.getElementById('paymentBancoCrediario');
+
+
+            const valorPagoInitial = parseFloat(salePaidValueInitialInput?.value || '0') || 0;
+            const formaPagamento = paymentFormaSelect?.value || 'Dinheiro';
+            const parcelas = parseInt(paymentParcelasInput?.value || '1') || 1;
+            const bandeiraCartao = paymentBandeiraCartaoInput?.value || null;
+            const bancoCrediario = paymentBancoCrediarioInput?.value || null;
+
             if (state.selectedSaleProducts.length === 0) {
                 utils.showToast('Adicione pelo menos um produto à venda.', 'error');
                 return;
@@ -1794,7 +2112,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 handlers.loadSaleDetail(saleId);
                 handlers.loadDashboard();
                 handlers.loadSales(true);
-            } catch (error) {
+            }
+            catch (error) {
                 utils.showToast(error.message, 'error');
             }
         },
@@ -2004,7 +2323,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     await api.deleteUser(userId);
                     utils.showToast('Usuário excluído!', 'success');
-                    setTimeout(() => { // Pequeno delay para o modal fechar suavemente
+                    setTimeout(() => {
                         handlers.loadUsers(true);
                     }, 50);
                 } catch (error) {
@@ -2073,10 +2392,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const id = dom.supplierIdInput.value;
             const data = {
                 nome: dom.supplierNameInput.value,
-                contato: dom.supplierContactInput.value || null,
+                contact: dom.supplierContactInput.value || null,
                 email: dom.supplierEmailInput.value || null,
                 cnpj: dom.supplierCnpjInput.value || null,
-                endereco: dom.supplierAddressInput.value || null,
+                address: dom.supplierAddressInput.value || null,
             };
 
             try {
@@ -2100,19 +2419,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             utils.showConfirm('Deseja realmente excluir este fornecedor?', async () => {
                 try {
-                    await api.deleteSupplier(supplierId); 
+                    await api.deleteSupplier(supplierId);
                     utils.showToast('Fornecedor excluído!', 'success');
-                    setTimeout(() => { // Pequeno delay para garantir que o modal de confirmação do Bootstrap tenha tempo de fechar
+                    setTimeout(() => {
                         handlers.loadSuppliers(true);
-                    }, 50); 
+                    }, 50);
                 } catch (error) {
                     utils.showToast(error.message, 'error');
                 }
             });
         },
-        // NOVO: Handlers para gestão de Compras
         loadPurchases: async (force = false) => {
-            if (!utils.hasPermission(['admin', 'gerente'])) { // Apenas admin e gerente podem ver compras
+            if (!utils.hasPermission(['admin', 'gerente'])) {
                 utils.showToast('Você não tem permissão para ver as compras.', 'error');
                 document.getElementById('purchasesSection').innerHTML = `
                     <div class="alert alert-danger text-center" role="alert">
@@ -2135,13 +2453,13 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) { utils.showToast(error.message, 'error'); }
         },
         openPurchaseModal: async (purchaseId = null) => {
-            if (!utils.hasPermission(['admin', 'gerente'])) { // Apenas admin e gerente podem gerenciar compras
+            if (!utils.hasPermission(['admin', 'gerente'])) {
                 utils.showToast('Você não tem permissão para gerenciar compras.', 'error');
                 return;
             }
             dom.purchaseForm.reset();
             dom.purchaseIdInput.value = '';
-            state.selectedPurchaseProducts = []; // Limpa produtos da compra anterior
+            state.selectedPurchaseProducts = [];
             utils.renderSelectedPurchaseProductsList();
             dom.purchaseProductDetailsDisplay.innerHTML = '';
             dom.purchaseProductQuantityInput.value = '1';
@@ -2149,10 +2467,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const modalLabel = document.getElementById('purchaseModalLabel');
             const supplierSelect = dom.purchaseSupplierSelect;
-            supplierSelect.empty().append($('<option value="">Carregando fornecedores...</option>')).select2({
+            supplierSelect.empty().append($('<option value="">Selecione um fornecedor</option>')).select2({
                 placeholder: "Buscar fornecedor...",
                 dropdownParent: $('#purchaseModal'),
-                data: [], // Será preenchido após a requisição
+                data: [],
             });
 
             const productSelect = dom.purchaseProductSelect;
@@ -2171,11 +2489,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!p) return product.text;
                     return p.nome;
                 },
-                data: [], // Será preenchido após a requisição
+                data: [],
             });
 
             try {
-                // Carregar fornecedores
                 const { data: suppliers } = await api.getSuppliers(1, '', 1000);
                 state.availableSuppliers = suppliers;
                 supplierSelect.empty().append($('<option value="">Selecione um fornecedor</option>')).select2({
@@ -2184,7 +2501,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     dropdownParent: $('#purchaseModal'),
                 });
 
-                // Carregar produtos (todos os produtos para compra)
                 const { data: products } = await api.getProducts(1, '', 1000);
                 state.availableProductsForPurchase = products;
                 productSelect.empty().append($('<option value="">Selecione um produto</option>')).select2({
@@ -2205,14 +2521,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
-                // Listener para exibir detalhes do produto selecionado no modal de compra
                 productSelect.off('select2:select').on('select2:select', (e) => {
                     const productId = String(e.params.data.id);
                     const product = state.availableProductsForPurchase.find(p => String(p.id) === productId);
                     if (product) {
                         state.currentSelectedProductForPurchase = product;
                         dom.purchaseProductDetailsDisplay.innerHTML = `Estoque atual: ${product.estoque}, Preço de Venda: ${utils.formatCurrency(product.precoVenda)}`;
-                        dom.purchaseProductCostInput.value = product.precoCusto ? product.precoCusto.toFixed(2) : product.precoVenda.toFixed(2); // Sugere o último custo ou preço de venda
+                        dom.purchaseProductCostInput.value = product.precoCusto ? product.precoCusto.toFixed(2) : product.precoVenda.toFixed(2);
                         dom.purchaseProductQuantityInput.value = '1';
                     } else {
                         state.currentSelectedProductForPurchase = null;
@@ -2232,17 +2547,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     modalLabel.textContent = 'Editar Compra';
                     const purchase = await api.getPurchaseById(purchaseId);
 
-                    // Permissões para editar compra (apenas admin/gerente podem editar qualquer compra)
                     if (!utils.hasPermission(['admin', 'gerente'])) {
                         utils.showToast('Você não tem permissão para editar esta compra.', 'error');
                         return;
                     }
-                    
+
                     dom.purchaseIdInput.value = purchase.id;
                     dom.purchaseDateInput.value = purchase.dataCompra ? new Date(purchase.dataCompra).toISOString().split('T')[0] : '';
                     dom.purchaseStatusSelect.value = purchase.status;
                     dom.purchaseObservationsInput.value = purchase.observacoes || '';
-                    supplierSelect.val(purchase.supplierId).trigger('change'); // Seleciona o fornecedor
+                    supplierSelect.val(purchase.supplierId).trigger('change');
 
                     if (purchase.products && purchase.products.length > 0) {
                         state.selectedPurchaseProducts = purchase.products.map(p => ({
@@ -2254,16 +2568,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         utils.renderSelectedPurchaseProductsList();
                     }
                 } else {
-                    dom.purchaseDateInput.valueAsDate = new Date(); // Define a data atual para novas compras
+                    dom.purchaseDateInput.valueAsDate = new Date();
                 }
-                
+
                 state.bootstrapPurchaseModal.show();
             } catch(error) {
                 utils.showToast(error.message, 'error');
             }
         },
         handleAddPurchaseProduct: () => {
-            if (!utils.hasPermission(['admin', 'gerente'])) { // Apenas admin e gerente podem adicionar produtos a compras
+            if (!utils.hasPermission(['admin', 'gerente'])) {
                 utils.showToast('Você não tem permissão para adicionar produtos a compras.', 'error');
                 return;
             }
@@ -2294,7 +2608,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const existingItem = state.selectedPurchaseProducts.find(item => String(item.id) === productId);
             if (existingItem) {
                 existingItem.quantidade += quantity;
-                existingItem.precoCustoUnitario = unitCost; // Atualiza o preço de custo unitário para o último adicionado
+                existingItem.precoCustoUnitario = unitCost;
             } else {
                 state.selectedPurchaseProducts.push({
                     id: product.id,
@@ -2304,14 +2618,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
             utils.renderSelectedPurchaseProductsList();
-            dom.purchaseProductSelect.val(null).trigger('change'); // Limpa a seleção do produto
+            dom.purchaseProductSelect.val(null).trigger('change');
             dom.purchaseProductQuantityInput.value = '1';
             dom.purchaseProductCostInput.value = '';
             dom.purchaseProductDetailsDisplay.innerHTML = '';
             state.currentSelectedProductForPurchase = null;
         },
         handleRemovePurchaseProduct: (index) => {
-            if (!utils.hasPermission(['admin', 'gerente'])) { // Apenas admin e gerente podem remover produtos de compras
+            if (!utils.hasPermission(['admin', 'gerente'])) {
                 utils.showToast('Você não tem permissão para remover produtos de compras.', 'error');
                 return;
             }
@@ -2320,7 +2634,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         handleSavePurchase: async (e) => {
             e.preventDefault();
-            if (!utils.hasPermission(['admin', 'gerente'])) { // Apenas admin e gerente podem salvar compras
+            if (!utils.hasPermission(['admin', 'gerente'])) {
                 utils.showToast('Você não tem permissão para salvar compras.', 'error');
                 return;
             }
@@ -2340,7 +2654,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 utils.showToast('Adicione pelo menos um produto à compra.', 'error');
                 return;
             }
-            
+
             const purchaseData = {
                 supplierId: supplierId,
                 dataCompra: dataCompra,
@@ -2363,15 +2677,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     utils.showToast('Compra registrada com sucesso!', 'success');
                 }
                 state.bootstrapPurchaseModal.hide();
-                handlers.loadPurchases(true); // Recarrega a lista de compras
-                handlers.loadProducts(true); // Recarrega a lista de produtos (estoque pode ter mudado)
-                handlers.loadDashboard(); // Recarrega o dashboard (KPIs podem ter mudado)
+                handlers.loadPurchases(true);
+                handlers.loadProducts(true);
+                handlers.loadDashboard();
             } catch (error) {
                 utils.showToast(error.message, 'error');
             }
         },
         handleDeletePurchase: async (purchaseId) => {
-            if (!utils.hasPermission(['admin', 'gerente'])) { // Apenas admin e gerente podem deletar compras
+            if (!utils.hasPermission(['admin', 'gerente'])) {
                 utils.showToast('Você não tem permissão para excluir compras.', 'error');
                 return;
             }
@@ -2379,10 +2693,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     await api.deletePurchase(purchaseId);
                     utils.showToast('Compra excluída e estoque revertido!', 'success');
-                    setTimeout(() => { // Pequeno delay para o modal fechar suavemente
-                        handlers.loadPurchases(true); // Recarrega a lista de compras
-                        handlers.loadProducts(true); // Recarrega a lista de produtos (estoque pode ter mudado)
-                        handlers.loadDashboard(); // Recarrega o dashboard (KPIs podem ter mudado)
+                    setTimeout(() => {
+                        handlers.loadPurchases(true);
+                        handlers.loadProducts(true);
+                        handlers.loadDashboard();
                     }, 50);
                 } catch (error) {
                     utils.showToast(error.message, 'error');
@@ -2422,7 +2736,7 @@ document.addEventListener('DOMContentLoaded', () => {
             dom.sidebarOverlay.classList.remove('active');
             dom.mainContent.style.marginLeft = '0px';
         }
-        
+
         ui.updateSidebarVisibility();
 
         dom.navLinks.forEach(link => {
@@ -2441,7 +2755,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (!utils.hasPermission(['admin'])) hasPermission = false;
                         break;
                     case 'suppliersSection':
-                    case 'purchasesSection': // NOVO: Permissão para acessar seção de compras
+                    case 'purchasesSection':
                         if (!utils.hasPermission(['admin', 'gerente'])) hasPermission = false;
                         break;
                     case 'logoutSection':
@@ -2464,12 +2778,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (sectionId === 'clientsSection') handlers.loadClients();
                 if (sectionId === 'salesSection') handlers.loadSales();
                 if (sectionId === 'reportsSection') {
+                    // Limpa e exibe o placeholder para ambos os relatórios
                     dom.reportResults.innerHTML = '<p class="text-center text-muted">Selecione um período e clique em "Gerar Relatório" para ver os resultados.</p>';
+                    dom.cashFlowReportResults.innerHTML = '<p class="text-center text-muted">Selecione um período e clique em "Gerar Fluxo" para ver o fluxo de caixa.</p>';
                 }
                 if (sectionId === 'productsSection') handlers.loadProducts();
                 if (sectionId === 'usersSection') handlers.loadUsers();
                 if (sectionId === 'suppliersSection') handlers.loadSuppliers();
-                if (sectionId === 'purchasesSection') handlers.loadPurchases(); // NOVO: Carregar compras
+                if (sectionId === 'purchasesSection') handlers.loadPurchases();
             });
         });
 
@@ -2487,7 +2803,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const index = parseInt(button.dataset.index);
                     handlers.handleRemoveProductFromSale(index);
                 }
-                // NOVO: Botão para remover produto da compra
                 if (button.classList.contains('btn-remove-purchase-product')) {
                     const index = parseInt(button.dataset.index);
                     handlers.handleRemovePurchaseProduct(index);
@@ -2496,8 +2811,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const saleId = button.dataset.saleId;
                     api.getSaleById(saleId).then(sale => {
                         if (!utils.hasPermission(['admin', 'gerente']) && (utils.hasPermission(['vendedor']) && sale.userId !== state.user.id)) {
-                             utils.showToast('Você não tem permissão para compartilhar detalhes desta venda.', 'error');
-                             return;
+                            utils.showToast('Você não tem permissão para compartilhar detalhes desta venda.', 'error');
+                            return;
                         }
                         const message = utils.generateSaleMessage(sale);
                         const clientPhone = sale.client?.telefone?.replace(/\D/g, '') || '';
@@ -2509,8 +2824,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const saleId = button.dataset.saleId;
                     api.getSaleById(saleId).then(sale => {
                         if (!utils.hasPermission(['admin', 'gerente']) && (utils.hasPermission(['vendedor']) && sale.userId !== state.user.id)) {
-                             utils.showToast('Você não tem permissão para compartilhar detalhes desta venda.', 'error');
-                             return;
+                            utils.showToast('Você não tem permissão para compartilhar detalhes desta venda.', 'error');
+                            return;
                         }
                         const subject = encodeURIComponent(`Detalhes da sua compra #${sale.id} no Gestor PRO`);
                         const body = encodeURIComponent(utils.generateSaleMessage(sale));
@@ -2523,8 +2838,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const saleId = button.dataset.saleId;
                     api.getSaleById(saleId).then(sale => {
                         if (!utils.hasPermission(['admin', 'gerente']) && (utils.hasPermission(['vendedor']) && sale.userId !== state.user.id)) {
-                             utils.showToast('Você não tem permissão para imprimir detalhes desta venda.', 'error');
-                             return;
+                            utils.showToast('Você não tem permissão para imprimir detalhes desta venda.', 'error');
+                            return;
                         }
                         handlers.handlePrintSale(sale);
                     }).catch(error => utils.showToast(error.message, 'error'));
@@ -2536,8 +2851,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (button.id === 'btnNewUser') handlers.openUserModal();
                 if (button.id === 'btnNewSupplier') handlers.openSupplierModal();
-                if (button.id === 'btnNewPurchase') handlers.openPurchaseModal(); // NOVO: Botão para nova compra
-                if (button.id === 'btnAddPurchaseProduct') handlers.handleAddPurchaseProduct(); // NOVO: Adicionar produto à compra
+                if (button.id === 'btnNewPurchase') handlers.openPurchaseModal();
+                if (button.id === 'btnAddPurchaseProduct') handlers.handleAddPurchaseProduct();
 
                 const { type, id } = button.dataset;
                 if (button.classList.contains('action-delete')) {
@@ -2546,12 +2861,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (type === 'product') handlers.handleDeleteProduct(id);
                     if (type === 'user') handlers.handleDeleteUser(id);
                     if (type === 'supplier') handlers.handleDeleteSupplier(id);
-                    if (type === 'purchase') handlers.handleDeletePurchase(id); // NOVO: Deletar compra
+                    if (type === 'purchase') handlers.handleDeletePurchase(id);
                 }
                 if (button.classList.contains('action-detail')) {
                     if (type === 'sale') handlers.loadSaleDetail(id);
-                    // NOVO: Detalhe da compra (se necessário, pode ser uma modal ou seção diferente)
-                    // if (type === 'purchase') handlers.loadPurchaseDetail(id);
                 }
                 if(button.classList.contains('action-edit')) {
                     if (type === 'client') handlers.openClientModal(id);
@@ -2559,7 +2872,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (type === 'sale') handlers.openSaleModal(id);
                     if (type === 'user') handlers.openUserModal(id);
                     if (type === 'supplier') handlers.openSupplierModal(id);
-                    if (type === 'purchase') handlers.openPurchaseModal(id); // NOVO: Editar compra
+                    if (type === 'purchase') handlers.openPurchaseModal(id);
                 }
             }
 
@@ -2570,7 +2883,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const { type, page } = pageLink.dataset;
                 handlers.handlePageChange(type, parseInt(page));
             }
-            
+
             const backLink = e.target.closest('.nav-back');
             if (backLink) {
                 e.preventDefault();
@@ -2589,22 +2902,39 @@ document.addEventListener('DOMContentLoaded', () => {
         if (dom.supplierForm) {
             dom.supplierForm.addEventListener('submit', handlers.handleSaveSupplier);
         }
-        if (dom.purchaseForm) { // NOVO: Event listener para o formulário de compra
+        if (dom.purchaseForm) {
             dom.purchaseForm.addEventListener('submit', handlers.handleSavePurchase);
         }
 
         if (dom.reportPeriodForm) {
             dom.reportPeriodForm.addEventListener('submit', handlers.handleGenerateSalesReport);
         }
+        if (dom.cashFlowReportForm) {
+            dom.cashFlowReportForm.addEventListener('submit', handlers.handleGenerateCashFlowReport);
+        }
+        // NOVO: Event listener para o formulário de Relatório Contábil
+        if (dom.accountingReportForm) {
+            dom.accountingReportForm.addEventListener('submit', handlers.handleExportAccountingCsv);
+        }
 
         document.body.addEventListener('submit', e => {
             if (e.target.id === 'paymentForm') handlers.handleSavePayment(e);
         });
-        if (dom.paymentFormaSelect) {
-            dom.paymentFormaSelect.addEventListener('change', () => {
-                utils.togglePaymentFields(dom.paymentFormaSelect, dom.paymentParcelasField, dom.paymentBandeiraCartaoField, dom.paymentBancoCrediarioField, dom.paymentParcelasInput, dom.paymentBandeiraCartaoInput, dom.paymentBancoCrediarioInput);
+
+        const paymentFormaSelectInitial = document.getElementById('paymentForma');
+        if (paymentFormaSelectInitial) {
+            paymentFormaSelectInitial.addEventListener('change', () => {
+                const paymentParcelasField = document.getElementById('parcelasField');
+                const paymentBandeiraCartaoField = document.getElementById('bandeiraCartaoField');
+                const paymentBancoCrediarioField = document.getElementById('bancoCrediarioField');
+                const paymentParcelasInput = document.getElementById('paymentParcelas');
+                const paymentBandeiraCartaoInput = document.getElementById('paymentBandeiraCartao');
+                const paymentBancoCrediarioInput = document.getElementById('paymentBancoCrediario');
+
+                utils.togglePaymentFields(paymentFormaSelectInitial, paymentParcelasField, paymentBandeiraCartaoField, paymentBancoCrediarioField, paymentParcelasInput, paymentBandeiraCartaoInput, paymentBancoCrediarioInput);
             });
         }
+
         document.body.addEventListener('change', (e) => {
             if (e.target.id === 'paymentFormaNew') {
                 const newPaymentFormaSelectElement = document.getElementById('paymentFormaNew');
@@ -2643,7 +2973,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (state.confirmAction) state.confirmAction();
                 setTimeout(() => {
                     state.bootstrapConfirmModal.hide();
-                }, 50); 
+                }, 50);
             });
         }
 

@@ -22,7 +22,9 @@ module.exports = (sequelize) => {
             defaultValue: DataTypes.NOW
         },
         valorTotal: { // Valor total da compra
-            type: DataTypes.FLOAT,
+            // CORREÇÃO: Alterado de DataTypes.FLOAT para DataTypes.DECIMAL(10, 2)
+            // DECIMAL é mais preciso para valores monetários, evitando problemas de ponto flutuante.
+            type: DataTypes.DECIMAL(10, 2), 
             allowNull: false
         },
         status: { // Status da compra (Ex: 'Pendente', 'Concluída', 'Cancelada')
