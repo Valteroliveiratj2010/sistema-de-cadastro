@@ -3,25 +3,30 @@
 
 :root {
     /* Cores Primárias e Secundárias */
-    --primary-color: #4f46e5; /* Um azul/roxo vibrante */
-    --primary-dark: #3730a3;
-    --primary-light: #6366f1;
-    --secondary-color: #16a34a; /* Um verde forte */
-    --secondary-dark: #15803d;
-    --secondary-light: #22c55e;
+    --primary-color: #1D4E89; /* Azul Confiança */
+    --primary-dark: #123C66; /* Tom mais escuro para hover/ativos */
+    --primary-light: #2A6FA8; /* Tom mais claro para focos/bordas */
+    
+    --secondary-color: #2E8B57; /* Verde Estável */
+    --secondary-dark: #226B43; /* Tom mais escuro para hover/ativos */
+    --secondary-light: #48A97A; /* Tom mais claro */
 
     /* Cores de Alerta */
-    --danger-color: #ef4444; /* Vermelho */
-    --warning-color: #f59e0b; /* Laranja */
-    --info-color: #0ea5e9; /* Azul claro */
-    --success-color: #22c55e; /* Verde (duplicado para clareza em uso) */
+    --warning-color: #EAB308; /* Amarelo Acessível */
+    --danger-color: #D64550; /* Vermelho Claro */
+    --info-color: #4A90E2; /* Azul Suave (para informação) */
+    --success-color: #2E8B57; /* Verde Estável (para sucesso, igual ao secundário) */
 
     /* Cores Neutras */
-    --text-color: #333;
-    --text-light: #666;
-    --bg-light: #f8f9fa; /* Um cinza bem claro */
-    --bg-card: #ffffff; /* Branco para cards */
-    --border-color: #e2e8f0; /* Cinza para bordas */
+    --neutral-dark: #4A4A4A; /* Cinza Quente para texto principal */
+    --neutral-light: #F5F5F5; /* Cinza Suave para background geral */
+    --white-color: #ffffff; /* Branco puro */
+    
+    --text-color: var(--neutral-dark);
+    --text-light: #666; /* Um cinza um pouco mais claro para texto secundário */
+    --bg-light: var(--neutral-light); /* Background geral */
+    --bg-card: var(--white-color); /* Fundo padrão para cards */
+    --border-color: #e2e8f0; /* Cinza claro para bordas e linhas */
 
     /* Fontes */
     --font-primary: 'Inter', sans-serif;
@@ -55,8 +60,8 @@ h1, h2, h3, h4, h5, h6 {
 /* Sidebar Styling */
 .sidebar {
     width: 280px;
-    background-color: var(--primary-dark);
-    color: white;
+    background-color: var(--primary-dark); /* Sidebar com a cor primária escura */
+    color: var(--white-color);
     padding: 20px;
     display: flex;
     flex-direction: column;
@@ -84,11 +89,11 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
     text-align: center;
     margin-bottom: 30px;
-    color: white;
+    color: var(--white-color);
 }
 
 .sidebar .nav-link {
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.8); /* Texto levemente transparente para inativos */
     padding: 12px 15px;
     margin-bottom: 5px;
     border-radius: var(--border-radius-base);
@@ -98,13 +103,13 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .sidebar .nav-link:hover {
-    background-color: var(--primary-color);
-    color: white;
+    background-color: var(--primary-color); /* Primária no hover */
+    color: var(--white-color);
 }
 
 .sidebar .nav-link.active {
-    background-color: var(--primary-color);
-    color: white;
+    background-color: var(--primary-color); /* Primária para ativo */
+    color: var(--white-color);
     font-weight: 500;
 }
 
@@ -133,10 +138,11 @@ h1, h2, h3, h4, h5, h6 {
     z-index: 1001;
     background-color: var(--primary-dark);
     border-color: var(--primary-light);
+    color: var(--white-color); /* Garante que o ícone do hambúrguer seja branco */
 }
 
 .navbar-toggler:focus {
-    box-shadow: 0 0 0 .25rem rgba(var(--primary-light), .5);
+    box-shadow: 0 0 0 .25rem rgba(29, 78, 137, 0.5); /* Usando o valor RGB da --primary-color */
 }
 
 /* Overlay for mobile sidebar */
@@ -164,24 +170,44 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .card-header {
-    background-color: var(--primary-color);
-    color: white;
+    background-color: var(--primary-color); /* Cabeçalhos de cards com a cor primária */
+    color: var(--white-color); /* Texto branco para contraste no cabeçalho */
     border-top-left-radius: var(--border-radius-base);
     border-top-right-radius: var(--border-radius-base);
     font-weight: 500;
+    display: flex; /* Adicionado para alinhar título e botões/ícones */
+    justify-content: space-between; /* Espaça o conteúdo do header */
+    align-items: center; /* Alinha verticalmente */
 }
+
+/* Garante que qualquer texto dentro do card-header seja branco */
+.card-header h1, .card-header h2, .card-header h3, .card-header h4, .card-header h5, .card-header h6 {
+    color: var(--white-color);
+    margin-bottom: 0; /* Remove margem padrão para melhor alinhamento */
+}
+
+/* Estilo para botões dentro do card-header (como os de compartilhar/imprimir) */
+.card-header .btn {
+    color: var(--white-color); /* Ícones e texto do botão branco */
+    border-color: rgba(255, 255, 255, 0.5); /* Borda branca semitransparente */
+}
+
+.card-header .btn:hover {
+    background-color: rgba(255, 255, 255, 0.1); /* Fundo branco semitransparente no hover */
+    border-color: var(--white-color); /* Borda branca sólida no hover */
+}
+
 
 /* Specific KPI Card Styling (Dashboard) */
 .kpi-card {
-    /* Ensure all KPI cards have consistent padding and rounded corners */
-    padding: 1.25rem; /* Aumenta o padding */
+    padding: 1.25rem; 
     border-radius: var(--border-radius-base);
-    min-height: 120px; /* Garante altura mínima para alinhamento */
+    min-height: 120px; 
     display: flex;
     flex-direction: column;
-    justify-content: space-between; /* Espaça o título e o valor */
-    color: var(--text-color); /* Cor padrão para texto */
-    background-color: var(--bg-card); /* Fundo padrão branco */
+    justify-content: space-between; 
+    color: var(--text-color); 
+    background-color: var(--bg-card); 
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-base);
 }
@@ -193,19 +219,22 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .kpi-card .fs-2 {
-    font-size: 2.25rem !important; /* Tamanho da fonte para o valor */
+    font-size: 1.25rem !important; /* Reduzida para evitar quebra de linha */
+    white-space: nowrap; /* Força o texto a ficar em uma única linha */
+    overflow: hidden; /* Esconde o texto que excede o card */
+    text-overflow: ellipsis; /* Adiciona "..." se o texto for truncado */
     color: var(--text-color);
     margin-bottom: 0;
     line-height: 1.2;
 }
 
-/* Cores específicas para cards de alerta */
+/* Cores específicas para cards de alerta e para o Dashboard */
 .kpi-card.kpi-danger {
     background-color: var(--danger-color);
-    color: white;
+    color: var(--white-color);
 }
 .kpi-card.kpi-danger h6, .kpi-card.kpi-danger .fs-2 {
-    color: white;
+    color: var(--white-color);
 }
 
 .kpi-card.kpi-warning {
@@ -220,17 +249,17 @@ h1, h2, h3, h4, h5, h6 {
 /* Tabelas e Paginação */
 .table {
     border-radius: var(--border-radius-base);
-    overflow: hidden; /* Garante que os cantos arredondados sejam respeitados */
+    overflow: hidden; 
 }
 
 .table thead th {
-    background-color: var(--primary-color);
-    color: white;
+    background-color: var(--primary-color); /* Cabeçalhos de tabela com a cor primária */
+    color: var(--white-color);
     border-bottom: none;
 }
 
 .table-hover tbody tr:hover {
-    background-color: rgba(var(--primary-color-rgb), 0.1); /* Cor de hover suave */
+    background-color: rgba(29, 78, 137, 0.1); /* Usando o valor RGB da --primary-color */
 }
 
 .pagination .page-link {
@@ -243,7 +272,7 @@ h1, h2, h3, h4, h5, h6 {
 .pagination .page-item.active .page-link {
     background-color: var(--primary-color);
     border-color: var(--primary-color);
-    color: white;
+    color: var(--white-color);
 }
 
 /* Formulários */
@@ -254,7 +283,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .form-control:focus, .form-select:focus {
     border-color: var(--primary-light);
-    box-shadow: 0 0 0 0.2rem rgba(var(--primary-color-rgb), 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(29, 78, 137, 0.25); /* Usando o valor RGB da --primary-color */
 }
 
 .btn {
@@ -285,18 +314,28 @@ h1, h2, h3, h4, h5, h6 {
     border-color: var(--danger-color);
 }
 .btn-danger:hover {
-    background-color: #dc2626; /* Um vermelho um pouco mais escuro */
-    border-color: #dc2626;
+    background-color: #bb3944; /* Um vermelho um pouco mais escuro baseado no seu */
+    border-color: #bb3944;
 }
 
-.btn-info { /* Para o CSV contábil */
+.btn-info { /* Para o CSV contábil e botões de info */
     background-color: var(--info-color);
     border-color: var(--info-color);
-    color: white; /* Garante que o texto seja branco */
+    color: var(--white-color); 
 }
 .btn-info:hover {
-    background-color: #0284c7; /* Azul um pouco mais escuro */
-    border-color: #0284c7;
+    background-color: #3d7ad6; /* Azul um pouco mais escuro baseado no seu */
+    border-color: #3d7ad6;
+}
+
+.btn-dark { /* Para o botão de projeção e outros escuros */
+    background-color: var(--neutral-dark);
+    border-color: var(--neutral-dark);
+    color: var(--white-color);
+}
+.btn-dark:hover {
+    background-color: #333333; /* Um cinza um pouco mais escuro */
+    border-color: #333333;
 }
 
 
@@ -319,22 +358,36 @@ h1, h2, h3, h4, h5, h6 {
 /* Media Queries para responsividade */
 @media (max-width: 991.98px) {
     .sidebar {
-        left: -280px; /* Esconde a sidebar */
+        left: -280px; 
         box-shadow: none;
     }
     .sidebar.active {
-        left: 0; /* Mostra a sidebar */
+        left: 0; 
         box-shadow: var(--shadow-lg);
     }
     .main-content {
-        margin-left: 0; /* Main content ocupa toda a largura */
-        padding-top: 80px; /* Espaço para o botão de toggle */
+        margin-left: 0; 
+        padding-top: 80px; 
     }
     .navbar-toggler {
         display: block;
     }
     .sidebar .nav.flex-column {
-        height: calc(100% - 80px); /* Ajusta altura da navegação para mobile */
+        height: calc(100% - 80px); 
         overflow-y: auto;
+    }
+    .dashboard-kpis .col-lg-2,
+    .dashboard-kpis .col-md-4,
+    .dashboard-kpis .col-sm-6 {
+        flex: 0 0 50%; 
+        max-width: 50%;
+    }
+     @media (max-width: 575.98px) { 
+        .dashboard-kpis .col-lg-2,
+        .dashboard-kpis .col-md-4,
+        .dashboard-kpis .col-sm-6 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
     }
 }

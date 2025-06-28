@@ -17,17 +17,21 @@ router.use(authMiddleware);
 router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     try {
         const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonthNumber = today.getMonth(); // 0-11
         const currentMonth = today.toISOString().slice(0, 7);
+
+        // CORRIGIDO: Definição de todayStart e todayEnd
+        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
 
         const baseWhereClause = (req.user.role === 'vendedor') ? { userId: req.user.id } : {};
 
         const totalClients = await Client.count({ where: baseWhereClause });
         
         // KPIs de Vendas
-        const salesSumOptions = { where: baseWhereClause };
         const totalSalesAmountAll = await Sale.sum('valorTotal', { where: baseWhereClause }) || 0;
         const totalPaidAmountAll = await Sale.sum('valorPago', { where: baseWhereClause }) || 0;
-
         const totalReceivable = totalSalesAmountAll - totalPaidAmountAll;
         
         const salesThisMonth = await Sale.sum('valorTotal', {
@@ -47,37 +51,61 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
             }
         }) || 0;
 
-        const salesByMonth = await Sale.findAll({
+        // Vendas por Mês (últimos 12 meses do histórico completo)
+        // Incluirá dados para o gráfico de histórico
+        const rawSalesByMonth = await Sale.findAll({
             attributes: [
                 [fn('strftime', '%Y-%m', col('dataVenda')), 'month'],
-                [fn('sum', col('valorTotal')), 'total']
+                [fn('sum', col('valorTotal')), 'total'],
+                [fn('count', col('id')), 'count']
             ],
-            where: baseWhereClause,
+            where: {
+                ...baseWhereClause,
+                dataVenda: {
+                    // Buscar dados de 24 meses para ter histórico suficiente para YOY para todos os meses
+                    [Op.gte]: new Date(currentYear - 2, currentMonthNumber, 1) 
+                }
+            },
             group: ['month'],
-            order: [['month', 'DESC']],
-            limit: 6
+            order: [['month', 'ASC']]
         });
 
-        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+        // NOVO: Preencher meses sem vendas com 0 para o gráfico
+        const salesByMonthMap = new Map();
+        rawSalesByMonth.forEach(item => {
+            salesByMonthMap.set(item.dataValues.month, {
+                total: parseFloat(item.dataValues.total),
+                count: parseInt(item.dataValues.count)
+            });
+        });
 
+        const fullSalesByMonth = [];
+        for (let i = -12; i <= 0; i++) { // Últimos 12 meses (incluindo o atual) para a visualização
+            const date = new Date(currentYear, currentMonthNumber + i, 1);
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            
+            const data = salesByMonthMap.get(monthKey);
+            fullSalesByMonth.push({
+                month: monthKey,
+                total: data ? data.total : 0,
+                count: data ? data.count : 0,
+                averageTicket: data && data.count > 0 ? data.total / data.count : 0
+            });
+        }
+        
         const salesToday = await Sale.sum('valorTotal', {
             where: {
                 ...baseWhereClause,
                 dataVenda: {
-                    [Op.between]: [todayStart, todayEnd]
+                    [Op.between]: [new Date(today.getFullYear(), today.getMonth(), today.getDate()), todayEnd] 
                 }
             }
         }) || 0;
 
-        const totalSalesCount = await Sale.count({ where: baseWhereClause }) || 1;
-        const totalSalesSum = await Sale.sum('valorTotal', { where: baseWhereClause }) || 0;
-        const averageTicket = totalSalesSum / totalSalesCount;
+        const totalSalesCountAll = await Sale.count({ where: baseWhereClause }) || 1; // Para ticket médio geral
+        const averageTicket = totalSalesAmountAll / totalSalesCountAll;
 
-        // NOVO: KPIs de Compras
-        // Contas a Pagar (todas as compras)
-        const totalPurchasesAmount = await Purchase.sum('valorTotal', { where: { status: 'Pendente' } }) || 0; // Contas a pagar não são por vendedor
-        // Contas a Pagar Vencidas (status 'Pendente' e data de compra no passado, ou vencimento explícito se adicionarmos)
+        const totalPurchasesAmount = await Purchase.sum('valorTotal', { where: { status: 'Pendente' } }) || 0; 
         const overduePurchases = await Purchase.sum('valorTotal', {
             where: {
                 status: 'Pendente',
@@ -85,7 +113,6 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
             }
         }) || 0;
         
-        // Acessível apenas para Admin e Gerente (se for o caso, pode ser filtrado também na rota do frontend)
         let totalAccountsPayable = 0;
         let overdueAccountsPayable = 0;
         if (req.user.role === 'admin' || req.user.role === 'gerente') {
@@ -93,16 +120,31 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
             overdueAccountsPayable = overduePurchases;
         }
 
+        // Vendas do mesmo mês do ano anterior (para o KPI e o gráfico YOY)
+        const lastYearSameMonthDate = new Date(today.getFullYear() - 1, today.getMonth(), 1);
+        const lastYearSameMonthEndDate = new Date(today.getFullYear() - 1, today.getMonth() + 1, 0, 23, 59, 59, 999); 
+
+        const salesLastYearSameMonth = await Sale.sum('valorTotal', {
+            where: {
+                ...baseWhereClause,
+                dataVenda: {
+                    [Op.between]: [lastYearSameMonthDate, lastYearSameMonthEndDate]
+                }
+            }
+        }) || 0;
+
+
         res.json({
             totalClients: totalClients || 0,
-            totalReceivable: totalReceivable || 0, // Contas a receber total
-            overdueSales: overdueSales || 0, // Contas a receber vencidas
+            totalReceivable: totalReceivable || 0, 
+            overdueSales: overdueSales || 0, 
             salesThisMonth: salesThisMonth || 0,
-            salesByMonth: salesByMonth.reverse(),
+            salesByMonth: fullSalesByMonth, // AGORA RETORNA fullSalesByMonth
             salesToday: salesToday, 
             averageTicket: averageTicket,
-            totalAccountsPayable: totalAccountsPayable, // NOVO
-            overdueAccountsPayable: overdueAccountsPayable // NOVO
+            totalAccountsPayable: totalAccountsPayable, 
+            overdueAccountsPayable: overdueAccountsPayable, 
+            salesLastYearSameMonth: salesLastYearSameMonth 
         });
     } catch (error) {
         console.error('❌ ERRO NO ENDPOINT DO DASHBOARD:', error);
@@ -110,16 +152,16 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
     }
 });
 
-// --- NOVO: ROTAS PARA VENCIMENTOS DETALHADOS NO DASHBOARD ---
+// --- ROTAS PARA VENCIMENTOS DETALHADOS NO DASHBOARD ---
 router.get('/dashboard/due-dates', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     console.log(`[API Route Log] ${new Date().toISOString()} - Due Dates report route accessed by ${req.user.username}.`);
     try {
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // Começo do dia
+        today.setHours(0, 0, 0, 0); 
         
         const thirtyDaysFromNow = new Date(); 
         thirtyDaysFromNow.setDate(today.getDate() + 30);
-        thirtyDaysFromNow.setHours(23, 59, 59, 999); // Fim do dia
+        thirtyDaysFromNow.setHours(23, 59, 59, 999); 
 
         let saleWhereClause = { status: 'Pendente' };
         if (req.user.role === 'vendedor') {
@@ -666,8 +708,8 @@ router.get('/rankings/produtos', authorizeRole(['admin', 'gerente', 'vendedor'])
         }));
         res.json(formattedRanking);
     } catch (error) {
-        console.error('❌ ERRO AO OBTER RANKING DE PRODUTOS:', error);
-        res.status(500).json({ message: error.message || 'Erro ao buscar ranking de produtos.' });
+        console.error('❌ ERRO AO OBTTER RANKING DE PRODUTOS:', error);
+        res.status(500).json({ message: 'Erro ao buscar ranking de produtos.' });
     }
 });
 
@@ -697,7 +739,7 @@ router.get('/rankings/clientes', authorizeRole(['admin', 'gerente', 'vendedor'])
         res.json(formattedRanking);
     } catch (error) {
         console.error('❌ ERRO AO OBTER RANKING DE CLIENTES:', error);
-        res.status(500).json({ message: error.message || 'Erro ao buscar ranking de clientes.' });
+        res.status(500).json({ message: 'Erro ao buscar ranking de clientes.' });
     }
 });
 
@@ -728,8 +770,8 @@ router.get('/rankings/vendedores', authorizeRole(['admin', 'gerente']), async (r
 
         res.json(formattedRanking);
     } catch (error) {
-        console.error('❌ ERRO AO OBTER RANKING DE VENDEDORES:', error);
-        res.status(500).json({ message: error.message || 'Erro ao buscar ranking de vendedores.' });
+        console.error('❌ ERRO AO OBTTER RANKING DE VENDEDORES:', error);
+        res.status(500).json({ message: 'Erro ao buscar ranking de vendedores.' });
     }
 });
 
@@ -774,7 +816,10 @@ router.delete('/products/:id', authorizeRole(['admin', 'gerente']), async (req, 
         const deleted = await Product.destroy({ where: { id: req.params.id } });
         if (deleted) res.status(204).send();
         else res.status(404).json({ message: 'Produto não encontrado' });
-    } catch (error) { res.status(500).json({ message: error.message }); }
+    } catch (error) { // CORRIGIDO: 'Catch' para 'catch'
+        console.error('❌ ERRO AO DELETAR PRODUTO:', error);
+        res.status(500).json({ message: error.message });
+    }
 });
 
 // --- ROTAS DE GESTÃO DE UTILIZADORES (APENAS PARA ADMIN) ---
@@ -950,7 +995,7 @@ router.delete('/suppliers/:id', authorizeRole(['admin', 'gerente']), async (req,
         const deleted = await Supplier.destroy({ where: { id: req.params.id } });
         if (deleted) res.status(204).send();
         else res.status(404).json({ message: 'Fornecedor não encontrado' });
-    } catch (error) {
+    } catch (error) { 
         console.error('❌ ERRO AO DELETAR FORNECEDOR:', error);
         res.status(500).json({ message: error.message });
     }
@@ -1025,7 +1070,7 @@ router.post('/purchases', authorizeRole(['admin', 'gerente']), async (req, res) 
             supplierId,
             userId,
             dataCompra: dataCompra || new Date(),
-            valorTotal: calculatedTotalValue,
+            valorTotal: calculatedTotalValue, 
             status: status || 'Concluída',
             observacoes: observacoes || null
         }, { transaction });
@@ -1145,7 +1190,7 @@ router.delete('/purchases/:id', authorizeRole(['admin', 'gerente']), async (req,
         } catch (error) {
             if (transaction) await transaction.rollback();
             console.error('❌ ERRO AO DELETAR COMPRA COM PRODUTOS:', error);
-            res.status(500).json({ message: error.message || 'Erro ao deletar compra.' });
+            res.status(500).json({ message: 'Erro ao deletar compra.' });
         }
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -1207,7 +1252,7 @@ router.get('/finance/cash-flow', authorizeRole(['admin', 'gerente']), async (req
     }
 });
 
-// NOVO: Endpoint para exportar CSV Contábil Consolidado
+// Endpoint para exportar CSV Contábil Consolidado
 router.get('/finance/accounting-csv', authorizeRole(['admin', 'gerente']), async (req, res) => {
     console.log(`[API Route Log] ${new Date().toISOString()} - Accounting CSV export route accessed by ${req.user.username}.`);
     try {
@@ -1322,4 +1367,69 @@ router.get('/finance/accounting-csv', authorizeRole(['admin', 'gerente']), async
 });
 
 
+// ROTAS PARA ANÁLISE PREDITIVA SIMPLES
+router.get('/finance/sales-prediction', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
+    console.log(`[API Route Log] ${new Date().toISOString()} - Sales Prediction report route accessed by ${req.user.username}.`);
+    try {
+        const { months = 12 } = req.query; // Pega o número de meses do histórico (default 12)
+
+        // Calcula a data de início para buscar o histórico de vendas
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setMonth(endDate.getMonth() - parseInt(months));
+        startDate.setDate(1); // Começa no primeiro dia do mês
+
+        let whereClause = {
+            dataVenda: {
+                [Op.between]: [startDate, endDate]
+            }
+        };
+        // Se o usuário for vendedor, filtra pelas vendas dele
+        if (req.user.role === 'vendedor') {
+            whereClause.userId = req.user.id;
+        }
+
+        // Agrupa as vendas por mês para obter o histórico, incluindo contagem de vendas e ticket médio
+        const monthlySales = await Sale.findAll({
+            attributes: [
+                [fn('strftime', '%Y-%m', col('dataVenda')), 'month'], // Formata para 'AAAA-MM'
+                [fn('sum', col('valorTotal')), 'totalSales'], // Soma o valor total
+                [fn('count', col('id')), 'salesCount'] // Adiciona a contagem de vendas
+            ],
+            where: whereClause,
+            group: ['month'],
+            order: [[fn('strftime', '%Y-%m', col('dataVenda')), 'ASC']] // Ordena cronologicamente
+        });
+
+        // Formata os dados para o frontend, calculando ticket médio por mês
+        const formattedData = monthlySales.map(item => {
+            const totalSales = parseFloat(item.dataValues.totalSales);
+            const salesCount = parseInt(item.dataValues.salesCount);
+            const averageTicket = salesCount > 0 ? totalSales / salesCount : 0;
+
+            return {
+                month: item.dataValues.month,
+                totalSales: totalSales,
+                salesCount: salesCount,
+                averageTicket: averageTicket
+            };
+        });
+
+        res.json({
+            historicalData: formattedData,
+            period: {
+                startDate: startDate.toISOString().split('T')[0],
+                endDate: endDate.toISOString().split('T')[0],
+                months: parseInt(months)
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ ERRO AO GERAR DADOS PARA PREDIÇÃO DE VENDAS:', error);
+        res.status(500).json({ message: 'Erro ao gerar dados para análise preditiva de vendas.' });
+    }
+});
+
+
 module.exports = router;
+

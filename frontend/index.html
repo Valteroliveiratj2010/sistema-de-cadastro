@@ -94,7 +94,7 @@
 
                         <hr class="my-5"> <!-- Separador -->
 
-                        <!-- NOVO: Relatório Contábil Consolidado CSV -->
+                        <!-- Relatório Contábil Consolidado CSV -->
                         <h3><i class="bi bi-file-earmark-bar-graph me-2"></i>Relatório Contábil Consolidado</h3>
                         <div class="card shadow-sm mb-4">
                             <div class="card-body">
@@ -112,6 +112,28 @@
                                         <button type="submit" class="btn btn-info text-white w-100"><i class="bi bi-download me-2"></i>Exportar CSV</button>
                                     </div>
                                 </form>
+                            </div>
+                        </div>
+
+                        <hr class="my-5"> <!-- Separador -->
+
+                        <!-- NOVO: Seção de Análise Preditiva de Vendas -->
+                        <h3><i class="bi bi-graph-up-arrow me-2"></i>Análise Preditiva de Vendas</h3>
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-body">
+                                <p class="text-muted">Visualize o histórico de vendas e uma projeção simples para o futuro.</p>
+                                <form id="salesPredictionForm" class="row g-3 align-items-end">
+                                    <div class="col-md-6">
+                                        <label for="predictionMonths" class="form-label">Histórico de Meses (para análise)</label>
+                                        <input type="number" class="form-control" id="predictionMonths" value="12" min="3" max="24" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <button type="submit" class="btn btn-dark w-100"><i class="bi bi-arrow-right-circle me-2"></i>Gerar Projeção</button>
+                                    </div>
+                                </form>
+                                <div id="salesPredictionResults" class="mt-4">
+                                    <p class="text-center text-muted">Selecione o histórico de meses e clique em "Gerar Projeção" para ver a análise.</p>
+                                </div>
                             </div>
                         </div>
 
