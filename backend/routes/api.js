@@ -19,7 +19,8 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
         const today = new Date();
         const currentYear = today.getFullYear();
         const currentMonthNumber = today.getMonth(); // 0-11
-        const currentMonth = today.toISOString().slice(0, 7);
+        // Formato 'AAAA-MM' para MySQL: DATE_FORMAT(coluna, '%Y-%m')
+        const currentMonth = `${currentYear}-${String(currentMonthNumber + 1).padStart(2, '0')}`;
 
         // CORRIGIDO: Definição de todayStart e todayEnd
         const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -37,8 +38,9 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
         const salesThisMonth = await Sale.sum('valorTotal', {
             where: { 
                 ...baseWhereClause,
+                // CORREÇÃO AQUI: Usando DATE_FORMAT para MySQL
                 [Op.and]: [
-                    where(fn('strftime', '%Y-%m', col('dataVenda')), currentMonth)
+                    where(fn('DATE_FORMAT', col('dataVenda'), '%Y-%m'), currentMonth)
                 ]
             }
         }) || 0;
@@ -55,7 +57,8 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
         // Incluirá dados para o gráfico de histórico
         const rawSalesByMonth = await Sale.findAll({
             attributes: [
-                [fn('strftime', '%Y-%m', col('dataVenda')), 'month'],
+                // CORREÇÃO AQUI: Usando DATE_FORMAT para MySQL
+                [fn('DATE_FORMAT', col('dataVenda'), '%Y-%m'), 'month'],
                 [fn('sum', col('valorTotal')), 'total'],
                 [fn('count', col('id')), 'count']
             ],
@@ -67,7 +70,8 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
                 }
             },
             group: ['month'],
-            order: [['month', 'ASC']]
+            // CORREÇÃO AQUI: Ordenar pelo resultado da função DATE_FORMAT
+            order: [[fn('DATE_FORMAT', col('dataVenda'), '%Y-%m'), 'ASC']]
         });
 
         // NOVO: Preencher meses sem vendas com 0 para o gráfico
@@ -199,6 +203,7 @@ router.get('/dashboard/due-dates', authorizeRole(['admin', 'gerente', 'vendedor'
             overduePayables = await Purchase.findAll({
                 where: {
                     ...purchaseWhereClause,
+                    // CORREÇÃO AQUI: MySQL não tem dataVencimento para Purchase, usando dataCompra
                     dataCompra: { [Op.lt]: today } 
                 },
                 include: [{ model: Supplier, as: 'supplier', attributes: ['nome'] }],
@@ -208,6 +213,7 @@ router.get('/dashboard/due-dates', authorizeRole(['admin', 'gerente', 'vendedor'
             upcomingPayables = await Purchase.findAll({
                 where: {
                     ...purchaseWhereClause,
+                    // CORREÇÃO AQUI: MySQL não tem dataVencimento para Purchase, usando dataCompra
                     dataCompra: { [Op.between]: [today, thirtyDaysFromNow] } 
                 },
                 include: [{ model: Supplier, as: 'supplier', attributes: ['nome'] }],
@@ -595,7 +601,7 @@ router.delete('/sales/:id', authorizeRole(['admin', 'gerente']), async (req, res
             for (const item of sale.saleProducts) {
                 const product = await Product.findByPk(item.productId, { transaction });
                 if (product) {
-                    product.estoque += item.quantidade;
+                    product.estoque -= item.quantidade; 
                     await product.save({ transaction });
                 }
             }
@@ -1392,13 +1398,15 @@ router.get('/finance/sales-prediction', authorizeRole(['admin', 'gerente', 'vend
         // Agrupa as vendas por mês para obter o histórico, incluindo contagem de vendas e ticket médio
         const monthlySales = await Sale.findAll({
             attributes: [
-                [fn('strftime', '%Y-%m', col('dataVenda')), 'month'], // Formata para 'AAAA-MM'
+                // CORREÇÃO AQUI: Usando DATE_FORMAT para MySQL
+                [fn('DATE_FORMAT', col('dataVenda'), '%Y-%m'), 'month'], // Formata para 'AAAA-MM'
                 [fn('sum', col('valorTotal')), 'totalSales'], // Soma o valor total
                 [fn('count', col('id')), 'salesCount'] // Adiciona a contagem de vendas
             ],
             where: whereClause,
             group: ['month'],
-            order: [[fn('strftime', '%Y-%m', col('dataVenda')), 'ASC']] // Ordena cronologicamente
+            // CORREÇÃO AQUI: Ordenar pelo resultado da função DATE_FORMAT
+            order: [[fn('DATE_FORMAT', col('dataVenda'), '%Y-%m'), 'ASC']] // Ordena cronologicamente
         });
 
         // Formata os dados para o frontend, calculando ticket médio por mês
@@ -1431,5 +1439,4 @@ router.get('/finance/sales-prediction', authorizeRole(['admin', 'gerente', 'vend
 });
 
 
-module.exports = router;
-
+module.exports = router

@@ -4,7 +4,7 @@
     document.addEventListener('DOMContentLoaded', () => {
 
         // --- CONFIGURAÇÃO E ESTADO ---
-        const API_BASE = 'http://localhost:5000/api';
+        const API_BASE = 'http://localhost:4000/api'; 
         const state = {
             bootstrapClientModal: new bootstrap.Modal(document.getElementById('clientModal')),
             bootstrapSaleModal: new bootstrap.Modal(document.getElementById('saleModal')),
