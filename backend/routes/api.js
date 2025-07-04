@@ -1,7 +1,7 @@
 // backend/routes/api.js
 const express = require('express');
 const { Op, fn, col, where } = require('sequelize');
-const scrypt = require('scrypt-js'); // Importado para uso em User CRUD
+// const scrypt = require('scrypt-js'); // Importado para uso em User CRUD
 const { TextEncoder } = require('util'); // Para encodeUTF8
 
 // Helper functions para Scrypt (precisam estar disponíveis onde o hash é gerado)
@@ -870,10 +870,11 @@ router.delete('/products/:id', authorizeRole(['admin', 'gerente']), async (req, 
 });
 
 // --- ROTAS DE GESTÃO DE UTILIZADORES (APENAS PARA ADMIN) ---
+
+// LISTAR USUÁRIOS
 router.get('/users', authorizeRole(['admin']), async (req, res) => {
     const { page = 1, limit = 10, q = '' } = req.query;
     const offset = (page - 1) * limit;
-    
     let whereClause = {};
     if (q) {
         whereClause = {
@@ -899,6 +900,7 @@ router.get('/users', authorizeRole(['admin']), async (req, res) => {
     }
 });
 
+// OBTER UM USUÁRIO POR ID
 router.get('/users/:id', authorizeRole(['admin']), async (req, res) => {
     try {
         const user = await User.findByPk(req.params.id, {
@@ -912,28 +914,14 @@ router.get('/users/:id', authorizeRole(['admin']), async (req, res) => {
     }
 });
 
+// CRIAR USUÁRIO (bcrypt será aplicado automaticamente pelo hook do modelo)
 router.post('/users', authorizeRole(['admin']), async (req, res) => {
     const { username, email, password, role } = req.body;
     try {
         if (!password) {
             return res.status(400).json({ message: 'A senha é obrigatória para criar um novo utilizador.' });
         }
-        // --- ALTERAÇÃO AQUI: USAR SCRYPT PARA HASHING ---
-        const N = 16384; 
-        const r = 8;
-        const p = 1;
-        const dkLen = 32;
-        const salt = Math.random().toString(36).substring(2, 18); 
-        
-        const derivedKey = await scrypt.scrypt(
-            encodeUTF8(password), 
-            encodeUTF8(salt), 
-            N, r, p, dkLen
-        );
-        const hashedPassword = `scrypt$${N}$${r}$${p}$${salt}$${toHex(derivedKey)}`;
-        // --- FIM DA ALTERAÇÃO ---
-
-        const user = await User.create({ username, email, password: hashedPassword, role });
+        const user = await User.create({ username, email, password, role }); // bcrypt hook no model!
         res.status(201).json({ id: user.id, username: user.username, email: user.email, role: user.role });
     } catch (error) {
         console.error('❌ ERRO AO CRIAR UTILIZADOR:', error);
@@ -944,6 +932,7 @@ router.post('/users', authorizeRole(['admin']), async (req, res) => {
     }
 });
 
+// ATUALIZAR USUÁRIO (bcrypt será aplicado automaticamente pelo hook do modelo)
 router.put('/users/:id', authorizeRole(['admin']), async (req, res) => {
     const { username, email, password, role } = req.body;
     try {
@@ -951,29 +940,12 @@ router.put('/users/:id', authorizeRole(['admin']), async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: 'Utilizador não encontrado' });
         }
-
         if (username) user.username = username;
         if (email) user.email = email;
         if (role) user.role = role;
+        if (password) user.password = password; // bcrypt hook no model!
 
-        if (password) { // Se uma nova senha for fornecida
-            // --- ALTERAÇÃO AQUI: USAR SCRYPT PARA HASHING ---
-            const N = 16384; 
-            const r = 8;
-            const p = 1;
-            const dkLen = 32;
-            const salt = Math.random().toString(36).substring(2, 18); 
-            
-            const derivedKey = await scrypt.scrypt(
-                encodeUTF8(password), 
-                encodeUTF8(salt), 
-                N, r, p, dkLen
-            );
-            user.password = `scrypt$${N}$${r}$${p}$${salt}$${toHex(derivedKey)}`;
-            // --- FIM DA ALTERAÇÃO ---
-        }
-
-        await user.save(); // Salva as alterações no usuário
+        await user.save();
         res.json({ id: user.id, username: user.username, email: user.email, role: user.role });
     } catch (error) {
         console.error('❌ ERRO AO ATUALIZAR UTILIZADOR:', error);
@@ -984,12 +956,12 @@ router.put('/users/:id', authorizeRole(['admin']), async (req, res) => {
     }
 });
 
+// DELETAR USUÁRIO
 router.delete('/users/:id', authorizeRole(['admin']), async (req, res) => {
     try {
-        if (req.params.id === req.user.id) {
+        if (String(req.params.id) === String(req.user.id)) {
             return res.status(403).json({ message: 'Você não pode excluir sua própria conta.' });
         }
-
         const deleted = await User.destroy({ where: { id: req.params.id } });
         if (deleted) res.status(204).send();
         else res.status(404).json({ message: 'Utilizador não encontrado' });
@@ -998,6 +970,7 @@ router.delete('/users/:id', authorizeRole(['admin']), async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
 
 // --- ROTAS DE FORNECEDORES (APENAS ADMIN E GERENTE) ---
 router.get('/suppliers', authorizeRole(['admin', 'gerente']), async (req, res) => {

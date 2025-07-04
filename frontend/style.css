@@ -1,40 +1,33 @@
-/* Importar Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
 
 :root {
-    /* Cores Primárias e Secundárias */
-    --primary-color: #1D4E89; /* Azul Confiança */
-    --primary-dark: #123C66; /* Tom mais escuro para hover/ativos */
-    --primary-light: #2A6FA8; /* Tom mais claro para focos/bordas */
-    
-    --secondary-color: #2E8B57; /* Verde Estável */
-    --secondary-dark: #226B43; /* Tom mais escuro para hover/ativos */
-    --secondary-light: #48A97A; /* Tom mais claro */
+    --primary-color: #1D4E89;
+    --primary-dark: #123C66;
+    --primary-light: #2A6FA8;
+    --secondary-color: #2E8B57;
+    --secondary-dark: #226B43;
+    --secondary-light: #48A97A;
 
-    /* Cores de Alerta */
-    --warning-color: #EAB308; /* Amarelo Acessível */
-    --danger-color: #D64550; /* Vermelho Claro */
-    --info-color: #4A90E2; /* Azul Suave (para informação) */
-    --success-color: #2E8B57; /* Verde Estável (para sucesso, igual ao secundário) */
+    --warning-color: #EAB308;
+    --danger-color: #D64550;
+    --info-color: #4A90E2;
+    --success-color: #2E8B57;
 
-    /* Cores Neutras */
-    --neutral-dark: #4A4A4A; /* Cinza Quente para texto principal */
-    --neutral-light: #F5F5F5; /* Cinza Suave para background geral */
-    --white-color: #ffffff; /* Branco puro */
-    
+    --neutral-dark: #4A4A4A;
+    --neutral-light: #F5F5F5;
+    --white-color: #ffffff;
+
     --text-color: var(--neutral-dark);
-    --text-light: #666; /* Um cinza um pouco mais claro para texto secundário */
-    --bg-light: var(--neutral-light); /* Background geral */
-    --bg-card: var(--white-color); /* Fundo padrão para cards */
-    --border-color: #e2e8f0; /* Cinza claro para bordas e linhas */
+    --text-light: #666;
+    --bg-light: var(--neutral-light);
+    --bg-card: var(--white-color);
+    --border-color: #e2e8f0;
 
-    /* Fontes */
     --font-primary: 'Inter', sans-serif;
     --font-heading: 'Poppins', sans-serif;
 
-    /* Espaçamentos e Bordas */
-    --border-radius-base: 0.75rem; /* Cantos mais arredondados */
-    --shadow-base: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px; /* Sombra mais suave */
+    --border-radius-base: 0.75rem;
+    --shadow-base: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
     --shadow-lg: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
 }
 
@@ -44,7 +37,7 @@ body {
     color: var(--text-color);
     margin: 0;
     padding: 0;
-    overflow-x: hidden; /* Evita rolagem horizontal */
+    overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -57,10 +50,10 @@ h1, h2, h3, h4, h5, h6 {
     min-height: 100vh;
 }
 
-/* Sidebar Styling */
+/* Sidebar */
 .sidebar {
     width: 280px;
-    background-color: var(--primary-dark); /* Sidebar com a cor primária escura */
+    background-color: var(--primary-dark);
     color: var(--white-color);
     padding: 20px;
     display: flex;
@@ -69,19 +62,9 @@ h1, h2, h3, h4, h5, h6 {
     height: 100%;
     left: 0;
     top: 0;
-    z-index: 1000;
+    z-index: 2000;
     box-shadow: var(--shadow-lg);
-    transition: all 0.3s ease; /* Animação para recolher/expandir */
-}
-
-.sidebar.collapsed {
-    width: 0;
-    overflow: hidden;
-    box-shadow: none;
-}
-
-.sidebar.active { /* Para telas pequenas, quando está visível */
-    width: 280px;
+    transition: left 0.3s;
 }
 
 .sidebar-title {
@@ -90,10 +73,13 @@ h1, h2, h3, h4, h5, h6 {
     text-align: center;
     margin-bottom: 30px;
     color: var(--white-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .sidebar .nav-link {
-    color: rgba(255, 255, 255, 0.8); /* Texto levemente transparente para inativos */
+    color: rgba(255, 255, 255, 0.8);
     padding: 12px 15px;
     margin-bottom: 5px;
     border-radius: var(--border-radius-base);
@@ -101,134 +87,112 @@ h1, h2, h3, h4, h5, h6 {
     display: flex;
     align-items: center;
 }
-
-.sidebar .nav-link:hover {
-    background-color: var(--primary-color); /* Primária no hover */
-    color: var(--white-color);
-}
-
+.sidebar .nav-link:hover,
 .sidebar .nav-link.active {
-    background-color: var(--primary-color); /* Primária para ativo */
+    background-color: var(--primary-color);
     color: var(--white-color);
     font-weight: 500;
 }
-
 .sidebar .nav-link i {
     font-size: 1.1rem;
 }
 
-/* Main Content Area */
+/* Main Content */
 .main-content {
     flex-grow: 1;
-    margin-left: 280px; /* Espaço para a sidebar */
+    margin-left: 280px;
     padding: 20px;
-    transition: margin-left 0.3s ease; /* Animação para acompanhar a sidebar */
+    transition: margin-left 0.3s;
 }
-
 .content-wrapper {
     max-width: 1200px;
     margin: 0 auto;
 }
 
-/* Navbar toggler for mobile */
 .navbar-toggler {
     position: fixed;
     top: 15px;
     left: 15px;
-    z-index: 1001;
+    z-index: 2100;
     background-color: var(--primary-dark);
     border-color: var(--primary-light);
-    color: var(--white-color); /* Garante que o ícone do hambúrguer seja branco */
+    color: var(--white-color);
+    display: none; /* só aparece em mobile */
 }
-
 .navbar-toggler:focus {
-    box-shadow: 0 0 0 .25rem rgba(29, 78, 137, 0.5); /* Usando o valor RGB da --primary-color */
+    box-shadow: 0 0 0 .25rem rgba(29, 78, 137, 0.5);
 }
 
-/* Overlay for mobile sidebar */
+/* Overlay para sidebar mobile */
 .overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0; width: 100vw; height: 100vh;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 999;
+    z-index: 1999;
     display: none;
 }
-
 .overlay.active {
     display: block;
 }
 
-/* General Card Styling */
+/* Cards e visual dos KPIs */
 .card {
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-base);
     box-shadow: var(--shadow-base);
     background-color: var(--bg-card);
 }
-
 .card-header {
-    background-color: var(--primary-color); /* Cabeçalhos de cards com a cor primária */
-    color: var(--white-color); /* Texto branco para contraste no cabeçalho */
+    background-color: var(--primary-color);
+    color: var(--white-color);
     border-top-left-radius: var(--border-radius-base);
     border-top-right-radius: var(--border-radius-base);
     font-weight: 500;
-    display: flex; /* Adicionado para alinhar título e botões/ícones */
-    justify-content: space-between; /* Espaça o conteúdo do header */
-    align-items: center; /* Alinha verticalmente */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
 }
-
-/* Garante que qualquer texto dentro do card-header seja branco */
 .card-header h1, .card-header h2, .card-header h3, .card-header h4, .card-header h5, .card-header h6 {
     color: var(--white-color);
-    margin-bottom: 0; /* Remove margem padrão para melhor alinhamento */
+    margin-bottom: 0;
 }
-
-/* Estilo para botões dentro do card-header (como os de compartilhar/imprimir) */
 .card-header .btn {
-    color: var(--white-color); /* Ícones e texto do botão branco */
-    border-color: rgba(255, 255, 255, 0.5); /* Borda branca semitransparente */
+    color: var(--white-color);
+    border-color: rgba(255, 255, 255, 0.5);
 }
-
 .card-header .btn:hover {
-    background-color: rgba(255, 255, 255, 0.1); /* Fundo branco semitransparente no hover */
-    border-color: var(--white-color); /* Borda branca sólida no hover */
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--white-color);
 }
 
-
-/* Specific KPI Card Styling (Dashboard) */
+/* KPI Cards Dashboard */
 .kpi-card {
-    padding: 1.25rem; 
+    padding: 1.25rem;
     border-radius: var(--border-radius-base);
-    min-height: 120px; 
+    min-height: 120px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between; 
-    color: var(--text-color); 
-    background-color: var(--bg-card); 
+    justify-content: space-between;
+    color: var(--text-color);
+    background-color: var(--bg-card);
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-base);
 }
-
 .kpi-card h6 {
     font-size: 0.9rem;
-    color: var(--text-light); /* Cor mais suave para os títulos dos KPIs */
+    color: var(--text-light);
     margin-bottom: 0.5rem;
 }
-
 .kpi-card .fs-2 {
-    font-size: 1.25rem !important; /* Reduzida para evitar quebra de linha */
-    white-space: nowrap; /* Força o texto a ficar em uma única linha */
-    overflow: hidden; /* Esconde o texto que excede o card */
-    text-overflow: ellipsis; /* Adiciona "..." se o texto for truncado */
+    font-size: 1.25rem !important;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
     color: var(--text-color);
     margin-bottom: 0;
     line-height: 1.2;
 }
-
-/* Cores específicas para cards de alerta e para o Dashboard */
 .kpi-card.kpi-danger {
     background-color: var(--danger-color);
     color: var(--white-color);
@@ -236,39 +200,43 @@ h1, h2, h3, h4, h5, h6 {
 .kpi-card.kpi-danger h6, .kpi-card.kpi-danger .fs-2 {
     color: var(--white-color);
 }
-
 .kpi-card.kpi-warning {
     background-color: var(--warning-color);
-    color: var(--text-color); /* Texto escuro no fundo amarelo/laranja */
+    color: var(--text-color);
 }
 .kpi-card.kpi-warning h6, .kpi-card.kpi-warning .fs-2 {
     color: var(--text-color);
 }
 
-
-/* Tabelas e Paginação */
+/* Tabelas e responsividade */
 .table {
     border-radius: var(--border-radius-base);
-    overflow: hidden; 
+    overflow: hidden;
 }
-
 .table thead th {
-    background-color: var(--primary-color); /* Cabeçalhos de tabela com a cor primária */
+    background-color: var(--primary-color);
     color: var(--white-color);
     border-bottom: none;
 }
-
 .table-hover tbody tr:hover {
-    background-color: rgba(29, 78, 137, 0.1); /* Usando o valor RGB da --primary-color */
+    background-color: rgba(29, 78, 137, 0.08);
+}
+.table-responsive {
+    overflow-x: auto;
+    margin-bottom: 1rem;
+}
+.table-responsive table td {
+    word-break: break-word;
+    white-space: normal;
 }
 
+/* Paginação */
 .pagination .page-link {
     color: var(--primary-color);
     border-color: var(--border-color);
     border-radius: var(--border-radius-base);
     margin: 0 2px;
 }
-
 .pagination .page-item.active .page-link {
     background-color: var(--primary-color);
     border-color: var(--primary-color);
@@ -280,17 +248,14 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: var(--border-radius-base);
     border-color: var(--border-color);
 }
-
 .form-control:focus, .form-select:focus {
     border-color: var(--primary-light);
-    box-shadow: 0 0 0 0.2rem rgba(29, 78, 137, 0.25); /* Usando o valor RGB da --primary-color */
+    box-shadow: 0 0 0 0.2rem rgba(29, 78, 137, 0.18);
 }
-
 .btn {
     border-radius: var(--border-radius-base);
     font-weight: 500;
 }
-
 .btn-primary {
     background-color: var(--primary-color);
     border-color: var(--primary-color);
@@ -299,7 +264,6 @@ h1, h2, h3, h4, h5, h6 {
     background-color: var(--primary-dark);
     border-color: var(--primary-dark);
 }
-
 .btn-success {
     background-color: var(--secondary-color);
     border-color: var(--secondary-color);
@@ -308,86 +272,123 @@ h1, h2, h3, h4, h5, h6 {
     background-color: var(--secondary-dark);
     border-color: var(--secondary-dark);
 }
-
 .btn-danger {
     background-color: var(--danger-color);
     border-color: var(--danger-color);
 }
 .btn-danger:hover {
-    background-color: #bb3944; /* Um vermelho um pouco mais escuro baseado no seu */
+    background-color: #bb3944;
     border-color: #bb3944;
 }
-
-.btn-info { /* Para o CSV contábil e botões de info */
+.btn-info {
     background-color: var(--info-color);
     border-color: var(--info-color);
-    color: var(--white-color); 
+    color: var(--white-color);
 }
 .btn-info:hover {
-    background-color: #3d7ad6; /* Azul um pouco mais escuro baseado no seu */
+    background-color: #3d7ad6;
     border-color: #3d7ad6;
 }
-
-.btn-dark { /* Para o botão de projeção e outros escuros */
+.btn-dark {
     background-color: var(--neutral-dark);
     border-color: var(--neutral-dark);
     color: var(--white-color);
 }
 .btn-dark:hover {
-    background-color: #333333; /* Um cinza um pouco mais escuro */
+    background-color: #333333;
     border-color: #333333;
 }
 
-
 /* Outros elementos */
-.badge {
-    border-radius: var(--border-radius-base);
-}
-
-.alert {
-    border-radius: var(--border-radius-base);
-}
-
-/* Seções de Relatórios e Dashboard */
+.badge { border-radius: var(--border-radius-base); }
+.alert { border-radius: var(--border-radius-base); }
 .content-section h3, .content-section h4 {
     margin-bottom: 1.5rem;
     padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--border-color); /* Adiciona uma linha sutil */
+    border-bottom: 1px solid var(--border-color);
 }
 
-/* Media Queries para responsividade */
+/* RESPONSIVIDADE */
+/* Laptops/tablets */
+@media (max-width: 1199.98px) {
+    .content-wrapper {
+        max-width: 100%;
+        padding: 0 12px;
+    }
+}
+/* Sidebar responsiva */
 @media (max-width: 991.98px) {
     .sidebar {
-        left: -280px; 
+        left: -280px;
+        width: 280px;
         box-shadow: none;
+        transition: left 0.3s;
     }
     .sidebar.active {
-        left: 0; 
+        left: 0;
         box-shadow: var(--shadow-lg);
     }
     .main-content {
-        margin-left: 0; 
-        padding-top: 80px; 
+        margin-left: 0 !important;
+        padding-top: 60px;
     }
     .navbar-toggler {
-        display: block;
+        display: block !important;
     }
     .sidebar .nav.flex-column {
-        height: calc(100% - 80px); 
+        height: calc(100% - 80px);
         overflow-y: auto;
     }
-    .dashboard-kpis .col-lg-2,
-    .dashboard-kpis .col-md-4,
-    .dashboard-kpis .col-sm-6 {
-        flex: 0 0 50%; 
-        max-width: 50%;
+    .content-wrapper {
+        max-width: 100%;
+        padding: 0 1rem;
     }
-     @media (max-width: 575.98px) { 
-        .dashboard-kpis .col-lg-2,
-        .dashboard-kpis .col-md-4,
-        .dashboard-kpis .col-sm-6 {
-            flex: 0 0 100%;
-            max-width: 100%;
-        }
+}
+@media (max-width: 767.98px) {
+    .content-wrapper {
+        padding: 0 10px;
+    }
+    .kpi-card {
+        font-size: 0.9rem;
+        padding: 0.75rem;
+        text-align: center;
+    }
+    .kpi-card .fs-2 {
+        font-size: 1.1rem !important;
+    }
+    .card-header {
+        font-size: 1rem;
+        padding: 0.75rem 1rem;
+    }
+    .row.g-4 {
+        --bs-gutter-x: 0.5rem;
+        --bs-gutter-y: 0.5rem;
+    }
+    .row.g-3 > [class*="col-"] {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+@media (max-width: 575.98px) {
+    .card-header, .card-body {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+    .kpi-card {
+        padding: 0.5rem;
+    }
+    .navbar-toggler {
+        left: 10px;
+        top: 10px;
+    }
+    .list-group-item span:first-child {
+        word-break: break-all;
+    }
+    .list-group-item {
+        padding: 0.5rem;
+    }
+    .modal-body {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 }

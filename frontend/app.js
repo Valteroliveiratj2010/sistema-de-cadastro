@@ -1,13 +1,38 @@
-(() => { // IIFE para encapsular todo o script e evitar conflitos de escopo
+(() => {
     'use strict';
 
-    // console.log para verificar o carregamento do arquivo app.js
-    // Mude o valor de 'v' (versão) para a data e hora atual (AAAA-MM-DD-HHMMSS)
-    // para garantir que o navegador sempre carregue a versão mais recente.
-    const APP_VERSION = "2025-07-02-154000"; // ATUALIZE ESTE NÚMERO SEMPRE QUE QUISER FORÇAR O CACHE
-    console.log(`APP.JS CARREGADO - Versão: ${APP_VERSION}`);
-
     document.addEventListener('DOMContentLoaded', () => {
+        const sidebar = document.querySelector('.sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+        function openSidebar() {
+            sidebar.classList.add('active');
+            sidebarOverlay.classList.add('active');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+        }
+
+        // Verifica se os elementos existem antes de adicionar listeners
+        if (sidebar && sidebarToggle && sidebarOverlay) {
+            sidebarToggle.addEventListener('click', openSidebar);
+            sidebarOverlay.addEventListener('click', closeSidebar);
+
+            document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+                link.addEventListener('click', closeSidebar);
+            });
+        } else {
+            console.warn('[Sidebar] Elementos não encontrados no DOM.');
+        }
+    
+
+        // --- ADICIONEI ESTES CONSOLE.LOGS AQUI PARA DEBUG DE MODAL ---
+        console.log('[DEBUG APP.JS] Verificando objeto Bootstrap:', typeof bootstrap);
+        console.log('[DEBUG APP.JS] Verificando Bootstrap.Modal:', typeof bootstrap.Modal);
+        // --- FIM DOS CONSOLE.LOGS ---
 
         // --- CONFIGURAÇÃO E ESTADO ---
         const API_BASE = 'http://localhost:4000/api';
@@ -169,7 +194,7 @@
             purchaseTotalValueHidden: document.getElementById('purchaseTotalValue'),
             purchaseStatusSelect: document.getElementById('purchaseStatus'),
             purchaseObservationsInput: document.getElementById('purchaseObservations'),
-            
+
             accountingReportForm: document.getElementById('accountingReportForm'),
             accountingStartDateInput: document.getElementById('accountingStartDate'),
             accountingEndDateInput: document.getElementById('accountingEndDate'),
@@ -649,9 +674,9 @@
                 if (lowStockProducts && lowStockProducts.length > 0) {
                     const productItems = lowStockProducts.map(p =>
                         `<li class="list-group-item d-flex justify-content-between align-items-center">
-                            ${p.nome} (SKU: ${p.sku || 'N/A'})
-                            <span class="badge bg-danger rounded-pill">${p.estoque}</span>
-                        </li>`
+                            ${p.nome} (SKU: ${p.sku || 'N/A'})
+                            <span class="badge bg-danger rounded-pill">${p.estoque}</span>
+                        </li>`
                     ).join('');
                     lowStockAlertHtml = `
                         <div class="alert alert-warning mb-4" role="alert">
@@ -811,7 +836,7 @@
                 const primaryDark = rootStyles.getPropertyValue('--primary-dark').trim();
                 const secondaryColor = rootStyles.getPropertyValue('--secondary-color').trim();
                 const secondaryDark = rootStyles.getPropertyValue('--secondary-dark').trim();
-                
+
                 const currentYear = new Date().getFullYear();
                 const salesCurrentYear = [];
                 const salesPreviousYear = [];
@@ -823,12 +848,12 @@
                     const date = new Date(currentYear, new Date().getMonth() - i, 1);
                     const monthKeyCurrentYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
                     const monthKeyPreviousYear = `${date.getFullYear() - 1}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-                    
+
                     labels.push(`${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`);
 
                     const currentMonthData = salesDataMap.get(monthKeyCurrentYear);
                     const previousMonthData = salesDataMap.get(monthKeyPreviousYear);
-                    
+
                     salesCurrentYear.push(currentMonthData ? currentMonthData.total : 0);
                     salesPreviousYear.push(previousMonthData ? previousMonthData.total : 0);
                 }
@@ -865,7 +890,7 @@
                                     text: 'Valor (R$)'
                                 },
                                 ticks: {
-                                    callback: function(value, index, ticks) {
+                                    callback: function (value, index, ticks) {
                                         return utils.formatCurrency(value);
                                     }
                                 }
@@ -885,22 +910,22 @@
                             },
                             tooltip: {
                                 callbacks: {
-                                    title: function(context) {
+                                    title: function (context) {
                                         const monthLabel = context[0].label;
                                         return `Mês: ${monthLabel}`;
                                     },
-                                    label: function(context) {
+                                    label: function (context) {
                                         const datasetLabel = context.dataset.label;
                                         const [labelMonth, labelYear] = context.label.split('/').map(Number);
                                         const searchYear = datasetLabel.includes(`${currentYear - 1}`) ? labelYear - 1 : labelYear;
-                                        
+
                                         const currentMonthData = salesByMonth.find(item => {
                                             const [itemYear, itemMonth] = item.month.split('-');
                                             return parseInt(itemYear) === searchYear && parseInt(itemMonth) === labelMonth;
                                         });
-                                        
+
                                         let label = `${datasetLabel}: ${utils.formatCurrency(context.raw)}`;
-                                        
+
                                         if (currentMonthData) {
                                             label += `\nQuantidade de Vendas: ${currentMonthData.count}`;
                                             label += `\nTicket Médio: ${utils.formatCurrency(currentMonthData.averageTicket)}`;
@@ -919,7 +944,7 @@
                                                 label += `\nComparado ao Ano Anterior: N/A (sem vendas no ano anterior)`;
                                             }
                                         }
-                                        
+
                                         return label;
                                     }
                                 }
@@ -951,9 +976,9 @@
                         <td>${client.id}</td><td><strong>${client.nome}</strong></td><td>${client.email || 'N/A'}</td><td>${client.telefone || 'N/A'}</td>
                         <td>
                             ${(utils.hasPermission(['admin', 'gerente']) || (utils.hasPermission(['vendedor']) && state.user && client.userId === state.user.id)) ?
-                                `<button class="btn btn-sm btn-outline-primary action-edit" data-type="client" data-id="${client.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
+                        `<button class="btn btn-sm btn-outline-primary action-edit" data-type="client" data-id="${client.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
                             ${utils.hasPermission(['admin', 'gerente']) ?
-                                `<button class="btn btn-sm btn-outline-danger action-delete" data-type="client" data-id="${client.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
+                        `<button class="btn btn-sm btn-outline-danger action-delete" data-type="client" data-id="${client.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
                         </td>
                     </tr>`).join('');
 
@@ -994,9 +1019,9 @@
                                 <td>
                                     <button class="btn btn-sm btn-outline-info action-detail" data-type="sale" data-id="${sale.id}" title="Detalhes"><i class="bi bi-eye"></i></button>
                                     ${(utils.hasPermission(['admin', 'gerente']) || (utils.hasPermission(['vendedor']) && state.user && sale.userId === state.user.id)) ?
-                                        `<button class="btn btn-sm btn-outline-primary action-edit" data-type="sale" data-id="${sale.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
+                            `<button class="btn btn-sm btn-outline-primary action-edit" data-type="sale" data-id="${sale.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
                                     ${utils.hasPermission(['admin', 'gerente']) ?
-                                        `<button class="btn btn-sm btn-outline-danger action-delete" data-type="sale" data-id="${sale.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
+                            `<button class="btn btn-sm btn-outline-danger action-delete" data-type="sale" data-id="${sale.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
                                 </td>
                             </tr>`;
                 }).join('');
@@ -1459,9 +1484,9 @@
                         <td>${product.estoque}</td>
                         <td>
                             ${utils.hasPermission(['admin', 'gerente']) ?
-                                `<button class="btn btn-sm btn-outline-primary action-edit" data-type="product" data-id="${product.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
+                        `<button class="btn btn-sm btn-outline-primary action-edit" data-type="product" data-id="${product.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
                             ${utils.hasPermission(['admin', 'gerente']) ?
-                                `<button class="btn btn-sm btn-outline-danger action-delete" data-type="product" data-id="${product.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
+                        `<button class="btn btn-sm btn-outline-danger action-delete" data-type="product" data-id="${product.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
                         </td>
                     </tr>`).join('');
 
@@ -1499,9 +1524,9 @@
                         <td><span class="badge bg-secondary">${user.role}</span></td>
                         <td>
                             ${utils.hasPermission(['admin']) ?
-                                `<button class="btn btn-sm btn-outline-primary action-edit" data-type="user" data-id="${user.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
+                        `<button class="btn btn-sm btn-outline-primary action-edit" data-type="user" data-id="${user.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
                             ${(utils.hasPermission(['admin']) && user.id !== state.user.id) ?
-                                `<button class="btn btn-sm btn-outline-danger action-delete" data-type="user" data-id="${user.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
+                        `<button class="btn btn-sm btn-outline-danger action-delete" data-type="user" data-id="${user.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
                         </td>
                     </tr>`).join('');
 
@@ -1541,9 +1566,9 @@
                         <td>${supplier.endereco || 'N/A'}</td>
                         <td>
                             ${utils.hasPermission(['admin', 'gerente']) ?
-                                `<button class="btn btn-sm btn-outline-primary action-edit" data-type="supplier" data-id="${supplier.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
+                        `<button class="btn btn-sm btn-outline-primary action-edit" data-type="supplier" data-id="${supplier.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
                             ${utils.hasPermission(['admin', 'gerente']) ?
-                                `<button class="btn btn-sm btn-outline-danger action-delete" data-type="supplier" data-id="${supplier.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
+                        `<button class="btn btn-sm btn-outline-danger action-delete" data-type="supplier" data-id="${supplier.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
                         </td>
                     </tr>`).join('');
 
@@ -1583,9 +1608,9 @@
                         <td>
                             <button class="btn btn-sm btn-outline-info action-detail" data-type="purchase" data-id="${purchase.id}" title="Detalhes"><i class="bi bi-eye"></i></button>
                             ${utils.hasPermission(['admin', 'gerente']) ?
-                                `<button class="btn btn-sm btn-outline-primary action-edit" data-type="purchase" data-id="${purchase.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
+                        `<button class="btn btn-sm btn-outline-primary action-edit" data-type="purchase" data-id="${purchase.id}" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
                             ${utils.hasPermission(['admin', 'gerente']) ?
-                                `<button class="btn btn-sm btn-outline-danger action-delete" data-type="purchase" data-id="${purchase.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
+                        `<button class="btn btn-sm btn-outline-danger action-delete" data-type="purchase" data-id="${purchase.id}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
                         </td>
                     </tr>`).join('');
 
@@ -1663,7 +1688,7 @@
                             },
                             {
                                 label: 'Projeção (Próximos ' + futureMonthsCount + ' meses)',
-                                data: Array(historicalData.length -1).fill(null).concat([historicalSales[historicalSales.length - 1]], predictedSales),
+                                data: Array(historicalData.length - 1).fill(null).concat([historicalSales[historicalSales.length - 1]], predictedSales),
                                 borderColor: 'var(--secondary-color)',
                                 backgroundColor: 'transparent',
                                 borderDash: [5, 5],
@@ -1684,7 +1709,7 @@
                                     text: 'Valor das Vendas (R$)'
                                 },
                                 ticks: {
-                                    callback: function(value) {
+                                    callback: function (value) {
                                         return utils.formatCurrency(value);
                                     }
                                 }
@@ -1704,7 +1729,7 @@
                             },
                             tooltip: {
                                 callbacks: {
-                                    title: function(context) {
+                                    title: function (context) {
                                         const dataIndex = context[0].dataIndex;
                                         if (dataIndex < historicalData.length) {
                                             const currentMonthData = historicalData[dataIndex];
@@ -1712,7 +1737,7 @@
                                         }
                                         return `Mês: ${context[0].label}`;
                                     },
-                                    label: function(context) {
+                                    label: function (context) {
                                         let label = context.dataset.label + ': ' + utils.formatCurrency(context.raw);
 
                                         if (context.datasetIndex === 0) {
@@ -2329,13 +2354,13 @@
                 const clientId = document.getElementById('saleClient').value;
                 const dataVencimento = document.getElementById('saleDueDate').value;
                 const valorTotal = utils.calculateSaleTotal();
-                
+
                 const salePaidValueInitialInput = document.getElementById('salePaidValueInitial');
                 const paymentFormaSelect = document.getElementById('paymentForma');
                 const paymentParcelasInput = document.getElementById('paymentParcelas');
                 const paymentBandeiraCartaoInput = document.getElementById('paymentBandeiraCartao');
                 const paymentBancoCrediarioInput = document.getElementById('paymentBancoCrediario');
-                
+
                 const valorPagoInitial = parseFloat(salePaidValueInitialInput?.value || '0') || 0;
                 const formaPagamento = paymentFormaSelect?.value || 'Dinheiro';
                 const parcelas = parseInt(paymentParcelasInput?.value || '1') || 1;
@@ -2623,7 +2648,7 @@
                 dom.userIdInput.value = '';
                 dom.userPasswordInput.required = true;
                 dom.userPasswordInput.placeholder = 'Senha';
-                
+
                 const modalLabel = document.getElementById('userModalLabel');
 
                 if (userId) {
@@ -2827,25 +2852,25 @@
                 } catch (error) { utils.showToast(error.message, 'error'); }
             },
             // Dentro do seu arquivo frontend/js/app.js, localize o objeto 'handlers'
-// e adicione esta função DENTRO dele, por exemplo, após 'loadPurchases'.
+            // e adicione esta função DENTRO dele, por exemplo, após 'loadPurchases'.
 
-loadPurchaseDetail: async (purchaseId) => {
-    // console.log para verificar se loadPurchaseDetail está sendo chamada
-    console.log("Chamado: handlers.loadPurchaseDetail para ID:", purchaseId); 
+            loadPurchaseDetail: async (purchaseId) => {
+                // console.log para verificar se loadPurchaseDetail está sendo chamada
+                console.log("Chamado: handlers.loadPurchaseDetail para ID:", purchaseId);
 
-    if (!utils.hasPermission(['admin', 'gerente'])) {
-        utils.showToast('Você não tem permissão para ver os detalhes das compras.', 'error');
-        return;
-    }
-    try {
-        const purchase = await api.getPurchaseById(purchaseId);
-        ui.renderPurchaseDetail(purchase);
-        ui.showSection('purchaseDetailSection'); 
-    } catch (error) {
-        console.error("Falha ao carregar detalhes da compra:", error);
-        utils.showToast(error.message, 'error');
-    }
-},
+                if (!utils.hasPermission(['admin', 'gerente'])) {
+                    utils.showToast('Você não tem permissão para ver os detalhes das compras.', 'error');
+                    return;
+                }
+                try {
+                    const purchase = await api.getPurchaseById(purchaseId);
+                    ui.renderPurchaseDetail(purchase);
+                    ui.showSection('purchaseDetailSection');
+                } catch (error) {
+                    console.error("Falha ao carregar detalhes da compra:", error);
+                    utils.showToast(error.message, 'error');
+                }
+            },
             openPurchaseModal: async (purchaseId = null) => {
                 if (!utils.hasPermission(['admin', 'gerente'])) {
                     utils.showToast('Você não tem permissão para gerenciar compras.', 'error');
@@ -3178,7 +3203,7 @@ loadPurchaseDetail: async (purchaseId) => {
                     if (sectionId === 'reportsSection') {
                         dom.reportResults.innerHTML = '<p class="text-center text-muted">Selecione um período e clique em "Gerar Relatório" para ver os resultados.</p>';
                         dom.cashFlowReportResults.innerHTML = '<p class="text-center text-muted">Selecione um período e clique em "Gerar Fluxo" para ver o fluxo de caixa.</p>';
-                        if(dom.salesPredictionResults) dom.salesPredictionResults.innerHTML = '<p class="text-center text-muted">Selecione o histórico de meses e clique em "Gerar Projeção" para ver a análise.</p>';
+                        if (dom.salesPredictionResults) dom.salesPredictionResults.innerHTML = '<p class="text-center text-muted">Selecione o histórico de meses e clique em "Gerar Projeção" para ver a análise.</p>';
                         if (state.predictionChartInstance) {
                             state.predictionChartInstance.destroy();
                             state.predictionChartInstance = null;
