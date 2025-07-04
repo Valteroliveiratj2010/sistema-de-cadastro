@@ -392,3 +392,21 @@ h1, h2, h3, h4, h5, h6 {
         -webkit-overflow-scrolling: touch;
     }
 }
+/* Correção para telas grandes: sidebar visível e botão oculto */
+@media (min-width: 992px) {
+    .sidebar {
+        left: 0 !important;
+    }
+
+    .main-content {
+        margin-left: 280px !important;
+    }
+
+    #sidebarToggle {
+        display: none !important;
+    }
+
+    #sidebar-overlay {
+        display: none !important;
+    }
+}

@@ -1,33 +1,13 @@
-(() => {
+(() => { // IIFE para encapsular todo o script e evitar conflitos de escopo
     'use strict';
 
+    // console.log para verificar o carregamento do arquivo app.js
+    // Mude o valor de 'v' (versão) para a data e hora atual (AAAA-MM-DD-HHMMSS)
+    // para garantir que o navegador sempre carregue a versão mais recente.
+    const APP_VERSION = "2025-07-04-105500"; // ATUALIZE ESTE NÚMERO SEMPRE QUE QUISER FORÇAR O CACHE
+    console.log(`APP.JS CARREGADO - Versão: ${APP_VERSION}`);
+
     document.addEventListener('DOMContentLoaded', () => {
-        const sidebar = document.querySelector('.sidebar');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const sidebarOverlay = document.getElementById('sidebar-overlay');
-
-        function openSidebar() {
-            sidebar.classList.add('active');
-            sidebarOverlay.classList.add('active');
-        }
-
-        function closeSidebar() {
-            sidebar.classList.remove('active');
-            sidebarOverlay.classList.remove('active');
-        }
-
-        // Verifica se os elementos existem antes de adicionar listeners
-        if (sidebar && sidebarToggle && sidebarOverlay) {
-            sidebarToggle.addEventListener('click', openSidebar);
-            sidebarOverlay.addEventListener('click', closeSidebar);
-
-            document.querySelectorAll('.sidebar .nav-link').forEach(link => {
-                link.addEventListener('click', closeSidebar);
-            });
-        } else {
-            console.warn('[Sidebar] Elementos não encontrados no DOM.');
-        }
-    
 
         // --- ADICIONEI ESTES CONSOLE.LOGS AQUI PARA DEBUG DE MODAL ---
         console.log('[DEBUG APP.JS] Verificando objeto Bootstrap:', typeof bootstrap);
@@ -127,7 +107,7 @@
             availableProducts: [],
             currentSelectedProduct: null,
             selectedPurchaseProducts: [],
-            availableProductsForPurchase: [],
+            availableProductsForPurchase: null,
             currentSelectedProductForPurchase: null,
             availableSuppliers: [],
         };
@@ -194,7 +174,7 @@
             purchaseTotalValueHidden: document.getElementById('purchaseTotalValue'),
             purchaseStatusSelect: document.getElementById('purchaseStatus'),
             purchaseObservationsInput: document.getElementById('purchaseObservations'),
-
+            
             accountingReportForm: document.getElementById('accountingReportForm'),
             accountingStartDateInput: document.getElementById('accountingStartDate'),
             accountingEndDateInput: document.getElementById('accountingEndDate'),
@@ -618,74 +598,74 @@
             getDueDates: () => api.request('/dashboard/due-dates'),
             exportAccountingCsv: (startDate, endDate) => api.request(`/finance/accounting-csv?startDate=${startDate}&endDate=${endDate}`, { isFileDownload: true }),
             getSalesPredictionData: (months) => api.request(`/finance/sales-prediction?months=${months}`),
-        };
+        };
 
-        // --- UI AND RENDERING LOGIC ---
-        const ui = {
-            showSection: (sectionId) => {
-                document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
-                const section = document.getElementById(sectionId);
-                if (section) section.style.display = 'block';
+        // --- UI AND RENDERING LOGIC ---
+        const ui = {
+            showSection: (sectionId) => {
+                document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+                const section = document.getElementById(sectionId);
+                if (section) section.style.display = 'block';
 
-                dom.navLinks.forEach(l => l.classList.remove('active'));
-                const navLink = document.querySelector(`[data-section="${sectionId}"]`);
-                if (navLink) navLink.classList.add('active');
+                dom.navLinks.forEach(l => l.classList.remove('active'));
+                const navLink = document.querySelector(`[data-section="${sectionId}"]`);
+                if (navLink) navLink.classList.add('active');
 
-                ui.updateSidebarVisibility();
-            },
-            updateSidebarVisibility: () => {
-                const userRole = state.userRole;
-                dom.navLinks.forEach(link => {
-                    const sectionId = link.dataset.section;
-                    let isVisible = true;
+                ui.updateSidebarVisibility();
+            },
+            updateSidebarVisibility: () => {
+                const userRole = state.userRole;
+                dom.navLinks.forEach(link => {
+                    const sectionId = link.dataset.section;
+                    let isVisible = true;
 
-                    switch (sectionId) {
-                        case 'productsSection':
-                        case 'reportsSection':
-                        case 'clientsSection':
-                        case 'salesSection':
-                        case 'dashboardSection':
-                            break;
-                        case 'usersSection':
-                            if (!utils.hasPermission(['admin'])) {
-                                isVisible = false;
-                            }
-                            break;
-                        case 'suppliersSection':
-                        case 'purchasesSection':
-                            if (!utils.hasPermission(['admin', 'gerente'])) {
-                                isVisible = false;
-                            }
-                            break;
-                        case 'logoutSection':
-                            isVisible = true;
-                            break;
-                        default:
-                            isVisible = false;
-                            break;
-                    }
-                    link.style.display = isVisible ? '' : 'none';
-                });
-            },
-            renderDashboard: ({ totalClients, salesThisMonth, totalReceivable, overdueSales, salesByMonth, lowStockProducts, salesToday, averageTicket, totalAccountsPayable, overdueAccountsPayable, salesLastYearSameMonth }) => {
-                const section = document.getElementById('dashboardSection');
+                    switch (sectionId) {
+                        case 'productsSection':
+                        case 'reportsSection':
+                        case 'clientsSection':
+                        case 'salesSection':
+                        case 'dashboardSection':
+                            break;
+                        case 'usersSection':
+                            if (!utils.hasPermission(['admin'])) {
+                                isVisible = false;
+                            }
+                            break;
+                        case 'suppliersSection':
+                        case 'purchasesSection':
+                            if (!utils.hasPermission(['admin', 'gerente'])) {
+                                isVisible = false;
+                            }
+                            break;
+                        case 'logoutSection':
+                            isVisible = true;
+                            break;
+                        default:
+                            isVisible = false;
+                            break;
+                    }
+                    link.style.display = isVisible ? '' : 'none';
+                });
+            },
+            renderDashboard: ({ totalClients, salesThisMonth, totalReceivable, overdueSales, salesByMonth, lowStockProducts, salesToday, averageTicket, totalAccountsPayable, overdueAccountsPayable, salesLastYearSameMonth }) => {
+                const section = document.getElementById('dashboardSection');
 
-                let lowStockAlertHtml = '';
-                if (lowStockProducts && lowStockProducts.length > 0) {
-                    const productItems = lowStockProducts.map(p =>
-                        `<li class="list-group-item d-flex justify-content-between align-items-center">
+                let lowStockAlertHtml = '';
+                if (lowStockProducts && lowStockProducts.length > 0) {
+                    const productItems = lowStockProducts.map(p =>
+                        `<li class="list-group-item d-flex justify-content-between align-items-center">
                             ${p.nome} (SKU: ${p.sku || 'N/A'})
                             <span class="badge bg-danger rounded-pill">${p.estoque}</span>
                         </li>`
-                    ).join('');
-                    lowStockAlertHtml = `
-                        <div class="alert alert-warning mb-4" role="alert">
-                            <h4 class="alert-heading"><i class="bi bi-exclamation-triangle-fill me-2"></i>Alerta: Estoque Baixo</h4>
-                            <p>Os seguintes produtos precisam de reposição urgente.</p>
-                            <hr>
-                            <ul class="list-group">
-                                ${productItems}
-                            </ul>
+                    ).join('');
+                    lowStockAlertHtml = `
+                        <div class="alert alert-warning mb-4" role="alert">
+                            <h4 class="alert-heading"><i class="bi bi-exclamation-triangle-fill me-2"></i>Alerta: Estoque Baixo</h4>
+                            <p>Os seguintes produtos precisam de reposição urgente.</p>
+                            <hr>
+                            <ul class="list-group">
+
+   
                         </div>
                     `;
                 }
@@ -2145,131 +2125,142 @@
                 });
             },
             openSaleModal: async (saleId = null) => {
-                dom.saleForm.reset();
-                document.getElementById('saleId').value = '';
-                state.selectedSaleProducts = [];
-                utils.renderSelectedProductsList();
-
-                const modalLabel = document.getElementById('saleModalLabel');
-                const clientSelect = document.getElementById('saleClient');
-                clientSelect.innerHTML = '<option value="">Carregando clientes...</option>';
-
-                dom.productSelect.empty().append($('<option value="">Selecione um produto</option>')).select2({
-                    placeholder: "Buscar produto...",
-                    dropdownParent: $('#saleModal'),
-                    templateResult: (product) => {
-                        if (!product.id) { return product.text; }
-                        const p = state.availableProducts.find(item => String(item.id) === String(product.id));
-                        if (!p) return product.text;
-                        return $(`<span>${p.nome} (Estoque: ${p.estoque}, R$ ${p.precoVenda.toFixed(2)})</span>`);
-                    },
-                    templateSelection: (product) => {
-                        if (!product.id) { return product.text; }
-                        const p = state.availableProducts.find(item => String(item.id) === String(product.id));
-                        if (!p) return product.text;
-                        return p.nome;
-                    },
-                    data: [],
-                });
-
-                try {
-                    const { data: clients } = await api.getClients(1, '', 1000);
-                    clientSelect.innerHTML = '<option value="">Selecione um cliente</option>';
-                    clients.forEach(c => clientSelect.add(new Option(c.nome, c.id)));
-
-                    const { data: products } = await api.getProducts(1, '', 1000);
-                    state.availableProducts = products;
-                    dom.productSelect.empty().append($('<option value="">Selecione um produto</option>')).select2({
-                        data: state.availableProducts.map(p => ({ id: String(p.id), text: p.nome })),
-                        placeholder: "Buscar produto...",
-                        dropdownParent: $('#saleModal'),
-                        templateResult: (productData) => {
-                            if (!productData.id) { return productData.text; }
-                            const product = state.availableProducts.find(item => String(item.id) === String(productData.id));
-                            if (!product) return productData.text;
-                            return $(`<span>${product.nome} (Estoque: ${product.estoque}, R$ ${product.precoVenda.toFixed(2)})</span>`);
-                        },
-                        templateSelection: (productData) => {
-                            if (!productData.id) { return productData.text; }
-                            const product = state.availableProducts.find(item => String(item.id) === String(productData.id));
-                            if (!product) return productData.text;
-                            return product.nome;
-                        }
-                    });
-                    dom.productSelect.off('select2:select').on('select2:select', (e) => {
-                        const productId = String(e.params.data.id);
-                        const product = state.availableProducts.find(p => String(p.id) === productId);
-                        if (product) {
-                            state.currentSelectedProduct = product;
-                            dom.productDetailsDisplay.innerHTML = `Estoque: ${product.estoque}, Preço: ${utils.formatCurrency(product.precoVenda)}`;
-                            dom.productUnitPriceInput.value = product.precoVenda.toFixed(2);
-                            dom.productQuantityInput.value = '1';
-                        } else {
-                            state.currentSelectedProduct = null;
-                            dom.productDetailsDisplay.innerHTML = '';
-                            dom.productUnitPriceInput.value = '';
-                        }
-                    });
-                    dom.productSelect.off('select2:unselect').on('select2:unselect', (e) => {
-                        state.currentSelectedProduct = null;
-                        dom.productDetailsDisplay.innerHTML = '';
-                        dom.productUnitPriceInput.value = '';
-                    });
-
-                    const paymentFormaSelect = document.getElementById('paymentForma');
-                    const paymentParcelasField = document.getElementById('parcelasField');
-                    const paymentBandeiraCartaoField = document.getElementById('bandeiraCartaoField');
-                    const paymentBancoCrediarioField = document.getElementById('bancoCrediarioField');
-                    const paymentParcelasInput = document.getElementById('paymentParcelas');
-                    const paymentBandeiraCartaoInput = document.getElementById('paymentBandeiraCartao');
-                    const paymentBancoCrediarioInput = document.getElementById('paymentBancoCrediario');
-                    const salePaidValueInitialInput = document.getElementById('salePaidValueInitial');
-
-                    if (paymentFormaSelect) paymentFormaSelect.value = 'Dinheiro';
-                    utils.togglePaymentFields(paymentFormaSelect, paymentParcelasField, paymentBandeiraCartaoField, paymentBancoCrediarioField, paymentParcelasInput, paymentBandeiraCartaoInput, paymentBancoCrediarioInput);
-                    if (salePaidValueInitialInput) salePaidValueInitialInput.value = '0';
-
-                    if (modalLabel) {
-                        modalLabel.textContent = saleId ? 'Editar Venda' : 'Nova Venda';
-                    }
-                    if (saleId) {
-                        const sale = await api.getSaleById(saleId);
-                        if (!utils.hasPermission(['admin', 'gerente'])) {
-                            if (!(utils.hasPermission(['vendedor']) && state.user && sale.userId === state.user.id)) {
-                                utils.showToast('Você não tem permissão para editar esta venda.', 'error');
-                                return;
-                            } else if (!utils.hasPermission(['vendedor'])) {
-                                utils.showToast('Você não tem permissão para editar vendas.', 'error');
-                                return;
-                            }
-                        }
-
-                        document.getElementById('saleId').value = sale.id;
-                        document.getElementById('saleDueDate').value = sale.dataVencimento ? sale.dataVencimento.split('T')[0] : '';
-
-                        if (sale.products && sale.products.length > 0) {
-                            state.selectedSaleProducts = sale.products.map(p => ({
-                                id: p.id,
-                                nome: p.nome,
-                                precoVenda: p.precoVenda,
-                                precoUnitario: p.SaleProduct.precoUnitario,
-                                quantidade: p.SaleProduct.quantidade
-                            }));
-                            utils.renderSelectedProductsList();
-                        }
-                        $('#saleClient').val(sale.clientId).trigger('change');
-                    } else {
-                        if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
-                            utils.showToast('Você não tem permissão para criar vendas.', 'error');
-                            return;
-                        }
-                    }
-
-                    state.bootstrapSaleModal.show();
-                } catch (error) {
-                    utils.showToast(error.message, 'error');
-                }
-            },
+                                dom.saleForm.reset();
+                                document.getElementById('saleId').value = '';
+                                state.selectedSaleProducts = [];
+                                utils.renderSelectedProductsList();
+                
+                                const modalLabel = document.getElementById('saleModalLabel');
+                                // const clientSelect = document.getElementById('saleClient'); // Não é mais necessário um elemento direto aqui se usar JQuery Select2
+                                // clientSelect.innerHTML = '<option value="">Carregando clientes...</option>'; // Não é mais necessário
+                
+                
+                                // Inicialização do Select2 para o produto (já estava correto)
+                                dom.productSelect.empty().append($('<option value="">Selecione um produto</option>')).select2({
+                                    placeholder: "Buscar produto...",
+                                    dropdownParent: $('#saleModal'),
+                                    templateResult: (product) => {
+                                        if (!product.id) { return product.text; }
+                                        const p = state.availableProducts.find(item => String(item.id) === String(product.id));
+                                        if (!p) return product.text;
+                                        return $(`<span>${p.nome} (Estoque: ${p.estoque}, R$ ${p.precoVenda.toFixed(2)})</span>`);
+                                    },
+                                    templateSelection: (product) => {
+                                        if (!product.id) { return product.text; }
+                                        const p = state.availableProducts.find(item => String(item.id) === String(product.id));
+                                        if (!p) return product.text;
+                                        return p.nome;
+                                    },
+                                    data: [], // Garante que não há dados pré-populados antes da chamada da API
+                                });
+                
+                                try {
+                                    const { data: clients } = await api.getClients(1, '', 1000);
+                                    // ANTES: clientSelect.innerHTML = '<option value="">Selecione um cliente</option>';
+                                    // ANTES: clients.forEach(c => clientSelect.add(new Option(c.nome, c.id)));
+                
+                                    // NOVO: Inicializa o Select2 para o campo de seleção de cliente
+                                    $('#saleClient').empty().append($('<option value="">Selecione um cliente</option>')).select2({
+                                        data: clients.map(c => ({ id: String(c.id), text: c.nome })),
+                                        placeholder: "Buscar cliente...",
+                                        dropdownParent: $('#saleModal'), // <--- ESSA É A LINHA CHAVE PARA O CLIENTE
+                                        width: '100%' // Garante que o Select2 use 100% da largura do seu container
+                                    });
+                
+                                    const { data: products } = await api.getProducts(1, '', 1000);
+                                    state.availableProducts = products;
+                                    // Re-inicializa o Select2 para os produtos com os dados corretos
+                                    dom.productSelect.empty().append($('<option value="">Selecione um produto</option>')).select2({
+                                        data: state.availableProducts.map(p => ({ id: String(p.id), text: p.nome })),
+                                        placeholder: "Buscar produto...",
+                                        dropdownParent: $('#saleModal'),
+                                        templateResult: (productData) => {
+                                            if (!productData.id) { return productData.text; }
+                                            const product = state.availableProducts.find(item => String(item.id) === String(productData.id));
+                                            if (!product) return productData.text;
+                                            return $(`<span>${product.nome} (Estoque: ${product.estoque}, R$ ${product.precoVenda.toFixed(2)})</span>`);
+                                        },
+                                        templateSelection: (productData) => {
+                                            if (!productData.id) { return productData.text; }
+                                            const product = state.availableProducts.find(item => String(item.id) === String(productData.id));
+                                            if (!product) return productData.text;
+                                            return product.nome;
+                                        }
+                                    });
+                                    dom.productSelect.off('select2:select').on('select2:select', (e) => {
+                                        const productId = String(e.params.data.id);
+                                        const product = state.availableProducts.find(p => String(p.id) === productId);
+                                        if (product) {
+                                            state.currentSelectedProduct = product;
+                                            dom.productDetailsDisplay.innerHTML = `Estoque: ${product.estoque}, Preço: ${utils.formatCurrency(product.precoVenda)}`;
+                                            dom.productUnitPriceInput.value = product.precoVenda.toFixed(2);
+                                            dom.productQuantityInput.value = '1';
+                                        } else {
+                                            state.currentSelectedProduct = null;
+                                            dom.productDetailsDisplay.innerHTML = '';
+                                            dom.productUnitPriceInput.value = '';
+                                        }
+                                    });
+                                    dom.productSelect.off('select2:unselect').on('select2:unselect', (e) => {
+                                        state.currentSelectedProduct = null;
+                                        dom.productDetailsDisplay.innerHTML = '';
+                                        dom.productUnitPriceInput.value = '';
+                                    });
+                
+                                    const paymentFormaSelect = document.getElementById('paymentForma');
+                                    const paymentParcelasField = document.getElementById('parcelasField');
+                                    const paymentBandeiraCartaoField = document.getElementById('bandeiraCartaoField');
+                                    const paymentBancoCrediarioField = document.getElementById('bancoCrediarioField');
+                                    const paymentParcelasInput = document.getElementById('paymentParcelas');
+                                    const paymentBandeiraCartaoInput = document.getElementById('paymentBandeiraCartao');
+                                    const paymentBancoCrediarioInput = document.getElementById('paymentBancoCrediario');
+                                    const salePaidValueInitialInput = document.getElementById('salePaidValueInitial');
+                
+                                    if (paymentFormaSelect) paymentFormaSelect.value = 'Dinheiro';
+                                    utils.togglePaymentFields(paymentFormaSelect, paymentParcelasField, paymentBandeiraCartaoField, paymentBancoCrediarioField, paymentParcelasInput, paymentBandeiraCartaoInput, paymentBancoCrediarioInput);
+                                    if (salePaidValueInitialInput) salePaidValueInitialInput.value = '0';
+                
+                                    if (modalLabel) {
+                                        modalLabel.textContent = saleId ? 'Editar Venda' : 'Nova Venda';
+                                    }
+                                    if (saleId) {
+                                        const sale = await api.getSaleById(saleId);
+                                        if (!utils.hasPermission(['admin', 'gerente'])) {
+                                            if (!(utils.hasPermission(['vendedor']) && state.user && sale.userId === state.user.id)) {
+                                                utils.showToast('Você não tem permissão para editar esta venda.', 'error');
+                                                return;
+                                            } else if (!utils.hasPermission(['vendedor'])) {
+                                                utils.showToast('Você não tem permissão para editar vendas.', 'error');
+                                                return;
+                                            }
+                                        }
+                
+                                        document.getElementById('saleId').value = sale.id;
+                                        document.getElementById('saleDueDate').value = sale.dataVencimento ? sale.dataVencimento.split('T')[0] : '';
+                
+                                        if (sale.products && sale.products.length > 0) {
+                                            state.selectedSaleProducts = sale.products.map(p => ({
+                                                id: p.id,
+                                                nome: p.nome,
+                                                precoVenda: p.precoVenda,
+                                                precoUnitario: p.SaleProduct.precoUnitario,
+                                                quantidade: p.SaleProduct.quantidade
+                                            }));
+                                            utils.renderSelectedProductsList();
+                                        }
+                                        $('#saleClient').val(sale.clientId).trigger('change');
+                                    } else {
+                                        if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
+                                            utils.showToast('Você não tem permissão para criar vendas.', 'error');
+                                            return;
+                                        }
+                                    }
+                
+                                    state.bootstrapSaleModal.show();
+                                } catch (error) {
+                                    utils.showToast(error.message, 'error');
+                                }
+                            },
             handleAddProductToSale: () => {
                 if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
                     utils.showToast('Você não tem permissão para adicionar produtos a vendas.', 'error');

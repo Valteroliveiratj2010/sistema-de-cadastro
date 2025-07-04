@@ -13,7 +13,6 @@
 </head>
 
 <body>
-    <!-- Botão menu mobile, FORA do #app-container -->
     <button class="btn navbar-toggler d-lg-none" type="button" id="sidebarToggle" aria-label="Menu">
         <i class="bi bi-list text-white"></i>
     </button>
@@ -43,11 +42,117 @@
         </aside>
         <main class="main-content" id="mainContent">
             <div class="content-wrapper">
-                <!-- Aqui vão as sections do sistema, exemplo de dashboardSection -->
                 <section id="dashboardSection" class="content-section"></section>
                 <section id="clientsSection" class="content-section" style="display: none;"></section>
                 <section id="salesSection" class="content-section" style="display: none;"></section>
-                <section id="reportsSection" class="content-section" style="display: none;"></section>
+                <section id="reportsSection" class="content-section" style="display: none;">
+                    <h3 class="mb-4"><i class="bi bi-graph-up me-2"></i>Relatórios Financeiros e de Vendas</h3>
+
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="bi bi-bar-chart-line me-2"></i>Relatório de Vendas por Período</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="reportPeriodForm">
+                                <div class="row g-3">
+                                    <div class="col-md-5">
+                                        <label for="startDate" class="form-label">Data Inicial</label>
+                                        <input type="date" class="form-control" id="startDate" required>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label for="endDate" class="form-label">Data Final</label>
+                                        <input type="date" class="form-control" id="endDate" required>
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-end">
+                                        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-play-circle me-2"></i>Gerar Relatório</button>
+                                    </div>
+                                </div>
+                            </form>
+                            <hr class="my-4">
+                            <div id="reportResults">
+                                <p class="text-center text-muted">Selecione um período e clique em "Gerar Relatório" para ver os resultados.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="bi bi-currency-dollar me-2"></i>Fluxo de Caixa</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="cashFlowReportForm">
+                                <div class="row g-3">
+                                    <div class="col-md-5">
+                                        <label for="cashFlowStartDate" class="form-label">Data Inicial</label>
+                                        <input type="date" class="form-control" id="cashFlowStartDate" required>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label for="cashFlowEndDate" class="form-label">Data Final</label>
+                                        <input type="date" class="form-control" id="cashFlowEndDate" required>
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-end">
+                                        <button type="submit" class="btn btn-success w-100"><i class="bi bi-cash-stack me-2"></i>Gerar Fluxo</button>
+                                    </div>
+                                </div>
+                            </form>
+                            <hr class="my-4">
+                            <div id="cashFlowReportResults">
+                                <p class="text-center text-muted">Selecione um período e clique em "Gerar Fluxo" para ver o fluxo de caixa.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Relatório Contábil Consolidado (CSV)</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="accountingReportForm">
+                                <div class="row g-3">
+                                    <div class="col-md-5">
+                                        <label for="accountingStartDate" class="form-label">Data Inicial</label>
+                                        <input type="date" class="form-control" id="accountingStartDate" required>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label for="accountingEndDate" class="form-label">Data Final</label>
+                                        <input type="date" class="form-control" id="accountingEndDate" required>
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-end">
+                                        <button type="submit" class="btn btn-info w-100 text-white"><i class="bi bi-download me-2"></i>Exportar CSV</button>
+                                    </div>
+                                </div>
+                            </form>
+                            <p class="text-muted text-center mt-3 mb-0">Este relatório gera um arquivo CSV com todas as transações financeiras (entradas e saídas) do período.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0"><i class="bi bi-graph-up-arrow me-2"></i>Análise Preditiva de Vendas</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="salesPredictionForm">
+                                <div class="row g-3">
+                                    <div class="col-md-10">
+                                        <label for="predictionMonths" class="form-label">Histórico de Meses para Análise (3-24)</label>
+                                        <input type="number" class="form-control" id="predictionMonths" value="12" min="3" max="24" required>
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-end">
+                                        <button type="submit" class="btn btn-warning w-100"><i class="bi bi-lightbulb me-2"></i>Gerar Projeção</button>
+                                    </div>
+                                </div>
+                            </form>
+                            <hr class="my-4">
+                            <div id="salesPredictionResults">
+                                <p class="text-center text-muted">Selecione o histórico de meses e clique em "Gerar Projeção" para ver a análise.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <section id="saleDetailSection" class="content-section" style="display: none;"></section>
+                    <section id="purchaseDetailSection" class="content-section" style="display: none;"></section>
+
+                </section>
                 <section id="productsSection" class="content-section" style="display: none;"></section>
                 <section id="usersSection" class="content-section" style="display: none;"></section>
                 <section id="suppliersSection" class="content-section" style="display: none;"></section>

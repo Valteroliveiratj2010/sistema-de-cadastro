@@ -1,28 +1,44 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const scrypt = require('scrypt-js'); // Scrypt principal
-// const { TextEncoder } = require('util'); // <-- NÃO PRECISA MAIS DO TEXTENCODER AQUI
 
 // Helper functions para Scrypt (agora usando Buffer para garantir consistência de bytes)
-const encodeUTF8 = (str) => Buffer.from(str, 'utf8'); // <-- MUDANÇA AQUI: USANDO BUFFER.FROM
+const encodeUTF8 = (str) => Buffer.from(str, 'utf8');
 const toHex = (bytes) => Buffer.from(bytes).toString('hex');
 
+// --- Desestruturação das variáveis de ambiente ---
 const {
-    DB_DIALECT = 'mysql',
+    DB_DIALECT = 'postgres', // Mantemos o padrão como 'postgres'
     DB_HOST,
     DB_PORT,
     DB_NAME,
     DB_USER,
-    DB_PASSWORD
+    DB_PASSWORD,
+    NODE_ENV // Adicionado para verificar o ambiente
 } = process.env;
 
+// --- Configuração condicional do SSL ---
+// Se o NODE_ENV for 'production', ou se você decidir usar DATABASE_URL para conexão,
+// então `ssl` será true e configurado. Caso contrário, será `false` (desabilitado).
+// Para o seu .env atual, que não tem NODE_ENV=production, e usa DB_HOST/DB_PORT, etc.,
+// o SSL será 'false' para a conexão local.
+const sslConfig = NODE_ENV === 'production' ? {
+    require: true,
+    rejectUnauthorized: false // Importante para produção na Render
+} : false; // Desabilita SSL para desenvolvimento local
+
+// --- Inicialização do Sequelize ---
+// Usando as variáveis de ambiente separadas do seu .env
 const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
     host: DB_HOST,
     port: DB_PORT,
-    dialect: DB_DIALECT,
-    logging: false
+    dialect: DB_DIALECT, // Usará 'postgres' do .env ou o padrão
+    logging: false,
+    dialectOptions: {
+        ssl: sslConfig // Aplicamos a configuração condicional de SSL aqui
+    }
 });
 
-// --- Definição dos Modelos ---
+// --- Definição de TODOS os Modelos AQUI EM CIMA ---
 
 const User = sequelize.define('User', {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
@@ -41,11 +57,11 @@ const User = sequelize.define('User', {
             const salt = Math.random().toString(36).substring(2, 18); // Gerar um salt aleatório (16 chars)
             
             const derivedKey = await scrypt.scrypt(
-                encodeUTF8(user.password), // Usando Buffer.from
-                encodeUTF8(salt),          // Usando Buffer.from
+                encodeUTF8(user.password),
+                encodeUTF8(salt),
                 N, r, p, dkLen
             );
-            user.password = `scrypt$${N}$${r}$${p}$${salt}$${toHex(derivedKey)}`; // Formato customizado
+            user.password = `scrypt$${N}$${r}$${p}$${salt}$${toHex(derivedKey)}`;
             console.log(`[HOOK] beforeCreate: Senha hashed com Scrypt. Início do hash: ${user.password.substring(0, 30)}...`);
         },
         beforeUpdate: async (user) => { 
@@ -69,9 +85,7 @@ const User = sequelize.define('User', {
             }
         }
     },
-    indexes: [
-        // unique: true já cria índices para username e email
-    ]
+    indexes: []
 });
 
 User.prototype.comparePassword = async function (plainPassword) {
@@ -87,7 +101,6 @@ User.prototype.comparePassword = async function (plainPassword) {
     console.log(`[COMPARE-ULTIMATE-DEBUG] Stored Hash Full: '${storedHashFull.substring(0, 30)}...' (Length: ${storedHashFull.length})`);
     console.log(`[COMPARE-ULTIMATE-DEBUG] Char Codes (Stored Hash Início): [${Array.from(storedHashFull.substring(0, 20)).map(c => c.charCodeAt(0)).join(', ')}]`); 
 
-    // Extrair parâmetros (N, r, p, salt, hashedKey) do hash armazenado
     const parts = storedHashFull.split('$');
     if (parts.length !== 6 || parts[0] !== 'scrypt') {
         console.error('[COMPARE-ULTIMATE-DEBUG] ERRO: Formato de hash Scrypt inválido. Hash não começa com "scrypt$" ou tem partes insuficientes.');
@@ -105,15 +118,13 @@ User.prototype.comparePassword = async function (plainPassword) {
     let isLoginValid = false;
 
     try {
-        // Re-derivar a chave com a senha plain e os parâmetros do hash armazenado
         const derivedKey_plain = await scrypt.scrypt(
-            encodeUTF8(plain),           // Usando Buffer.from
-            encodeUTF8(salt_stored),     // Usando Buffer.from
+            encodeUTF8(plain), 
+            encodeUTF8(salt_stored), 
             N_stored, r_stored, p_stored, dkLen_stored
         );
         const derivedKey_plain_hex = toHex(derivedKey_plain); 
 
-        // Comparar a chave derivada da senha plain com a chave armazenada
         isLoginValid = (derivedKey_plain_hex === hashedKey_stored);
 
         console.log(`[COMPARE-ULTIMATE-DEBUG] Chave Derivada (Plain, Início): '${derivedKey_plain_hex.substring(0, 30)}...'`);
@@ -136,8 +147,8 @@ const Client = sequelize.define('Client', {
     telefone: { type: DataTypes.STRING }
 }, {
     indexes: [
-        { fields: ['userId'] }, // Índice para chave estrangeira userId
-        { fields: ['nome'] }    // Índice para buscas por nome
+        { fields: ['userId'] },
+        { fields: ['nome'] }
     ]
 });
 
@@ -151,81 +162,80 @@ const Product = sequelize.define('Product', {
     sku:         { type: DataTypes.STRING, unique: true }
 }, {
     indexes: [
-        // unique: true já cria índice para sku
-        { fields: ['nome'] },    // Índice para buscas por nome
-        { fields: ['estoque'] }  // Índice para queries de estoque baixo
+        { fields: ['nome'] },
+        { fields: ['estoque'] }
     ]
 });
 
 const Sale = sequelize.define('Sale', {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    dataVenda:      { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+    dataVenda:       { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     dataVencimento: { type: DataTypes.DATEONLY },
-    valorTotal:     { type: DataTypes.FLOAT, allowNull: false },
-    valorPago:      { type: DataTypes.FLOAT, allowNull: false, defaultValue: 0 },
-    status:         { type: DataTypes.ENUM('Paga','Pendente','Cancelada'), allowNull: false, defaultValue: 'Pendente' }
+    valorTotal:      { type: DataTypes.FLOAT, allowNull: false },
+    valorPago:       { type: DataTypes.FLOAT, allowNull: false, defaultValue: 0 },
+    status:          { type: DataTypes.ENUM('Paga','Pendente','Cancelada'), allowNull: false, defaultValue: 'Pendente' }
 }, {
     indexes: [
-        { fields: ['clientId'] },       // Índice para chave estrangeira clientId
-        { fields: ['userId'] },         // Índice para chave estrangeira userId
-        { fields: ['dataVenda'] },      // Índice para buscas por data e ordenação
-        { fields: ['dataVencimento'] }, // Índice para buscas de vencimentos
-        { fields: ['status'] }          // Índice para buscas por status (Pendente, Paga, etc.)
+        { fields: ['clientId'] },
+        { fields: ['userId'] },
+        { fields: ['dataVenda'] },
+        { fields: ['dataVencimento'] },
+        { fields: ['status'] }
     ]
 });
 
 const Payment = sequelize.define('Payment', {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    valor:          { type: DataTypes.FLOAT, allowNull: false },
-    dataPagamento:  { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+    valor:           { type: DataTypes.FLOAT, allowNull: false },
+    dataPagamento:   { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     formaPagamento: { type: DataTypes.ENUM('Dinheiro','Cartão de Crédito','Crediário','PIX'), allowNull: false },
-    parcelas:       { type: DataTypes.INTEGER, defaultValue: 1 },
+    parcelas:        { type: DataTypes.INTEGER, defaultValue: 1 },
     bandeiraCartao: { type: DataTypes.STRING },
     bancoCrediario: { type: DataTypes.STRING }
 }, {
     indexes: [
-        { fields: ['saleId'] },         // Índice para chave estrangeira saleId
-        { fields: ['dataPagamento'] }   // Índice para buscas por data de pagamento (fluxo de caixa)
+        { fields: ['saleId'] },
+        { fields: ['dataPagamento'] }
     ]
 });
 
 const SaleProduct = sequelize.define('SaleProduct', {
-    quantidade:    { type: DataTypes.INTEGER, allowNull: false },
+    quantidade:      { type: DataTypes.INTEGER, allowNull: false },
     precoUnitario: { type: DataTypes.FLOAT, allowNull: false }
 }, { 
     timestamps: false,
     indexes: [
-        { fields: ['saleId'] },    // Índice para chave estrangeira saleId
-        { fields: ['productId'] }, // Índice para chave estrangeira productId
-        { fields: ['quantidade'] } // Índice para rankings de produtos (group by quantidade)
+        { fields: ['saleId'] },
+        { fields: ['productId'] },
+        { fields: ['quantidade'] }
     ]
 });
 
 const Supplier = sequelize.define('Supplier', {
-    id:      { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    nome:    { type: DataTypes.STRING, allowNull: false, unique: true },
-    contato: { type: DataTypes.STRING },
-    email:   { type: DataTypes.STRING, unique: true, validate: { isEmail: true } },
-    cnpj:    { type: DataTypes.STRING, unique: true },
-    endereco:{ type: DataTypes.TEXT }
+    id:       { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    nome:     { type: DataTypes.STRING, allowNull: false, unique: true },
+    contato:  { type: DataTypes.STRING },
+    email:    { type: DataTypes.STRING, unique: true, validate: { isEmail: true } },
+    cnpj:     { type: DataTypes.STRING, unique: true },
+    endereco: { type: DataTypes.TEXT }
 }, {
     indexes: [
-        { fields: ['nome'] },    // Índice para buscas por nome
+        { fields: ['nome'] },
     ]
 });
 
 const Purchase = sequelize.define('Purchase', {
-    id:          { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    dataCompra:  { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
-    valorTotal:  { type: DataTypes.FLOAT, allowNull: false },
-    status:      { type: DataTypes.ENUM('Concluída','Pendente','Cancelada'), allowNull: false, defaultValue: 'Concluída' },
+    id:            { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    dataCompra:    { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+    valorTotal:    { type: DataTypes.FLOAT, allowNull: false },
+    status:        { type: DataTypes.ENUM('Concluída','Pendente','Cancelada'), allowNull: false, defaultValue: 'Concluída' },
     observacoes: { type: DataTypes.TEXT }
 }, {
     indexes: [
-        { fields: ['supplierId'] }, // Índice para chave estrangeira supplierId
-        { fields: ['userId'] },     // Índice para chave estrangeira userId
-        { fields: ['dataCompra'] }, // Índice para buscas por data e ordenação
-        { fields: ['status'] }      // Índice para buscas por status
+        { fields: ['supplierId'] },
+        { fields: ['userId'] },
+        { fields: ['dataCompra'] },
+        { fields: ['status'] }
     ]
 });
 
@@ -235,12 +245,12 @@ const PurchaseProduct = sequelize.define('PurchaseProduct', {
 }, { 
     timestamps: false,
     indexes: [
-        { fields: ['purchaseId'] },  // Índice para chave estrangeira purchaseId
-        { fields: ['productId'] }    // Índice para chave estrangeira productId
+        { fields: ['purchaseId'] },
+        { fields: ['productId'] }
     ]
 });
 
-// --- Associações entre Modelos (mantidas as mesmas, sem alterações nesta seção) ---
+// --- Associações entre Modelos ---
 User.hasMany(Client, { foreignKey: 'userId', as: 'clients' });
 Client.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
