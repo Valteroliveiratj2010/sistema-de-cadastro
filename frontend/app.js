@@ -1,10 +1,16 @@
 (() => { // IIFE para encapsular todo o script e evitar conflitos de escopo
     'use strict';
 
+    // console.log para verificar o carregamento do arquivo app.js
+    // Mude o valor de 'v' (versão) para a data e hora atual (AAAA-MM-DD-HHMMSS)
+    // para garantir que o navegador sempre carregue a versão mais recente.
+    const APP_VERSION = "2025-07-02-154000"; // ATUALIZE ESTE NÚMERO SEMPRE QUE QUISER FORÇAR O CACHE
+    console.log(`APP.JS CARREGADO - Versão: ${APP_VERSION}`);
+
     document.addEventListener('DOMContentLoaded', () => {
 
         // --- CONFIGURAÇÃO E ESTADO ---
-        const API_BASE = 'http://localhost:4000/api'; 
+        const API_BASE = 'http://localhost:4000/api';
         const state = {
             bootstrapClientModal: new bootstrap.Modal(document.getElementById('clientModal')),
             bootstrapSaleModal: new bootstrap.Modal(document.getElementById('saleModal')),
@@ -102,8 +108,6 @@
         };
 
         // --- DOM SELECTORS ---
-        // Removido dom.productModalLabel, dom.clientModalLabel, dom.supplierModalLabel, etc.
-        // Eles serão buscados diretamente nas funções openModal para garantir que existem no DOM.
         const dom = {
             navLinks: document.querySelectorAll('.sidebar .nav-link'),
             clientForm: document.getElementById('clientForm'),
@@ -144,7 +148,6 @@
             userEmailInput: document.getElementById('userEmail'),
             userPasswordInput: document.getElementById('userPassword'),
             userRoleSelect: document.getElementById('userRole'),
-            // userModalLabel: document.getElementById('userModalLabel'), // Removido daqui
 
             supplierForm: document.getElementById('supplierForm'),
             supplierIdInput: document.getElementById('supplierId'),
@@ -153,7 +156,6 @@
             supplierEmailInput: document.getElementById('supplierEmail'),
             supplierCnpjInput: document.getElementById('supplierCnpj'),
             supplierAddressInput: document.getElementById('supplierAddress'),
-            // supplierModalLabel: document.getElementById('supplierModalLabel'), // Removido daqui
 
             purchaseForm: document.getElementById('purchaseForm'),
             purchaseIdInput: document.getElementById('purchaseId'),
@@ -167,7 +169,13 @@
             purchaseTotalValueHidden: document.getElementById('purchaseTotalValue'),
             purchaseStatusSelect: document.getElementById('purchaseStatus'),
             purchaseObservationsInput: document.getElementById('purchaseObservations'),
-            // purchaseModalLabel: document.getElementById('purchaseModalLabel'), // Removido daqui
+            
+            accountingReportForm: document.getElementById('accountingReportForm'),
+            accountingStartDateInput: document.getElementById('accountingStartDate'),
+            accountingEndDateInput: document.getElementById('accountingEndDate'),
+            salesPredictionForm: document.getElementById('salesPredictionForm'),
+            predictionMonthsInput: document.getElementById('predictionMonths'),
+            salesPredictionResults: document.getElementById('salesPredictionResults'),
         };
 
         // --- UTILITY FUNCTIONS ---
@@ -176,7 +184,7 @@
             formatDate: (dateString) => {
                 if (!dateString) return 'N/A';
                 const date = new Date(dateString);
-                if (dateString.includes('T00:00:00.000Z')) {
+                if (dateString.includes('T00:00:00.000Z') || /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
                     date.setUTCDate(date.getUTCDate() + 1);
                 }
                 return date.toLocaleDateString('pt-BR');
@@ -515,7 +523,7 @@
                 if (options.isFileDownload) {
                     delete headers['Content-Type'];
                 } else if (!headers['Content-Type']) {
-                        headers['Content-Type'] = 'application/json';
+                    headers['Content-Type'] = 'application/json';
                 }
 
                 const response = await fetch(`${API_BASE}${endpoint}`, { headers, ...options });
@@ -530,6 +538,7 @@
                 if (!response.ok) {
                     if (!options.isFileDownload && response.headers.get('content-type')?.includes('application/json')) {
                         const error = await response.json();
+                        // Fix: Changed `new new Error` to `new Error`
                         throw new Error(error.message || 'Erro na requisição.');
                     } else {
                         throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
@@ -582,9 +591,7 @@
             deletePurchase: (id) => api.request(`/purchases/${id}`, { method: 'DELETE' }),
             getCashFlow: (startDate, endDate) => api.request(`/finance/cash-flow?startDate=${startDate}&endDate=${endDate}`),
             getDueDates: () => api.request('/dashboard/due-dates'),
-            // NOVO: API para obter o CSV contábil consolidado
             exportAccountingCsv: (startDate, endDate) => api.request(`/finance/accounting-csv?startDate=${startDate}&endDate=${endDate}`, { isFileDownload: true }),
-            // NOVO: API para obter dados históricos de vendas para predição
             getSalesPredictionData: (months) => api.request(`/finance/sales-prediction?months=${months}`),
         };
 
@@ -635,7 +642,6 @@
                     link.style.display = isVisible ? '' : 'none';
                 });
             },
-            // FUNÇÃO ATUALIZADA: renderDashboard
             renderDashboard: ({ totalClients, salesThisMonth, totalReceivable, overdueSales, salesByMonth, lowStockProducts, salesToday, averageTicket, totalAccountsPayable, overdueAccountsPayable, salesLastYearSameMonth }) => {
                 const section = document.getElementById('dashboardSection');
 
@@ -660,7 +666,6 @@
                 }
 
                 let accountsPayableHtml = '';
-                // Usa classes CSS customizadas para os cartões KPI de contas a pagar
                 if (utils.hasPermission(['admin', 'gerente'])) {
                     accountsPayableHtml = `
                         <div class="col-lg-2 col-md-4 col-sm-6">
@@ -801,24 +806,19 @@
                 const ctx = document.getElementById('salesChart').getContext('2d');
                 if (state.chartInstance) state.chartInstance.destroy();
 
-                // === NOVO: Obter cores das variáveis CSS ===
                 const rootStyles = getComputedStyle(document.documentElement);
                 const primaryColor = rootStyles.getPropertyValue('--primary-color').trim();
                 const primaryDark = rootStyles.getPropertyValue('--primary-dark').trim();
                 const secondaryColor = rootStyles.getPropertyValue('--secondary-color').trim();
                 const secondaryDark = rootStyles.getPropertyValue('--secondary-dark').trim();
                 
-                // Mapeia os dados de salesByMonth para o ano atual e o ano anterior
                 const currentYear = new Date().getFullYear();
                 const salesCurrentYear = [];
                 const salesPreviousYear = [];
                 const labels = [];
 
-                // Cria um mapa para acesso rápido aos dados de vendas por mês
                 const salesDataMap = new Map(salesByMonth.map(item => [item.month, item]));
 
-                // Preenche os últimos 12 meses (do currentYear) e seus respectivos meses do ano anterior
-                // A partir do mês atual e voltando 11 meses (total de 12 meses)
                 for (let i = 11; i >= 0; i--) {
                     const date = new Date(currentYear, new Date().getMonth() - i, 1);
                     const monthKeyCurrentYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -834,22 +834,22 @@
                 }
 
                 state.chartInstance = new Chart(ctx, {
-                    type: 'bar', // Tipo de gráfico de barras
+                    type: 'bar',
                     data: {
-                        labels: labels, 
+                        labels: labels,
                         datasets: [
-                            { 
-                                label: `Vendas ${currentYear} (R$)`, 
-                                data: salesCurrentYear, 
-                                backgroundColor: primaryColor, // Usando a variável CSS obtida
-                                borderColor: primaryDark, // Usando a variável CSS obtida
+                            {
+                                label: `Vendas ${currentYear} (R$)`,
+                                data: salesCurrentYear,
+                                backgroundColor: primaryColor,
+                                borderColor: primaryDark,
                                 borderWidth: 1
                             },
                             {
-                                label: `Vendas ${currentYear - 1} (R$)`, // Rótulo para o ano anterior
-                                data: salesPreviousYear, // Dados do ano anterior
-                                backgroundColor: secondaryColor, // Usando a variável CSS obtida
-                                borderColor: secondaryDark, // Usando a variável CSS obtida
+                                label: `Vendas ${currentYear - 1} (R$)`,
+                                data: salesPreviousYear,
+                                backgroundColor: secondaryColor,
+                                borderColor: secondaryDark,
                                 borderWidth: 1
                             }
                         ]
@@ -857,29 +857,28 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        scales: { 
-                            y: { 
+                        scales: {
+                            y: {
                                 beginAtZero: true,
-                                title: { 
+                                title: {
                                     display: true,
                                     text: 'Valor (R$)'
                                 },
                                 ticks: {
-                                    // Define o formato da legenda do eixo Y como moeda
                                     callback: function(value, index, ticks) {
                                         return utils.formatCurrency(value);
                                     }
                                 }
                             },
                             x: {
-                                title: { 
+                                title: {
                                     display: true,
                                     text: 'Mês/Ano'
                                 }
                             }
                         },
                         plugins: {
-                            title: { 
+                            title: {
                                 display: true,
                                 text: 'Vendas Mensais (Comparativo Anual)',
                                 font: { size: 16, family: 'var(--font-heading)' }
@@ -891,16 +890,10 @@
                                         return `Mês: ${monthLabel}`;
                                     },
                                     label: function(context) {
-                                        const dataIndex = context.dataIndex;
-                                        const datasetLabel = context.dataset.label; 
-
-                                        // Extrai o ano e mês do rótulo do mês no gráfico (ex: "06/2025" -> 2025, 6)
+                                        const datasetLabel = context.dataset.label;
                                         const [labelMonth, labelYear] = context.label.split('/').map(Number);
-                                        
-                                        // Ajusta o ano de busca para o Chart.js
                                         const searchYear = datasetLabel.includes(`${currentYear - 1}`) ? labelYear - 1 : labelYear;
                                         
-                                        // Encontra os dados brutos correspondentes ao mês/ano do tooltip
                                         const currentMonthData = salesByMonth.find(item => {
                                             const [itemYear, itemMonth] = item.month.split('-');
                                             return parseInt(itemYear) === searchYear && parseInt(itemMonth) === labelMonth;
@@ -909,12 +902,10 @@
                                         let label = `${datasetLabel}: ${utils.formatCurrency(context.raw)}`;
                                         
                                         if (currentMonthData) {
-                                            label += `\nQuantidade de Vendas: ${currentMonthData.count}`; 
+                                            label += `\nQuantidade de Vendas: ${currentMonthData.count}`;
                                             label += `\nTicket Médio: ${utils.formatCurrency(currentMonthData.averageTicket)}`;
                                         }
 
-                                        // Adiciona a comparação YOY
-                                        // Apenas se for o dataset do ano atual (para não duplicar a info)
                                         if (datasetLabel.includes(`${currentYear}`)) {
                                             const correspondingPrevYearData = salesByMonth.find(item => {
                                                 const [itemYear, itemMonth] = item.month.split('-');
@@ -995,7 +986,7 @@
                 const section = document.getElementById('salesSection');
                 const tableRows = data.map(sale => {
                     const valorDevido = sale.valorTotal - sale.valorPago;
-                    const statusClass = valorDevido > 0 ? 'text-danger' : 'text-success'; // Determine class based on valorDevido
+                    const statusClass = valorDevido > 0 ? 'text-danger' : 'text-success';
 
                     return `
                             <tr>
@@ -1187,7 +1178,6 @@
                 cashFlowResultsDiv.innerHTML = resultsHtml;
             },
             renderDetailedDueDates: ({ overdueReceivables, upcomingReceivables, overduePayables, upcomingPayables }) => {
-                // Render Contas a Receber Vencidas
                 const renderReceivablesTable = (data, elementId) => {
                     const listEl = document.getElementById(elementId);
                     if (data.length === 0) {
@@ -1219,7 +1209,6 @@
                     `;
                 };
 
-                // Render Contas a Pagar Vencidas/Próximas
                 const renderPayablesTable = (data, elementId) => {
                     const listEl = document.getElementById(elementId);
                     if (data.length === 0) {
@@ -1358,7 +1347,6 @@
                     `;
                 }
 
-
                 section.innerHTML = `
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb">
@@ -1391,7 +1379,7 @@
                                     <h5>Resumo da Venda</h5>
                                 </div>
                                 <div class="card-body">
-                                    <p><strong>Cliente:</strong> ${sale.client.nome}</p>
+                                    <p><strong>Cliente:</strong> ${sale.client?.nome || 'Cliente não informado'}</p>
                                     <p><strong>Valor Total:</strong> ${utils.formatCurrency(sale.valorTotal)}</p>
                                     <p><strong>Total Pago:</strong> ${utils.formatCurrency(sale.valorPago)}</p>
                                     <p class="fs-5"><strong>Valor Devido: <span class="text-danger">${utils.formatCurrency(valorDevido)}</span></strong></p>
@@ -1399,6 +1387,63 @@
                             </div>
                             ${paymentFormHtml}
                         </div>
+                    </div>
+                `;
+            },
+            // Adicionado: Função para renderizar detalhes da compra
+            renderPurchaseDetail: (purchase) => {
+                console.log("Chamado: ui.renderPurchaseDetail", purchase);
+                const section = document.getElementById('purchaseDetailSection'); // Certifique-se de ter esta div no seu HTML
+
+                let productsHtml = '';
+                if (purchase.products && purchase.products.length > 0) {
+                    productsHtml = `
+                        <h6>Itens da Compra:</h6>
+                        <ul class="list-group mb-3">
+                            ${purchase.products.map(item => `
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>${item.nome} (${item.PurchaseProduct.quantidade}x)</span>
+                                    <span class="fw-bold">${utils.formatCurrency(item.PurchaseProduct.quantidade * item.PurchaseProduct.precoCustoUnitario)}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    `;
+                } else {
+                    productsHtml = `<p>Nenhum produto associado a esta compra.</p>`;
+                }
+
+                section.innerHTML = `
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="#" class="nav-back" data-section="purchasesSection">Compras</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Detalhes da Compra #${purchase.id}</li>
+                        </ol>
+                    </nav>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h4>Detalhes da Compra</h4>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Fornecedor:</strong> ${purchase.supplier?.nome || 'Fornecedor não informado'}</p>
+                                    <p><strong>Data da Compra:</strong> ${utils.formatDate(purchase.dataCompra)}</p>
+                                    <p><strong>Valor Total:</strong> ${utils.formatCurrency(purchase.valorTotal)}</p>
+                                    <p><strong>Status:</strong> <span class="badge bg-secondary">${purchase.status}</span></p>
+                                    <p><strong>Observações:</strong> ${purchase.observacoes || 'N/A'}</p>
+                                </div>
+                            </div>
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h4>Itens da Compra</h4>
+                                </div>
+                                <div class="card-body">
+                                    ${productsHtml}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            </div>
                     </div>
                 `;
             },
@@ -1567,32 +1612,29 @@
 
                 ui.renderPagination('purchases', total, state.purchases.page, state.purchases.limit);
             },
-            // Função para renderizar o gráfico de previsão de vendas
             renderSalesPredictionChart: ({ historicalData, period }) => {
                 const predictionResultsDiv = dom.salesPredictionResults;
-                predictionResultsDiv.innerHTML = '<canvas id="salesPredictionChart"></canvas>'; // Cria o canvas para o gráfico
+                if (!predictionResultsDiv) return;
+                predictionResultsDiv.innerHTML = '<canvas id="salesPredictionChart"></canvas>';
 
                 const ctx = document.getElementById('salesPredictionChart').getContext('2d');
-                if (state.predictionChartInstance) state.predictionChartInstance.destroy(); // Destrói instância anterior
+                if (state.predictionChartInstance) state.predictionChartInstance.destroy();
 
-                // Formata os rótulos do mês para exibir Ano-Mês
                 const labels = historicalData.map(d => {
                     const [year, month] = d.month.split('-');
                     return `${month}/${year}`;
                 });
 
-                // Adiciona rótulos futuros para a projeção (ex: 3 meses à frente)
-                const futureMonthsCount = 3; // Quantidade de meses a projetar
-                const lastMonthHistorical = historicalData.length > 0 ? new Date(historicalData[historicalData.length - 1].month + '-01') : new Date();
+                const futureMonthsCount = 3;
+                const lastMonthHistorical = historicalData.length > 0 ? new Date(historicalData[historicalData.length - 1].month + '-02') : new Date();
                 for (let i = 1; i <= futureMonthsCount; i++) {
-                    lastMonthHistorical.setMonth(lastMonthHistorical.getMonth() + 1);
-                    labels.push(`${String(lastMonthHistorical.getMonth() + 1).padStart(2, '0')}/${lastMonthHistorical.getFullYear()}`);
+                    const futureDate = new Date(lastMonthHistorical);
+                    futureDate.setMonth(futureDate.getMonth() + i);
+                    labels.push(`${String(futureDate.getMonth() + 1).padStart(2, '0')}/${futureDate.getFullYear()}`);
                 }
 
-                // Dados históricos
                 const historicalSales = historicalData.map(d => d.totalSales);
 
-                // Predição simples: Média dos últimos 3 meses ou tendência linear básica
                 let predictedSales = [];
                 if (historicalSales.length >= 3) {
                     const lastThreeMonthsAverage = (historicalSales[historicalSales.length - 1] + historicalSales[historicalSales.length - 2] + historicalSales[historicalSales.length - 3]) / 3;
@@ -1621,7 +1663,7 @@
                             },
                             {
                                 label: 'Projeção (Próximos ' + futureMonthsCount + ' meses)',
-                                data: Array(historicalData.length).fill(null).concat(predictedSales),
+                                data: Array(historicalData.length -1).fill(null).concat([historicalSales[historicalSales.length - 1]], predictedSales),
                                 borderColor: 'var(--secondary-color)',
                                 backgroundColor: 'transparent',
                                 borderDash: [5, 5],
@@ -1642,7 +1684,7 @@
                                     text: 'Valor das Vendas (R$)'
                                 },
                                 ticks: {
-                                    callback: function(value, index, ticks) {
+                                    callback: function(value) {
                                         return utils.formatCurrency(value);
                                     }
                                 }
@@ -1664,29 +1706,23 @@
                                 callbacks: {
                                     title: function(context) {
                                         const dataIndex = context[0].dataIndex;
-                                        // Se for um mês histórico, usa os dados completos
                                         if (dataIndex < historicalData.length) {
                                             const currentMonthData = historicalData[dataIndex];
                                             return `Mês: ${currentMonthData.month.split('-')[1]}/${currentMonthData.month.split('-')[0]}`;
                                         }
-                                        // Para meses de projeção, apenas o rótulo do mês
                                         return `Mês: ${context[0].label}`;
                                     },
                                     label: function(context) {
                                         let label = context.dataset.label + ': ' + utils.formatCurrency(context.raw);
 
-                                        // Adiciona detalhes para dados históricos no tooltip
-                                        if (context.datasetIndex === 0) { // Se for o dataset de Vendas Históricas
+                                        if (context.datasetIndex === 0) {
                                             const dataIndex = context.dataIndex;
                                             const currentMonthData = historicalData[dataIndex];
                                             if (currentMonthData) {
                                                 label += `\nTotal de Vendas: ${currentMonthData.salesCount}`;
                                                 label += `\nTicket Médio: ${utils.formatCurrency(currentMonthData.averageTicket)}`;
                                             }
-                                        } else { // Para o dataset de Projeção
-                                            // Você pode adicionar informações de projeção aqui se houver mais detalhes
                                         }
-
                                         return label;
                                     }
                                 }
@@ -1896,7 +1932,7 @@
                     utils.showToast(error.message || 'Falha ao gerar relatório de fluxo de caixa.', 'error');
                 }
             },
-            handleExportPeriodReportCsv: async () => {
+            handleExportPeriodReportCsv: async (e) => {
                 e.preventDefault();
                 if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
                     utils.showToast('Você não tem permissão para exportar relatórios por período.', 'error');
@@ -1916,7 +1952,6 @@
                     utils.showToast(error.message || 'Falha ao exportar relatório CSV de vendas.', 'error');
                 }
             },
-            // Handler para exportar o CSV contábil
             handleExportAccountingCsv: async (e) => {
                 e.preventDefault();
                 if (!utils.hasPermission(['admin', 'gerente'])) {
@@ -1946,7 +1981,6 @@
                     utils.showToast(error.message || 'Falha ao exportar relatório CSV contábil.', 'error');
                 }
             },
-            // Handler para gerar a projeção de vendas
             handleGenerateSalesPrediction: async (e) => {
                 e.preventDefault();
                 if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
@@ -2012,7 +2046,7 @@
 
                 dom.clientForm.reset();
                 document.getElementById('clientId').value = '';
-                const modalLabel = document.getElementById('clientModalLabel'); // Buscar aqui
+                const modalLabel = document.getElementById('clientModalLabel');
                 if (modalLabel) {
                     modalLabel.textContent = clientId ? 'Editar Cliente' : 'Novo Cliente';
                 }
@@ -2157,7 +2191,6 @@
                         dom.productUnitPriceInput.value = '';
                     });
 
-                    // Acessar elementos do modal de venda diretamente na função
                     const paymentFormaSelect = document.getElementById('paymentForma');
                     const paymentParcelasField = document.getElementById('parcelasField');
                     const paymentBandeiraCartaoField = document.getElementById('bandeiraCartaoField');
@@ -2171,7 +2204,7 @@
                     utils.togglePaymentFields(paymentFormaSelect, paymentParcelasField, paymentBandeiraCartaoField, paymentBancoCrediarioField, paymentParcelasInput, paymentBandeiraCartaoInput, paymentBancoCrediarioInput);
                     if (salePaidValueInitialInput) salePaidValueInitialInput.value = '0';
 
-                    if (modalLabel) { // Verifica se o elemento existe
+                    if (modalLabel) {
                         modalLabel.textContent = saleId ? 'Editar Venda' : 'Nova Venda';
                     }
                     if (saleId) {
@@ -2278,7 +2311,7 @@
             handleSaveSale: async (e) => {
                 e.preventDefault();
                 const id = document.getElementById('saleId').value;
-                if (id) { // Editing
+                if (id) {
                     const sale = state.sales.data.find(s => String(s.id) === String(id));
                     if (!utils.hasPermission(['admin', 'gerente'])) {
                         if (!(utils.hasPermission(['vendedor']) && state.user && sale.userId === state.user.id)) {
@@ -2286,7 +2319,7 @@
                             return;
                         }
                     }
-                } else { // Creating
+                } else {
                     if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
                         utils.showToast('Você não tem permissão para salvar vendas.', 'error');
                         return;
@@ -2296,15 +2329,13 @@
                 const clientId = document.getElementById('saleClient').value;
                 const dataVencimento = document.getElementById('saleDueDate').value;
                 const valorTotal = utils.calculateSaleTotal();
-
-                // Acessar elementos do modal de venda diretamente na função
+                
                 const salePaidValueInitialInput = document.getElementById('salePaidValueInitial');
                 const paymentFormaSelect = document.getElementById('paymentForma');
                 const paymentParcelasInput = document.getElementById('paymentParcelas');
                 const paymentBandeiraCartaoInput = document.getElementById('paymentBandeiraCartao');
                 const paymentBancoCrediarioInput = document.getElementById('paymentBancoCrediario');
-
-
+                
                 const valorPagoInitial = parseFloat(salePaidValueInitialInput?.value || '0') || 0;
                 const formaPagamento = paymentFormaSelect?.value || 'Dinheiro';
                 const parcelas = parseInt(paymentParcelasInput?.value || '1') || 1;
@@ -2396,6 +2427,8 @@
                     ui.renderSaleDetail(sale);
                     ui.showSection('saleDetailSection');
                 } catch (error) {
+                    // CORREÇÃO: Adicionado console.error para melhor depuração do erro 500.
+                    console.error("Falha ao carregar detalhes da venda:", error);
                     utils.showToast(error.message, 'error');
                 }
             },
@@ -2467,7 +2500,6 @@
                 } catch (error) { utils.showToast(error.message, 'error'); }
             },
             openProductModal: async (productId = null) => {
-                // Lógica de permissão
                 if (productId && !utils.hasPermission(['admin', 'gerente'])) {
                     utils.showToast('Você não tem permissão para editar produtos.', 'error');
                     return;
@@ -2479,9 +2511,8 @@
 
                 dom.productForm.reset();
                 document.getElementById('productId').value = '';
-                // BUSCA O ELEMENTO modalLabel AQUI, QUANDO A FUNÇÃO É CHAMADA
                 const modalLabel = document.getElementById('productModalLabel');
-                if (modalLabel) { // Garante que o elemento existe antes de usar
+                if (modalLabel) {
                     modalLabel.textContent = productId ? 'Editar Produto' : 'Novo Produto';
                 }
 
@@ -2592,9 +2623,11 @@
                 dom.userIdInput.value = '';
                 dom.userPasswordInput.required = true;
                 dom.userPasswordInput.placeholder = 'Senha';
+                
+                const modalLabel = document.getElementById('userModalLabel');
 
                 if (userId) {
-                    dom.userModalLabel.textContent = 'Editar Usuário';
+                    if (modalLabel) modalLabel.textContent = 'Editar Usuário';
                     dom.userPasswordInput.required = false;
                     dom.userPasswordInput.placeholder = 'Deixe em branco para não alterar';
                     try {
@@ -2608,7 +2641,7 @@
                         return;
                     }
                 } else {
-                    dom.userModalLabel.textContent = 'Novo Usuário';
+                    if (modalLabel) modalLabel.textContent = 'Novo Usuário';
                     dom.userPasswordInput.required = true;
                     dom.userPasswordInput.placeholder = 'Senha';
                 }
@@ -2654,7 +2687,7 @@
                     utils.showToast('Você não tem permissão para excluir usuários.', 'error');
                     return;
                 }
-                if (userId === state.user.id) {
+                if (String(userId) === String(state.user.id)) {
                     utils.showToast('Você não pode excluir sua própria conta!', 'error');
                     return;
                 }
@@ -2702,8 +2735,8 @@
                 dom.supplierIdInput.value = '';
                 dom.supplierEmailInput.removeAttribute('required');
 
-                const modalLabel = document.getElementById('supplierModalLabel'); // Buscar aqui
-                if (modalLabel) { // Garante que o elemento existe antes de usar
+                const modalLabel = document.getElementById('supplierModalLabel');
+                if (modalLabel) {
                     modalLabel.textContent = supplierId ? 'Editar Fornecedor' : 'Novo Fornecedor';
                 }
 
@@ -2793,6 +2826,26 @@
                     ui.renderPurchases();
                 } catch (error) { utils.showToast(error.message, 'error'); }
             },
+            // Dentro do seu arquivo frontend/js/app.js, localize o objeto 'handlers'
+// e adicione esta função DENTRO dele, por exemplo, após 'loadPurchases'.
+
+loadPurchaseDetail: async (purchaseId) => {
+    // console.log para verificar se loadPurchaseDetail está sendo chamada
+    console.log("Chamado: handlers.loadPurchaseDetail para ID:", purchaseId); 
+
+    if (!utils.hasPermission(['admin', 'gerente'])) {
+        utils.showToast('Você não tem permissão para ver os detalhes das compras.', 'error');
+        return;
+    }
+    try {
+        const purchase = await api.getPurchaseById(purchaseId);
+        ui.renderPurchaseDetail(purchase);
+        ui.showSection('purchaseDetailSection'); 
+    } catch (error) {
+        console.error("Falha ao carregar detalhes da compra:", error);
+        utils.showToast(error.message, 'error');
+    }
+},
             openPurchaseModal: async (purchaseId = null) => {
                 if (!utils.hasPermission(['admin', 'gerente'])) {
                     utils.showToast('Você não tem permissão para gerenciar compras.', 'error');
@@ -2806,8 +2859,8 @@
                 dom.purchaseProductQuantityInput.value = '1';
                 dom.purchaseProductCostInput.value = '';
 
-                const modalLabel = document.getElementById('purchaseModalLabel'); // Buscar aqui
-                if (modalLabel) { // Garante que o elemento existe
+                const modalLabel = document.getElementById('purchaseModalLabel');
+                if (modalLabel) {
                     modalLabel.textContent = purchaseId ? 'Editar Compra' : 'Nova Compra';
                 }
 
@@ -2957,7 +3010,7 @@
                         id: product.id,
                         nome: product.nome,
                         precoCustoUnitario: unitCost,
-                        mês: quantity,
+                        quantidade: quantity,
                     });
                 }
                 utils.renderSelectedPurchaseProductsList();
@@ -3032,16 +3085,18 @@
                     utils.showToast('Você não tem permissão para excluir compras.', 'error');
                     return;
                 }
-                utils.showConfirm('Deseja realmente excluir esta compra? O estoque dos produtos será revertido.', async () => {
+                utils.showConfirm('Deseja realmente excluir esta compra? Esta ação não pode ser desfeita.', async () => {
                     try {
                         await api.deletePurchase(purchaseId);
-                        utils.showToast('Compra excluída e estoque revertido!', 'success');
+                        utils.showToast('Compra excluída com sucesso!', 'success');
                         setTimeout(() => {
                             handlers.loadPurchases(true);
                             handlers.loadProducts(true);
                             handlers.loadDashboard();
                         }, 50);
                     } catch (error) {
+                        // CORREÇÃO: Adicionado console.error para melhor depuração do erro 500.
+                        console.error("Falha ao deletar compra:", error);
                         utils.showToast(error.message, 'error');
                     }
                 });
@@ -3121,11 +3176,9 @@
                     if (sectionId === 'clientsSection') handlers.loadClients();
                     if (sectionId === 'salesSection') handlers.loadSales();
                     if (sectionId === 'reportsSection') {
-                        // Limpa e exibe o placeholder para todos os relatórios na seção Reports
                         dom.reportResults.innerHTML = '<p class="text-center text-muted">Selecione um período e clique em "Gerar Relatório" para ver os resultados.</p>';
                         dom.cashFlowReportResults.innerHTML = '<p class="text-center text-muted">Selecione um período e clique em "Gerar Fluxo" para ver o fluxo de caixa.</p>';
-                        dom.salesPredictionResults.innerHTML = '<p class="text-center text-muted">Selecione o histórico de meses e clique em "Gerar Projeção" para ver a análise.</p>';
-                        // Destrói a instância do gráfico de previsão se existir ao sair da seção
+                        if(dom.salesPredictionResults) dom.salesPredictionResults.innerHTML = '<p class="text-center text-muted">Selecione o histórico de meses e clique em "Gerar Projeção" para ver a análise.</p>';
                         if (state.predictionChartInstance) {
                             state.predictionChartInstance.destroy();
                             state.predictionChartInstance = null;
@@ -3145,7 +3198,7 @@
                     if (button.id === 'btnNewSale') handlers.openSaleModal();
                     if (button.id === 'btnExportClientsCsv') handlers.handleExportClientsCsv();
                     if (button.id === 'btnExportSalesCsv') handlers.handleExportSalesCsv();
-                    if (button.id === 'btnExportPeriodReportCsv') handlers.handleExportPeriodReportCsv();
+                    if (button.id === 'btnExportPeriodReportCsv') handlers.handleExportPeriodReportCsv(e);
                     if (button.id === 'btnNewProduct') handlers.openProductModal();
                     if (button.id === 'btnAddProduct') handlers.handleAddProductToSale();
                     if (button.classList.contains('btn-remove-product')) {
@@ -3156,11 +3209,10 @@
                         const index = parseInt(button.dataset.index);
                         handlers.handleRemovePurchaseProduct(index);
                     }
-                    // Adiciona a manipulação dos botões de compartilhamento/imprimir nos detalhes da venda
                     if (button.id === 'btnShareWhatsapp') {
                         const saleId = button.dataset.saleId;
                         api.getSaleById(saleId).then(sale => {
-                            if (!utils.hasPermission(['admin', 'gerente']) && (utils.hasPermission(['vendedor']) && state.user && sale.userId === state.user.id)) {
+                            if (!utils.hasPermission(['admin', 'gerente']) && !(utils.hasPermission(['vendedor']) && state.user && sale.userId === state.user.id)) {
                                 utils.showToast('Você não tem permissão para compartilhar detalhes desta venda.', 'error');
                                 return;
                             }
@@ -3173,7 +3225,7 @@
                     if (button.id === 'btnShareEmail') {
                         const saleId = button.dataset.saleId;
                         api.getSaleById(saleId).then(sale => {
-                            if (!utils.hasPermission(['admin', 'gerente']) && (utils.hasPermission(['vendedor']) && state.user && sale.userId === state.user.id)) {
+                            if (!utils.hasPermission(['admin', 'gerente']) && !(utils.hasPermission(['vendedor']) && state.user && sale.userId === state.user.id)) {
                                 utils.showToast('Você não tem permissão para compartilhar detalhes desta venda.', 'error');
                                 return;
                             }
@@ -3183,11 +3235,11 @@
                             const mailtoUrl = `mailto:${clientEmail}?subject=${subject}&body=${body}`;
                             window.open(mailtoUrl, '_blank');
                         }).catch(error => utils.showToast(error.message, 'error'));
-                        }
+                    }
                     if (button.id === 'btnPrintSale') {
                         const saleId = button.dataset.saleId;
                         api.getSaleById(saleId).then(sale => {
-                            if (!utils.hasPermission(['admin', 'gerente']) && (utils.hasPermission(['vendedor']) && state.user && sale.userId === state.user.id)) {
+                            if (!utils.hasPermission(['admin', 'gerente']) && !(utils.hasPermission(['vendedor']) && state.user && sale.userId === state.user.id)) {
                                 utils.showToast('Você não tem permissão para imprimir detalhes desta venda.', 'error');
                                 return;
                             }
@@ -3215,6 +3267,7 @@
                     }
                     if (button.classList.contains('action-detail')) {
                         if (type === 'sale') handlers.loadSaleDetail(id);
+                        if (type === 'purchase') handlers.loadPurchaseDetail(id); // Adicionado: Carregar detalhes da compra
                     }
                     if (button.classList.contains('action-edit')) {
                         if (type === 'client') handlers.openClientModal(id);
@@ -3241,34 +3294,16 @@
                 }
             });
 
-            dom.clientForm.addEventListener('submit', handlers.handleSaveClient);
-            dom.saleForm.addEventListener('submit', handlers.handleSaveSale);
-            if (dom.productForm) {
-                dom.productForm.addEventListener('submit', handlers.handleSaveProduct);
-            }
-            if (dom.userForm) {
-                dom.userForm.addEventListener('submit', handlers.handleSaveUser);
-            }
-            if (dom.supplierForm) {
-                dom.supplierForm.addEventListener('submit', handlers.handleSaveSupplier);
-            }
-            if (dom.purchaseForm) {
-                dom.purchaseForm.addEventListener('submit', handlers.handleSavePurchase);
-            }
-
-            if (dom.reportPeriodForm) {
-                dom.reportPeriodForm.addEventListener('submit', handlers.handleGenerateSalesReport);
-            }
-            if (dom.cashFlowReportForm) {
-                dom.cashFlowReportForm.addEventListener('submit', handlers.handleGenerateCashFlowReport);
-            }
-            if (dom.accountingReportForm) {
-                dom.accountingReportForm.addEventListener('submit', handlers.handleExportAccountingCsv);
-            }
-            // Event listener para o formulário de projeção de vendas
-            if (dom.salesPredictionForm) {
-                dom.salesPredictionForm.addEventListener('submit', handlers.handleGenerateSalesPrediction);
-            }
+            if (dom.clientForm) dom.clientForm.addEventListener('submit', handlers.handleSaveClient);
+            if (dom.saleForm) dom.saleForm.addEventListener('submit', handlers.handleSaveSale);
+            if (dom.productForm) dom.productForm.addEventListener('submit', handlers.handleSaveProduct);
+            if (dom.userForm) dom.userForm.addEventListener('submit', handlers.handleSaveUser);
+            if (dom.supplierForm) dom.supplierForm.addEventListener('submit', handlers.handleSaveSupplier);
+            if (dom.purchaseForm) dom.purchaseForm.addEventListener('submit', handlers.handleSavePurchase);
+            if (dom.reportPeriodForm) dom.reportPeriodForm.addEventListener('submit', handlers.handleGenerateSalesReport);
+            if (dom.cashFlowReportForm) dom.cashFlowReportForm.addEventListener('submit', handlers.handleGenerateCashFlowReport);
+            if (dom.accountingReportForm) dom.accountingReportForm.addEventListener('submit', handlers.handleExportAccountingCsv);
+            if (dom.salesPredictionForm) dom.salesPredictionForm.addEventListener('submit', handlers.handleGenerateSalesPrediction);
 
             document.body.addEventListener('submit', e => {
                 if (e.target.id === 'paymentForm') handlers.handleSavePayment(e);
@@ -3354,5 +3389,5 @@
         }
 
         initialize();
-    }); // Fim do DOMContentLoaded
-})(); // Fim da IIFE
+    });
+})();

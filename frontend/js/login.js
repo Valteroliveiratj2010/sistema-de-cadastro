@@ -25,8 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         hideMessage(); // Limpa mensagens anteriores
 
-        const username = usernameInput.value;
-        const password = passwordInput.value;
+        // --- CORREÇÃO AQUI: Adicionar .trim() para remover espaços em branco ---
+        const username = usernameInput.value.trim(); 
+        const password = passwordInput.value.trim();
+        // --- FIM DA CORREÇÃO ---
 
         try {
             // Requisição para a API de login do backend

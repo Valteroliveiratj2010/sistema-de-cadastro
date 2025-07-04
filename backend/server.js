@@ -1,15 +1,12 @@
 // backend/server.js
-// *** CORREÇÃO: path deve ser importado ANTES de ser usado no dotenv.config ***
-const path = require('path'); // Módulo 'path' importado PRIMEIRO
-
-// 1️⃣ Carrega o .env garantido que as variáveis venham da raiz se necessário
-// Especifica o caminho para o .env, subindo um nível a partir do diretório atual (backend/)
+const path = require('path');
 require('dotenv').config({
     path: path.resolve(__dirname, '../.env')
 });
 
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression'); // <-- Adicione esta linha
 const { sequelize } = require('./database');
 const authRoutes = require('./routes/auth');
 const apiRoutes = require('./routes/api');
@@ -20,11 +17,14 @@ const PORT = process.env.PORT || 4000;
 // Middlewares
 app.use(cors());
 app.use(express.json());
+app.use(compression()); // <-- Adicione esta linha: Habilita a compactação Gzip para todas as respostas
 
 // *** Ordem é crucial: Rotas estáticas vêm primeiro para servir CSS/JS ***
 // Garante que o Express sirva arquivos da pasta 'frontend'.
 // Quando o navegador requisita /style.css, Express procura em <raiz_do_projeto>/frontend/style.css
-app.use(express.static(path.join(__dirname, '../frontend')));
+app.use(express.static(path.join(__dirname, '../frontend'), {
+    maxAge: '1h' // <-- Opcional, mas recomendado: Define o cache HTTP para arquivos estáticos
+}));
 
 // Debug: caminho da pasta frontend que está sendo servida
 console.log('📂 Express está servindo arquivos estáticos de:', path.join(__dirname, '../frontend'));
@@ -66,6 +66,7 @@ app.use((err, req, res, next) => {
 
 // Função para iniciar o servidor após sincronizar o banco de dados
 async function startServer() {
+    console.log('--- INICIANDO SERVIDOR NODE.JS (TESTE DE LOG) ---');
     try {
         await sequelize.sync({ force: false }); // force: false mantém os dados
         console.log('✅ Conexão com o banco de dados estabelecida e modelos sincronizados.');

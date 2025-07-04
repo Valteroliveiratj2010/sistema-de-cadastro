@@ -1,6 +1,13 @@
+// backend/routes/api.js
 const express = require('express');
 const { Op, fn, col, where } = require('sequelize');
-const bcrypt = require('bcryptjs');
+const scrypt = require('scrypt-js'); // Importado para uso em User CRUD
+const { TextEncoder } = require('util'); // Para encodeUTF8
+
+// Helper functions para Scrypt (precisam estar disponíveis onde o hash é gerado)
+const encodeUTF8 = (str) => Buffer.from(str, 'utf8');
+const toHex = (bytes) => Buffer.from(bytes).toString('hex');
+
 
 // Importar os modelos
 const { Client, Sale, Payment, User, Product, SaleProduct, Supplier, Purchase, PurchaseProduct } = require('../database'); 
@@ -8,21 +15,22 @@ const { Client, Sale, Payment, User, Product, SaleProduct, Supplier, Purchase, P
 // Importar os middlewares
 const authMiddleware = require('../middleware/authMiddleware'); 
 const authorizeRole = require('../middleware/authorizationMiddleware'); 
+// const purchaseController = require('../controllers/purchaseController'); // Mantenha ou remova se não for usado
+
 
 const router = express.Router();
 
 router.use(authMiddleware); 
-
+console.log('--- ROUTER API ATIVADO (TESTE DE LOG) ---'); 
 // --- ROTAS DO DASHBOARD ---
 router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     try {
         const today = new Date();
         const currentYear = today.getFullYear();
         const currentMonthNumber = today.getMonth(); // 0-11
-        // Formato 'AAAA-MM' para MySQL: DATE_FORMAT(coluna, '%Y-%m')
+        // Formato 'AAAA-MM' para PostgreSQL: YYYY-MM
         const currentMonth = `${currentYear}-${String(currentMonthNumber + 1).padStart(2, '0')}`;
 
-        // CORRIGIDO: Definição de todayStart e todayEnd
         const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
 
@@ -38,9 +46,9 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
         const salesThisMonth = await Sale.sum('valorTotal', {
             where: { 
                 ...baseWhereClause,
-                // CORREÇÃO AQUI: Usando DATE_FORMAT para MySQL
+                // CORREÇÃO AQUI: Usando TO_CHAR para PostgreSQL
                 [Op.and]: [
-                    where(fn('DATE_FORMAT', col('dataVenda'), '%Y-%m'), currentMonth)
+                    where(fn('TO_CHAR', col('dataVenda'), 'YYYY-MM'), currentMonth)
                 ]
             }
         }) || 0;
@@ -57,8 +65,8 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
         // Incluirá dados para o gráfico de histórico
         const rawSalesByMonth = await Sale.findAll({
             attributes: [
-                // CORREÇÃO AQUI: Usando DATE_FORMAT para MySQL
-                [fn('DATE_FORMAT', col('dataVenda'), '%Y-%m'), 'month'],
+                // CORREÇÃO AQUI: Usando TO_CHAR para PostgreSQL
+                [fn('TO_CHAR', col('dataVenda'), 'YYYY-MM'), 'month'], 
                 [fn('sum', col('valorTotal')), 'total'],
                 [fn('count', col('id')), 'count']
             ],
@@ -70,8 +78,8 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
                 }
             },
             group: ['month'],
-            // CORREÇÃO AQUI: Ordenar pelo resultado da função DATE_FORMAT
-            order: [[fn('DATE_FORMAT', col('dataVenda'), '%Y-%m'), 'ASC']]
+            // CORREÇÃO AQUI: Ordenar pelo resultado da função TO_CHAR
+            order: [[fn('TO_CHAR', col('dataVenda'), 'YYYY-MM'), 'ASC']]
         });
 
         // NOVO: Preencher meses sem vendas com 0 para o gráfico
@@ -690,6 +698,10 @@ router.get('/products/low-stock', authorizeRole(['admin', 'gerente', 'vendedor']
     }
 });
 
+// backend/routes/api.js
+
+// ... (código anterior) ...
+
 router.get('/rankings/produtos', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     try {
         const topProducts = await SaleProduct.findAll({
@@ -697,7 +709,12 @@ router.get('/rankings/produtos', authorizeRole(['admin', 'gerente', 'vendedor'])
                 'productId',
                 [fn('sum', col('quantidade')), 'totalQuantidadeVendida']
             ],
-            group: ['productId'],
+            group: [
+                'productId', 
+                'Product.id',     // <-- ADICIONADO PARA POSTGRES
+                'Product.nome',   // <-- ADICIONADO PARA POSTGRES
+                'Product.precoVenda' // <-- ADICIONADO PARA POSTGRES
+            ], // Adicionar todas as colunas selecionadas que não são agregadas
             order: [[fn('sum', col('quantidade')), 'DESC']],
             limit: 5,
             include: [{
@@ -719,6 +736,12 @@ router.get('/rankings/produtos', authorizeRole(['admin', 'gerente', 'vendedor'])
     }
 });
 
+// ... (restante do seu código api.js) ...
+
+// backend/routes/api.js
+
+// ... (código anterior) ...
+
 router.get('/rankings/clientes', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     try {
         const topClients = await Sale.findAll({
@@ -727,7 +750,13 @@ router.get('/rankings/clientes', authorizeRole(['admin', 'gerente', 'vendedor'])
                 [fn('count', col('Sale.id')), 'totalVendas'],
                 [fn('sum', col('valorTotal')), 'valorTotalVendido'] 
             ],
-            group: ['clientId'],
+            group: [
+                'clientId', 
+                'client.id',      // <-- ADICIONADO PARA POSTGRES
+                'client.nome',    // <-- ADICIONADO PARA POSTGRES
+                'client.email',   // <-- ADICIONADO PARA POSTGRES
+                'client.telefone' // <-- ADICIONADO PARA POSTGRES
+            ], // Adicionar todas as colunas selecionadas que não são agregadas do "client"
             order: [[fn('count', col('Sale.id')), 'DESC']],
             limit: 5, 
             include: [{
@@ -749,6 +778,12 @@ router.get('/rankings/clientes', authorizeRole(['admin', 'gerente', 'vendedor'])
     }
 });
 
+// ... (restante do seu código api.js) ...
+
+// backend/routes/api.js
+
+// ... (código anterior) ...
+
 router.get('/rankings/vendedores', authorizeRole(['admin', 'gerente']), async (req, res) => {
     try {
         const topSellers = await Sale.findAll({
@@ -757,7 +792,11 @@ router.get('/rankings/vendedores', authorizeRole(['admin', 'gerente']), async (r
                 [fn('count', col('Sale.id')), 'totalVendasFeitas'], 
                 [fn('sum', col('valorTotal')), 'valorTotalVendido'] 
             ],
-            group: ['userId'],
+            group: [
+                'userId', 
+                'user.id',      // <-- ADICIONADO PARA POSTGRES
+                'user.username' // <-- ADICIONADO PARA POSTGRES
+            ], // Adicionar todas as colunas selecionadas que não são agregadas do "user"
             order: [[fn('sum', col('valorTotal')), 'DESC']], 
             limit: 5, 
             include: [{
@@ -780,6 +819,8 @@ router.get('/rankings/vendedores', authorizeRole(['admin', 'gerente']), async (r
         res.status(500).json({ message: 'Erro ao buscar ranking de vendedores.' });
     }
 });
+
+// ... (restante do seu código api.js) ...
 
 
 router.get('/products', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
@@ -822,7 +863,7 @@ router.delete('/products/:id', authorizeRole(['admin', 'gerente']), async (req, 
         const deleted = await Product.destroy({ where: { id: req.params.id } });
         if (deleted) res.status(204).send();
         else res.status(404).json({ message: 'Produto não encontrado' });
-    } catch (error) { // CORRIGIDO: 'Catch' para 'catch'
+    } catch (error) { 
         console.error('❌ ERRO AO DELETAR PRODUTO:', error);
         res.status(500).json({ message: error.message });
     }
@@ -877,7 +918,21 @@ router.post('/users', authorizeRole(['admin']), async (req, res) => {
         if (!password) {
             return res.status(400).json({ message: 'A senha é obrigatória para criar um novo utilizador.' });
         }
-        const hashedPassword = await bcrypt.hash(password, 10);
+        // --- ALTERAÇÃO AQUI: USAR SCRYPT PARA HASHING ---
+        const N = 16384; 
+        const r = 8;
+        const p = 1;
+        const dkLen = 32;
+        const salt = Math.random().toString(36).substring(2, 18); 
+        
+        const derivedKey = await scrypt.scrypt(
+            encodeUTF8(password), 
+            encodeUTF8(salt), 
+            N, r, p, dkLen
+        );
+        const hashedPassword = `scrypt$${N}$${r}$${p}$${salt}$${toHex(derivedKey)}`;
+        // --- FIM DA ALTERAÇÃO ---
+
         const user = await User.create({ username, email, password: hashedPassword, role });
         res.status(201).json({ id: user.id, username: user.username, email: user.email, role: user.role });
     } catch (error) {
@@ -901,11 +956,24 @@ router.put('/users/:id', authorizeRole(['admin']), async (req, res) => {
         if (email) user.email = email;
         if (role) user.role = role;
 
-        if (password) {
-            user.password = await bcrypt.hash(password, 10);
+        if (password) { // Se uma nova senha for fornecida
+            // --- ALTERAÇÃO AQUI: USAR SCRYPT PARA HASHING ---
+            const N = 16384; 
+            const r = 8;
+            const p = 1;
+            const dkLen = 32;
+            const salt = Math.random().toString(36).substring(2, 18); 
+            
+            const derivedKey = await scrypt.scrypt(
+                encodeUTF8(password), 
+                encodeUTF8(salt), 
+                N, r, p, dkLen
+            );
+            user.password = `scrypt$${N}$${r}$${p}$${salt}$${toHex(derivedKey)}`;
+            // --- FIM DA ALTERAÇÃO ---
         }
 
-        await user.save();
+        await user.save(); // Salva as alterações no usuário
         res.json({ id: user.id, username: user.username, email: user.email, role: user.role });
     } catch (error) {
         console.error('❌ ERRO AO ATUALIZAR UTILIZADOR:', error);
@@ -1398,15 +1466,15 @@ router.get('/finance/sales-prediction', authorizeRole(['admin', 'gerente', 'vend
         // Agrupa as vendas por mês para obter o histórico, incluindo contagem de vendas e ticket médio
         const monthlySales = await Sale.findAll({
             attributes: [
-                // CORREÇÃO AQUI: Usando DATE_FORMAT para MySQL
-                [fn('DATE_FORMAT', col('dataVenda'), '%Y-%m'), 'month'], // Formata para 'AAAA-MM'
+                // CORREÇÃO AQUI: Usando TO_CHAR para PostgreSQL
+                [fn('TO_CHAR', col('dataVenda'), 'YYYY-MM'), 'month'], // Formata para 'AAAA-MM'
                 [fn('sum', col('valorTotal')), 'totalSales'], // Soma o valor total
                 [fn('count', col('id')), 'salesCount'] // Adiciona a contagem de vendas
             ],
             where: whereClause,
             group: ['month'],
-            // CORREÇÃO AQUI: Ordenar pelo resultado da função DATE_FORMAT
-            order: [[fn('DATE_FORMAT', col('dataVenda'), '%Y-%m'), 'ASC']] // Ordena cronologicamente
+            // CORREÇÃO AQUI: Ordenar pelo resultado da função TO_CHAR
+            order: [[fn('TO_CHAR', col('dataVenda'), 'YYYY-MM'), 'ASC']] // Ordena cronologicamente
         });
 
         // Formata os dados para o frontend, calculando ticket médio por mês
