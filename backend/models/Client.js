@@ -1,6 +1,6 @@
+// backend/models/Client.js
 const { DataTypes } = require('sequelize');
 
-// Exporta uma função que define o modelo
 module.exports = (sequelize) => {
     const Client = sequelize.define('Client', {
         id: {
@@ -21,15 +21,23 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING,
             allowNull: true
         },
-        // NOVO: Adiciona a coluna userId ao modelo Client
         userId: {
             type: DataTypes.INTEGER,
-            allowNull: false, // Assume que todo cliente é criado por um usuário
+            allowNull: false,
             references: {
-                model: 'Users', // Nome da tabela que ele referencia (geralmente plural do nome do modelo)
+                model: 'Users', // OU: model: sequelize.models.User (em associações)
                 key: 'id'
             }
         }
+    }, {
+        tableName: 'Clients', // Garante o nome exato da tabela no DB
+        timestamps: true // Se quiser createdAt e updatedAt
     });
-    return Client; // Retorna o modelo definido
+
+    // Associações (declaradas fora do define)
+    Client.associate = (models) => {
+        Client.belongsTo(models.User, { foreignKey: 'userId', as: 'usuario' });
+    };
+
+    return Client;
 };
