@@ -7,9 +7,9 @@ require('dotenv').config({
 const express = require('express');
 const cors = require('cors');
 const compression = require('compression'); // <-- Adicione esta linha
-const { sequelize } = require('./database');
-const authRoutes = require('./routes/auth');
-const apiRoutes = require('./routes/api');
+const { sequelize } = require('./backend/database');
+const authRoutes = require('./backend/routes/auth');
+const apiRoutes = require('./backend/routes/api');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -73,7 +73,7 @@ async function startServer() {
 
         // --- CÓDIGO TEMPORÁRIO PARA CRIAR USUÁRIO ADMIN INICIAL ---
         // APENAS PARA O PRIMEIRO START. REMOVER DEPOIS DE LOGAR PELA PRIMEIRA VEZ.
-        const { User } = require('./database'); // Importa o modelo User aqui temporariamente
+        const { User } = require('./backend/database'); // Importa o modelo User aqui temporariamente
         const defaultAdminUsername = 'admin';
         const defaultAdminPassword = 'adminpassword'; // Senha segura para o admin
         
