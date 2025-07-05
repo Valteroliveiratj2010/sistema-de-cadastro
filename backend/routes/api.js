@@ -1,7 +1,6 @@
 // backend/routes/api.js
 const express = require('express');
 const { Op, fn, col, where } = require('sequelize');
-// const scrypt = require('scrypt-js'); // Importado para uso em User CRUD
 const { TextEncoder } = require('util'); // Para encodeUTF8
 
 // Helper functions para Scrypt (precisam estar disponíveis onde o hash é gerado)
@@ -15,20 +14,30 @@ const { Client, Sale, Payment, User, Product, SaleProduct, Supplier, Purchase, P
 // Importar os middlewares
 const authMiddleware = require('../middleware/authMiddleware'); 
 const authorizeRole = require('../middleware/authorizationMiddleware'); 
-// const purchaseController = require('../controllers/purchaseController'); // Mantenha ou remova se não for usado
-
 
 const router = express.Router();
 
+// ====================================================================
+// !!! IMPORTANTE: ROTAS DE AUTENTICAÇÃO DEVEM VIR AQUI PRIMEIRO !!!
+// Este é o ajuste crucial para permitir o login sem um token.
+// ====================================================================
+const authRoutes = require('./auth'); // Importa o seu arquivo auth.js
+router.use('/auth', authRoutes); // Aplica as rotas de autenticação sob o prefixo /api/auth
+
+// ====================================================================
+// APÓS AS ROTAS DE AUTENTICAÇÃO, APLIQUE O MIDDLEWARE PARA AS ROTAS PROTEGIDAS
+// Todas as rotas definidas ABAIXO desta linha exigirão um token JWT válido.
+// ====================================================================
 router.use(authMiddleware); 
 console.log('--- ROUTER API ATIVADO (TESTE DE LOG) ---'); 
+
 // --- ROTAS DO DASHBOARD ---
+// Exemplo de rota protegida pelo authMiddleware e authorizeRole
 router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     try {
         const today = new Date();
         const currentYear = today.getFullYear();
         const currentMonthNumber = today.getMonth(); // 0-11
-        // Formato 'AAAA-MM' para PostgreSQL: YYYY-MM
         const currentMonth = `${currentYear}-${String(currentMonthNumber + 1).padStart(2, '0')}`;
 
         const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -38,7 +47,6 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
 
         const totalClients = await Client.count({ where: baseWhereClause });
         
-        // KPIs de Vendas
         const totalSalesAmountAll = await Sale.sum('valorTotal', { where: baseWhereClause }) || 0;
         const totalPaidAmountAll = await Sale.sum('valorPago', { where: baseWhereClause }) || 0;
         const totalReceivable = totalSalesAmountAll - totalPaidAmountAll;
@@ -46,7 +54,6 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
         const salesThisMonth = await Sale.sum('valorTotal', {
             where: { 
                 ...baseWhereClause,
-                // CORREÇÃO AQUI: Usando TO_CHAR para PostgreSQL
                 [Op.and]: [
                     where(fn('TO_CHAR', col('dataVenda'), 'YYYY-MM'), currentMonth)
                 ]
@@ -61,11 +68,8 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
             }
         }) || 0;
 
-        // Vendas por Mês (últimos 12 meses do histórico completo)
-        // Incluirá dados para o gráfico de histórico
         const rawSalesByMonth = await Sale.findAll({
             attributes: [
-                // CORREÇÃO AQUI: Usando TO_CHAR para PostgreSQL
                 [fn('TO_CHAR', col('dataVenda'), 'YYYY-MM'), 'month'], 
                 [fn('sum', col('valorTotal')), 'total'],
                 [fn('count', col('id')), 'count']
@@ -73,16 +77,13 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
             where: {
                 ...baseWhereClause,
                 dataVenda: {
-                    // Buscar dados de 24 meses para ter histórico suficiente para YOY para todos os meses
                     [Op.gte]: new Date(currentYear - 2, currentMonthNumber, 1) 
                 }
             },
             group: ['month'],
-            // CORREÇÃO AQUI: Ordenar pelo resultado da função TO_CHAR
             order: [[fn('TO_CHAR', col('dataVenda'), 'YYYY-MM'), 'ASC']]
         });
 
-        // NOVO: Preencher meses sem vendas com 0 para o gráfico
         const salesByMonthMap = new Map();
         rawSalesByMonth.forEach(item => {
             salesByMonthMap.set(item.dataValues.month, {
@@ -92,7 +93,7 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
         });
 
         const fullSalesByMonth = [];
-        for (let i = -12; i <= 0; i++) { // Últimos 12 meses (incluindo o atual) para a visualização
+        for (let i = -12; i <= 0; i++) { 
             const date = new Date(currentYear, currentMonthNumber + i, 1);
             const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
             
@@ -114,7 +115,7 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
             }
         }) || 0;
 
-        const totalSalesCountAll = await Sale.count({ where: baseWhereClause }) || 1; // Para ticket médio geral
+        const totalSalesCountAll = await Sale.count({ where: baseWhereClause }) || 1; 
         const averageTicket = totalSalesAmountAll / totalSalesCountAll;
 
         const totalPurchasesAmount = await Purchase.sum('valorTotal', { where: { status: 'Pendente' } }) || 0; 
@@ -132,7 +133,6 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
             overdueAccountsPayable = overduePurchases;
         }
 
-        // Vendas do mesmo mês do ano anterior (para o KPI e o gráfico YOY)
         const lastYearSameMonthDate = new Date(today.getFullYear() - 1, today.getMonth(), 1);
         const lastYearSameMonthEndDate = new Date(today.getFullYear() - 1, today.getMonth() + 1, 0, 23, 59, 59, 999); 
 
@@ -151,7 +151,7 @@ router.get('/dashboard/stats', authorizeRole(['admin', 'gerente', 'vendedor']), 
             totalReceivable: totalReceivable || 0, 
             overdueSales: overdueSales || 0, 
             salesThisMonth: salesThisMonth || 0,
-            salesByMonth: fullSalesByMonth, // AGORA RETORNA fullSalesByMonth
+            salesByMonth: fullSalesByMonth, 
             salesToday: salesToday, 
             averageTicket: averageTicket,
             totalAccountsPayable: totalAccountsPayable, 
@@ -698,10 +698,6 @@ router.get('/products/low-stock', authorizeRole(['admin', 'gerente', 'vendedor']
     }
 });
 
-// backend/routes/api.js
-
-// ... (código anterior) ...
-
 router.get('/rankings/produtos', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     try {
         const topProducts = await SaleProduct.findAll({
@@ -711,10 +707,10 @@ router.get('/rankings/produtos', authorizeRole(['admin', 'gerente', 'vendedor'])
             ],
             group: [
                 'productId', 
-                'Product.id',     // <-- ADICIONADO PARA POSTGRES
-                'Product.nome',   // <-- ADICIONADO PARA POSTGRES
-                'Product.precoVenda' // <-- ADICIONADO PARA POSTGRES
-            ], // Adicionar todas as colunas selecionadas que não são agregadas
+                'Product.id', 
+                'Product.nome', 
+                'Product.precoVenda' 
+            ], 
             order: [[fn('sum', col('quantidade')), 'DESC']],
             limit: 5,
             include: [{
@@ -736,12 +732,6 @@ router.get('/rankings/produtos', authorizeRole(['admin', 'gerente', 'vendedor'])
     }
 });
 
-// ... (restante do seu código api.js) ...
-
-// backend/routes/api.js
-
-// ... (código anterior) ...
-
 router.get('/rankings/clientes', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     try {
         const topClients = await Sale.findAll({
@@ -752,11 +742,11 @@ router.get('/rankings/clientes', authorizeRole(['admin', 'gerente', 'vendedor'])
             ],
             group: [
                 'clientId', 
-                'client.id',      // <-- ADICIONADO PARA POSTGRES
-                'client.nome',    // <-- ADICIONADO PARA POSTGRES
-                'client.email',   // <-- ADICIONADO PARA POSTGRES
-                'client.telefone' // <-- ADICIONADO PARA POSTGRES
-            ], // Adicionar todas as colunas selecionadas que não são agregadas do "client"
+                'client.id', 
+                'client.nome', 
+                'client.email', 
+                'client.telefone' 
+            ], 
             order: [[fn('count', col('Sale.id')), 'DESC']],
             limit: 5, 
             include: [{
@@ -778,12 +768,6 @@ router.get('/rankings/clientes', authorizeRole(['admin', 'gerente', 'vendedor'])
     }
 });
 
-// ... (restante do seu código api.js) ...
-
-// backend/routes/api.js
-
-// ... (código anterior) ...
-
 router.get('/rankings/vendedores', authorizeRole(['admin', 'gerente']), async (req, res) => {
     try {
         const topSellers = await Sale.findAll({
@@ -794,9 +778,9 @@ router.get('/rankings/vendedores', authorizeRole(['admin', 'gerente']), async (r
             ],
             group: [
                 'userId', 
-                'user.id',      // <-- ADICIONADO PARA POSTGRES
-                'user.username' // <-- ADICIONADO PARA POSTGRES
-            ], // Adicionar todas as colunas selecionadas que não são agregadas do "user"
+                'user.id', 
+                'user.username' 
+            ], 
             order: [[fn('sum', col('valorTotal')), 'DESC']], 
             limit: 5, 
             include: [{
@@ -819,9 +803,6 @@ router.get('/rankings/vendedores', authorizeRole(['admin', 'gerente']), async (r
         res.status(500).json({ message: 'Erro ao buscar ranking de vendedores.' });
     }
 });
-
-// ... (restante do seu código api.js) ...
-
 
 router.get('/products', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     const { page = 1, limit = 10, q = '' } = req.query;
@@ -1098,7 +1079,7 @@ router.get('/purchases/:id', authorizeRole(['admin', 'gerente']), async (req, re
 router.post('/purchases', authorizeRole(['admin', 'gerente']), async (req, res) => {
     console.log('[API Route Log] POST /purchases - Request Body:', JSON.stringify(req.body, null, 2));
     const { supplierId, dataCompra, valorTotal, status, observacoes, products: purchaseProductsData } = req.body;
-    const userId = req.user.id; // Usuário logado registrando a compra
+    const userId = req.user.id; 
 
     if (!supplierId || !purchaseProductsData || purchaseProductsData.length === 0) {
         return res.status(400).json({ message: 'Fornecedor e produtos da compra são obrigatórios.' });
@@ -1254,7 +1235,6 @@ router.get('/finance/cash-flow', authorizeRole(['admin', 'gerente']), async (req
             return res.status(400).json({ message: 'Parâmetros startDate e endDate são obrigatórios.' });
         }
 
-        // Ajustar as datas para cobrir o dia inteiro
         const start = new Date(startDate + 'T00:00:00.000Z');
         const end = new Date(endDate + 'T23:59:59.999Z');
 
@@ -1262,8 +1242,6 @@ router.get('/finance/cash-flow', authorizeRole(['admin', 'gerente']), async (req
             return res.status(400).json({ message: 'Formato de data inválido. Use AAAA-MM-DD.' });
         }
 
-        // Calcular Entradas (Recebimentos de Vendas)
-        // Somar o valor dos pagamentos de vendas dentro do período
         const totalReceipts = await Payment.sum('valor', {
             where: {
                 dataPagamento: {
@@ -1272,14 +1250,12 @@ router.get('/finance/cash-flow', authorizeRole(['admin', 'gerente']), async (req
             }
         }) || 0;
 
-        // Calcular Saídas (Pagamentos de Compras)
-        // Somar o valor total das compras 'Concluídas' dentro do período
         const totalPayments = await Purchase.sum('valorTotal', {
             where: {
                 dataCompra: {
                     [Op.between]: [start, end]
                 },
-                status: 'Concluída' // Considera apenas compras que foram concluídas (pagas)
+                status: 'Concluída' 
             }
         }) || 0;
 
@@ -1305,9 +1281,7 @@ router.get('/finance/accounting-csv', authorizeRole(['admin', 'gerente']), async
     try {
         let { startDate, endDate } = req.query;
 
-        // Se datas não forem fornecidas, define um período padrão (ex: último mês ou todo o histórico)
         if (!startDate || !endDate) {
-            // Exemplo: Últimos 30 dias se não especificado
             const today = new Date();
             startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30).toISOString().split('T')[0];
             endDate = today.toISOString().split('T')[0];
@@ -1320,7 +1294,6 @@ router.get('/finance/accounting-csv', authorizeRole(['admin', 'gerente']), async
             return res.status(400).json({ message: 'Formato de data inválido. Use AAAA-MM-DD.' });
         }
 
-        // Buscar todos os pagamentos de vendas (entradas)
         const payments = await Payment.findAll({
             where: {
                 dataPagamento: { [Op.between]: [start, end] }
@@ -1328,7 +1301,6 @@ router.get('/finance/accounting-csv', authorizeRole(['admin', 'gerente']), async
             include: [{ model: Sale, as: 'sale', include: [{ model: Client, as: 'client', attributes: ['nome'] }] }]
         });
 
-        // Buscar todas as compras (saídas) que estão 'Concluídas'
         const purchases = await Purchase.findAll({
             where: {
                 dataCompra: { [Op.between]: [start, end] },
@@ -1339,7 +1311,6 @@ router.get('/finance/accounting-csv', authorizeRole(['admin', 'gerente']), async
 
         let transactions = [];
 
-        // Adicionar pagamentos (entradas)
         payments.forEach(p => {
             transactions.push({
                 date: p.dataPagamento,
@@ -1352,7 +1323,6 @@ router.get('/finance/accounting-csv', authorizeRole(['admin', 'gerente']), async
             });
         });
 
-        // Adicionar compras (saídas)
         purchases.forEach(pr => {
             transactions.push({
                 date: pr.dataCompra,
@@ -1360,15 +1330,13 @@ router.get('/finance/accounting-csv', authorizeRole(['admin', 'gerente']), async
                 description: `Pagamento de Compra #${pr.id}`,
                 amount: parseFloat(pr.valorTotal),
                 entity: pr.supplier ? pr.supplier.nome : 'N/A',
-                payment_method: 'N/A', // O modelo Purchase não tem forma de pagamento detalhada
+                payment_method: 'N/A', 
                 ref_id: pr.id
             });
         });
 
-        // Ordenar transações por data cronologicamente
         transactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-        // Cabeçalhos do CSV
         const headers = [
             'Data', 
             'Tipo de Movimento', 
@@ -1379,12 +1347,11 @@ router.get('/finance/accounting-csv', authorizeRole(['admin', 'gerente']), async
             'ID de Referencia'
         ];
 
-        // Linhas do CSV
         const csvRows = transactions.map(t => {
             const escapeCsv = (value) => {
                 if (value === null || value === undefined) return '';
                 const stringValue = String(value).replace(/"/g, '""');
-                if (stringValue.includes(',') || stringValue.includes('\n') || stringValue.includes('"') || stringValue.includes(';')) { // Inclui ; para CSV separado por ;
+                if (stringValue.includes(',') || stringValue.includes('\n') || stringValue.includes('"') || stringValue.includes(';')) { 
                     return `"${stringValue}"`;
                 }
                 return stringValue;
@@ -1394,11 +1361,11 @@ router.get('/finance/accounting-csv', authorizeRole(['admin', 'gerente']), async
                 escapeCsv(new Date(t.date).toLocaleDateString('pt-BR')),
                 escapeCsv(t.type),
                 escapeCsv(t.description),
-                escapeCsv(t.amount.toFixed(2).replace('.', ',')), // Formato monetário com vírgula para decimal
+                escapeCsv(t.amount.toFixed(2).replace('.', ',')), 
                 escapeCsv(t.entity),
                 escapeCsv(t.payment_method),
                 escapeCsv(t.ref_id)
-            ].join(';'); // Separador por ponto e vírgula
+            ].join(';'); 
         });
 
         const csvContent = [headers.join(';'), ...csvRows].join('\n');
@@ -1418,39 +1385,33 @@ router.get('/finance/accounting-csv', authorizeRole(['admin', 'gerente']), async
 router.get('/finance/sales-prediction', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     console.log(`[API Route Log] ${new Date().toISOString()} - Sales Prediction report route accessed by ${req.user.username}.`);
     try {
-        const { months = 12 } = req.query; // Pega o número de meses do histórico (default 12)
+        const { months = 12 } = req.query; 
 
-        // Calcula a data de início para buscar o histórico de vendas
         const endDate = new Date();
         const startDate = new Date();
         startDate.setMonth(endDate.getMonth() - parseInt(months));
-        startDate.setDate(1); // Começa no primeiro dia do mês
+        startDate.setDate(1); 
 
         let whereClause = {
             dataVenda: {
                 [Op.between]: [startDate, endDate]
             }
         };
-        // Se o usuário for vendedor, filtra pelas vendas dele
         if (req.user.role === 'vendedor') {
             whereClause.userId = req.user.id;
         }
 
-        // Agrupa as vendas por mês para obter o histórico, incluindo contagem de vendas e ticket médio
         const monthlySales = await Sale.findAll({
             attributes: [
-                // CORREÇÃO AQUI: Usando TO_CHAR para PostgreSQL
-                [fn('TO_CHAR', col('dataVenda'), 'YYYY-MM'), 'month'], // Formata para 'AAAA-MM'
-                [fn('sum', col('valorTotal')), 'totalSales'], // Soma o valor total
-                [fn('count', col('id')), 'salesCount'] // Adiciona a contagem de vendas
+                [fn('TO_CHAR', col('dataVenda'), 'YYYY-MM'), 'month'], 
+                [fn('sum', col('valorTotal')), 'totalSales'], 
+                [fn('count', col('id')), 'salesCount'] 
             ],
             where: whereClause,
             group: ['month'],
-            // CORREÇÃO AQUI: Ordenar pelo resultado da função TO_CHAR
-            order: [[fn('TO_CHAR', col('dataVenda'), 'YYYY-MM'), 'ASC']] // Ordena cronologicamente
+            order: [[fn('TO_CHAR', col('dataVenda'), 'YYYY-MM'), 'ASC']] 
         });
 
-        // Formata os dados para o frontend, calculando ticket médio por mês
         const formattedData = monthlySales.map(item => {
             const totalSales = parseFloat(item.dataValues.totalSales);
             const salesCount = parseInt(item.dataValues.salesCount);
@@ -1480,4 +1441,4 @@ router.get('/finance/sales-prediction', authorizeRole(['admin', 'gerente', 'vend
 });
 
 
-module.exports = router
+module.exports = router;

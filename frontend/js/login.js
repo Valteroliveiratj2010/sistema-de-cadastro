@@ -32,7 +32,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // Requisição para a API de login do backend
-            const response = await fetch('http://localhost:4000/auth/login', {
+            // O caminho '/api/auth/login' é construído a partir de:
+            // '/api' (definido em server.js para o apiRoutes)
+            // '/auth/login' (definido em backend/routes/auth.js)
+            const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -45,6 +48,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.ok) { // Se a resposta for 2xx (sucesso)
                 // Salvar o token no localStorage
                 localStorage.setItem('jwtToken', data.token);
+                // Opcional: Salvar outras informações do usuário se necessário (role, username, id)
+                localStorage.setItem('userRole', data.role);
+                localStorage.setItem('userName', data.username);
+                localStorage.setItem('userId', data.id);
+
                 showMessage('Login bem-sucedido! Redirecionando...', 'success');
                 
                 // Redirecionar para a página principal (dashboard)
@@ -60,6 +68,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
-
-
