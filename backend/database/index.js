@@ -1,41 +1,27 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const scrypt = require('scrypt-js'); // Scrypt principal
+// const { TextEncoder } = require('util'); // <-- NÃO PRECISA MAIS DO TEXTENCODER AQUI
 
 // Helper functions para Scrypt (agora usando Buffer para garantir consistência de bytes)
 const encodeUTF8 = (str) => Buffer.from(str, 'utf8');
 const toHex = (bytes) => Buffer.from(bytes).toString('hex');
 
-// --- Desestruturação das variáveis de ambiente ---
-const {
-    DB_DIALECT = 'postgres', // Mantemos o padrão como 'postgres'
-    DB_HOST,
-    DB_PORT,
-    DB_NAME,
-    DB_USER,
-    DB_PASSWORD,
-    NODE_ENV // Adicionado para verificar o ambiente
-} = process.env;
-
-// --- Configuração condicional do SSL ---
-// Se o NODE_ENV for 'production', ou se você decidir usar DATABASE_URL para conexão,
-// então `ssl` será true e configurado. Caso contrário, será `false` (desabilitado).
-// Para o seu .env atual, que não tem NODE_ENV=production, e usa DB_HOST/DB_PORT, etc.,
-// o SSL será 'false' para a conexão local.
-const sslConfig = NODE_ENV === 'production' ? {
-    require: true,
-    rejectUnauthorized: false // Importante para produção na Render
-} : false; // Desabilita SSL para desenvolvimento local
+// --- Carrega a configuração do banco de dados do config.json ---
+// A Render definirá process.env.NODE_ENV como 'production'.
+// Localmente, ele será 'development' (ou o que você definir no seu .env).
+const env = process.env.NODE_ENV || 'development';
+// Importa o arquivo de configuração gerado pelo sequelize init
+const config = require('../config/config')[env]; 
 
 // --- Inicialização do Sequelize ---
-// Usando as variáveis de ambiente separadas do seu .env
-const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
-    host: DB_HOST,
-    port: DB_PORT,
-    dialect: DB_DIALECT, // Usará 'postgres' do .env ou o padrão
-    logging: false,
-    dialectOptions: {
-        ssl: sslConfig // Aplicamos a configuração condicional de SSL aqui
-    }
+// Agora, o Sequelize é inicializado usando o objeto de configuração carregado do config.json.
+// Isso inclui todas as credenciais, o dialeto, e as opções de SSL.
+const sequelize = new Sequelize(config.database, config.username, config.password, {
+    host: config.host,
+    port: config.port,
+    dialect: config.dialect,
+    logging: config.logging || false, // Usa a configuração de logging do config.json, ou false como padrão
+    dialectOptions: config.dialectOptions || {} // Usa as opções do dialeto do config.json
 });
 
 // --- Definição de TODOS os Modelos AQUI EM CIMA ---
