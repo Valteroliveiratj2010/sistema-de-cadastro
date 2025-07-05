@@ -4,8 +4,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node backend/server.js",
-    "db:migrate": "npx sequelize db:migrate",   
-    "db:seed": "npx sequelize db:seed:all"     
+    
+    "migrate-db": "cd backend && npx sequelize db:migrate",
+    "seed-db": "cd backend && npx sequelize db:seed:all"
+   
   },
   "keywords": [],
   "author": "",
@@ -21,7 +23,6 @@
     "pg-hstore": "^2.3.4",
     "scrypt-js": "^3.0.1",
     "sequelize": "^6.37.7"
-   
   },
   "devDependencies": {
     "sequelize-cli": "^6.6.2"
