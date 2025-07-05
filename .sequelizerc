@@ -1,8 +1,9 @@
+// C:\app-cadastro\.sequelizerc
 const path = require('path');
 
 module.exports = {
-  config: path.resolve(__dirname, 'backend', 'config', 'config.js'), // <--- MUDANÇA AQUI!
+  config: path.resolve(__dirname, 'backend', 'config', 'config.js'),
   'migrations-path': path.resolve(__dirname, 'backend', 'migrations'),
   'seeders-path': path.resolve(__dirname, 'backend', 'seeders'),
-  'models-path': path.resolve(__dirname, 'backend', 'models')
+  'models-path': path.resolve(__dirname, 'backend', 'models') // Ajuste se seus modelos estiverem em outro lugar
 };
