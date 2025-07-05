@@ -1,110 +1,61 @@
 // backend/server.js
-const path = require('path');
-require('dotenv').config({
-    path: path.resolve(__dirname, '../.env')
-});
-
 const express = require('express');
-const cors = require('cors');
-const compression = require('compression'); // <-- Adicione esta linha
-const { sequelize } = require('./backend/database');
-const authRoutes = require('./backend/routes/auth');
-const apiRoutes = require('./backend/routes/api');
-
+const path = require('path');
+const cors = require('cors'); // Certifique-se de que o 'cors' está instalado
 const app = express();
-const PORT = process.env.PORT || 4000;
 
-// Middlewares
-app.use(cors());
-app.use(express.json());
-app.use(compression()); // <-- Adicione esta linha: Habilita a compactação Gzip para todas as respostas
+// Carrega as variáveis de ambiente (se ainda não carregou em um ponto de entrada superior)
+// Se seu principal server.js está na raiz e ele que tem o dotenv.config(), pode remover esta parte.
+// Mas se backend/server.js é o ponto de entrada principal, mantenha.
+// (Assumindo que o dotenv já foi carregado em server.js que está na raiz do seu projeto)
+// const path = require('path'); // Já está lá em cima
+// require('dotenv').config({ path: path.resolve(__dirname, '../.env') }); // Se o server.js da raiz não faz isso
 
-// *** Ordem é crucial: Rotas estáticas vêm primeiro para servir CSS/JS ***
-// Garante que o Express sirva arquivos da pasta 'frontend'.
-// Quando o navegador requisita /style.css, Express procura em <raiz_do_projeto>/frontend/style.css
-app.use(express.static(path.join(__dirname, '../frontend'), {
-    maxAge: '1h' // <-- Opcional, mas recomendado: Define o cache HTTP para arquivos estáticos
-}));
+// --- MIDDLEWARES GLOBAIS ---
+app.use(express.json()); // Body parser para JSON
+app.use(express.urlencoded({ extended: true })); // Body parser para URL-encoded
+app.use(cors()); // Habilita CORS. Para produção, considere configurar origens específicas!
 
-// Debug: caminho da pasta frontend que está sendo servida
-console.log('📂 Express está servindo arquivos estáticos de:', path.join(__dirname, '../frontend'));
+// --- DEBUGGING: LOG O CURRENT WORKING DIRECTORY ---
+console.log(`[SERVER_DEBUG] Current Working Directory (CWD): ${process.cwd()}`);
+console.log(`[SERVER_DEBUG] __dirname: ${__dirname}`);
 
 
-// *** Rota raiz para o index.html: Adicionado depuração e tratamento de erro ***
-// Esta rota deve ser a primeira a ser acionada para '/' se o arquivo estático não for encontrado.
-app.get('/', (req, res) => {
-    console.log('➡️ Requisição GET / recebida.');
-    const indexPath = path.join(__dirname, '../frontend', 'index.html');
-    console.log('📄 Tentando enviar index.html de:', indexPath);
+// --- CONFIGURAÇÃO PARA SERVIR ARQUIVOS ESTÁTICOS DO FRONTEND ---
+// A PASTA 'frontend' está no mesmo nível que 'backend'.
+// Baseado no erro anterior, parece que o CWD do processo Node.js na Render é '/opt/render/project'.
+// E seus arquivos estão em '/opt/render/project/src/frontend'.
+// Por isso, precisamos adicionar 'src' explicitamente ao caminho.
 
-    res.sendFile(indexPath, err => {
+const renderProjectRoot = process.cwd(); // Isso deve ser '/opt/render/project' na Render
+const frontendPath = path.join(renderProjectRoot, 'src', 'frontend'); // Monta o caminho completo até a pasta 'frontend'
+
+console.log(`[SERVER_LOG] Tentando servir arquivos estáticos de: ${frontendPath}`);
+app.use(express.static(frontendPath)); // Isso serve CSS, JS, imagens, etc.
+
+// --- ROTAS DA API ---
+// Devem vir antes da rota de fallback para index.html
+const apiRoutes = require('./routes/api');
+app.use('/api', apiRoutes); // Todas as rotas da sua API começarão com /api
+
+// --- ROTA DE FALLBACK PARA index.html (SPA) ---
+// Qualquer rota que não foi tratada pelas rotas da API ou pelos arquivos estáticos
+// será redirecionada para o index.html do frontend.
+// ISSO DEVE VIR POR ÚLTIMO, DEPOIS DE TODAS AS ROTAS DE API E ARQUIVOS ESTÁTICOS!
+app.get('*', (req, res) => {
+    // Log para depuração
+    console.log(`[SERVER_DEBUG] Requisição não tratada, tentando servir index.html para: ${req.path}`);
+    res.sendFile(path.join(frontendPath, 'index.html'), (err) => {
         if (err) {
-            console.error('❌ ERRO ao enviar index.html:', err);
-            // Verifica se o erro é um ENOENT (arquivo não encontrado)
-            if (err.code === 'ENOENT') {
-                res.status(404).send('Página inicial (index.html) não encontrada no servidor.');
-            } else {
-                res.status(err.status || 500).send(`Erro interno ao carregar a página: ${err.message}`);
-            }
-        } else {
-            console.log('✅ index.html enviado com sucesso.');
+            console.error(`❌ ERRO ao enviar index.html: ${err}`);
+            res.status(500).send('Erro interno do servidor ao carregar a página.');
         }
     });
 });
 
-// Rotas da API (devem vir depois das rotas de arquivos estáticos e da rota raiz)
-app.use('/auth', authRoutes);
-app.use('/api', apiRoutes);
-
-// Middleware de erros centralizado
-app.use((err, req, res, next) => {
-    console.error('❌ Erro no middleware centralizado:', err);
-    res.status(err.statusCode || 500).json({
-        message: err.message || 'Ocorreu um erro inesperado no servidor.'
-    });
+// --- INICIALIZAÇÃO DO SERVIDOR ---
+const port = process.env.PORT || 4000;
+app.listen(port, () => {
+    console.log(`Servidor rodando na porta ${port}`);
+    console.log(`Acesse a aplicação (localmente) em: http://localhost:${port}`);
 });
-
-// Função para iniciar o servidor após sincronizar o banco de dados
-async function startServer() {
-    console.log('--- INICIANDO SERVIDOR NODE.JS (TESTE DE LOG) ---');
-    try {
-        await sequelize.sync({ force: false }); // force: false mantém os dados
-        console.log('✅ Conexão com o banco de dados estabelecida e modelos sincronizados.');
-
-        // --- CÓDIGO TEMPORÁRIO PARA CRIAR USUÁRIO ADMIN INICIAL ---
-        // APENAS PARA O PRIMEIRO START. REMOVER DEPOIS DE LOGAR PELA PRIMEIRA VEZ.
-        const { User } = require('./backend/database'); // Importa o modelo User aqui temporariamente
-        const defaultAdminUsername = 'admin';
-        const defaultAdminPassword = 'adminpassword'; // Senha segura para o admin
-        
-        try {
-            const [adminUser, created] = await User.findOrCreate({
-                where: { username: defaultAdminUsername },
-                defaults: {
-                    username: defaultAdminUsername,
-                    email: 'admin@gestorpro.com', // Email padrão
-                    password: defaultAdminPassword, // A senha será hashed pelo hook do modelo User
-                    role: 'admin'
-                }
-            });
-            if (created) {
-                console.log(`🔑 Usuário administrador '${defaultAdminUsername}' criado com sucesso! Senha: '${defaultAdminPassword}'`);
-            } else {
-                console.log(`🔑 Usuário administrador '${defaultAdminUsername}' já existe.`);
-            }
-        } catch (userCreateError) {
-            console.error('❌ Erro ao criar/verificar usuário administrador inicial:', userCreateError.message);
-        }
-        // --- FIM DO CÓDIGO TEMPORÁRIO ---
-
-        app.listen(PORT, () => {
-            console.log(`🚀 Servidor rodando na porta ${PORT}`);
-            console.log(`🌐 Acesse o frontend em: http://localhost:${PORT}/`);
-        });
-    } catch (error) {
-        console.error('❌ Erro fatal ao iniciar o servidor:', error);
-        process.exit(1);
-    }
-}
-
-startServer();
