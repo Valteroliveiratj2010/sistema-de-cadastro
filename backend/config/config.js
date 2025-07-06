@@ -14,7 +14,17 @@ module.exports = {
     ssl: false,
     dialectOptions: {
       ssl: false
-    }
+    },
+    // --- CAMINHOS PARA O SEQUELIZE CLI (AJUSTADO) ---
+    // Caminhos são relativos à raiz do projeto ou ao arquivo de configuração do CLI.
+    // Como config.js está em backend/config, '..' volta para backend/.
+    // As pastas migrations e seeders estão diretamente em backend/.
+    // A pasta models está em backend/models.
+    migrationStorageTableName: 'sequelize_migrations', // Nome da tabela para registrar as migrações
+    seederStorageTableName: 'sequelize_seeders',     // Nome da tabela para registrar os seeders
+    migrationsPath: path.join(__dirname, '..', 'migrations'), // Caminho para as migrações
+    seedersPath: path.join(__dirname, '..', 'seeders'),       // Caminho para os seeders
+    modelsPath: path.join(__dirname, '..', 'models') // <-- CORRIGIDO: Caminho para os modelos
   },
   test: {
     username: process.env.DB_USER,
@@ -24,7 +34,13 @@ module.exports = {
     port: process.env.DB_PORT,
     dialect: process.env.DB_DIALECT,
     seederStorage: "sequelize",
-    logging: false
+    logging: false,
+    // --- CAMINHOS PARA O SEQUELIZE CLI (AJUSTADO) ---
+    migrationStorageTableName: 'sequelize_migrations',
+    seederStorageTableName: 'sequelize_seeders',
+    migrationsPath: path.join(__dirname, '..', 'migrations'),
+    seedersPath: path.join(__dirname, '..', 'seeders'),
+    modelsPath: path.join(__dirname, '..', 'models') // <-- CORRIGIDO
   },
   production: {
     username: process.env.DB_USER,
@@ -41,6 +57,12 @@ module.exports = {
         require: true,
         rejectUnauthorized: false
       }
-    }
+    },
+    // --- CAMINHOS PARA O SEQUELIZE CLI (AJUSTADO) ---
+    migrationStorageTableName: 'sequelize_migrations',
+    seederStorageTableName: 'sequelize_seeders',
+    migrationsPath: path.join(__dirname, '..', 'migrations'),
+    seedersPath: path.join(__dirname, '..', 'seeders'),
+    modelsPath: path.join(__dirname, '..', 'models') // <-- CORRIGIDO
   }
 };
