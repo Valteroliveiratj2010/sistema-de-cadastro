@@ -1,6 +1,6 @@
 // backend/database/index.js
 const { Sequelize, DataTypes } = require('sequelize');
-const bcrypt = require('bcryptjs'); // Usaremos apenas o bcrypt agora
+const bcrypt = require('bcryptjs'); // Apenas bcrypt agora
 
 const env = process.env.NODE_ENV || 'development';
 const config = require('../config/config')[env];
@@ -19,8 +19,7 @@ const sequelize = new Sequelize(
   }
 );
 
-// --- Definição de TODOS os Modelos AQUI EM CIMA ---
-
+// --- Modelo de Usuário com bcrypt ---
 const User = sequelize.define('User', {
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
   username: { type: DataTypes.STRING, allowNull: false, unique: true },
@@ -46,6 +45,7 @@ User.prototype.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
+// --- Demais Modelos ---
 const Client = sequelize.define('Client', {
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
   nome: { type: DataTypes.STRING, allowNull: false },
