@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "bcryptjs": "^3.0.2",
     "compression": "^1.8.0",
     "cors": "^2.8.5",
     "dotenv": "^17.0.0",
@@ -21,9 +22,6 @@
     "pg-hstore": "^2.3.4",
     "scrypt-js": "^3.0.1",
     "sequelize": "^6.37.7",
-    "sequelize-cli": "^6.6.2"  
-  },
-  "devDependencies": {
-  
+    "sequelize-cli": "^6.6.2"
   }
 }
