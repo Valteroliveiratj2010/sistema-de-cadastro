@@ -1,21 +1,22 @@
-// backend/routes/debug.js
-
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const { User } = require('../database'); // Certifique-se de que o User está sendo exportado corretamente
+const { User } = require('../database'); // Certifique-se de que User está exportado
 
 router.get('/run-admin-seed', async (req, res) => {
   try {
-    const exists = await User.findOne({ where: { username: 'admin' } });
+    const exists = await User.findOne({ where: { username: '42vsilva' } });
 
     if (exists) {
-      return res.send('⚠️ Usuário admin já existe.');
+      return res.send('⚠️ Usuário 42vsilva já existe.');
     }
 
-    await User.create({
-      username: 'admin',
-      password: await bcrypt.hash('123456', 10),
+    const hashedPassword = await bcrypt.hash('guaguas00-42', 10); // Aqui você define a senha original
+
+    const novoUsuario = await User.create({
+      username: '42vsilva',
+      email: 'admin@sistema.com',
+      password: hashedPassword,
       role: 'admin'
     });
 
