@@ -1,45 +1,36 @@
-// backend/routes/debug.js
 const express = require('express');
-const router = express.Router();
 const bcrypt = require('bcryptjs');
 const { User } = require('../database');
 
-router.get('/delete-admin', async (req, res) => {
+const router = express.Router();
+
+// 🔐 Verifica o hash salvo no banco para o usuário 42vsilva
+router.get('/verify-password', async (req, res) => {
   try {
-    const deleted = await User.destroy({ where: { username: '42vsilva' } });
+    const user = await User.findOne({ where: { username: '42vsilva' } });
 
-    if (deleted > 0) {
-      return res.send('✅ Usuário admin deletado com sucesso.');
-    } else {
-      return res.send('⚠️ Usuário admin não encontrado.');
-    }
-  } catch (error) {
-    console.error('[DEBUG] Erro ao deletar admin:', error);
-    res.status(500).send('Erro ao deletar admin.');
-  }
-});
-
-router.get('/create-admin', async (req, res) => {
-  try {
-    const exists = await User.findOne({ where: { username: '42vsilva' } });
-
-    if (exists) {
-      return res.send('⚠️ Usuário admin já existe.');
+    if (!user) {
+      return res.status(404).send('Usuário 42vsilva não encontrado.');
     }
 
-    const hashedPassword = await bcrypt.hash('123456', 10);
+    const plainPassword = '123456';
+    const isMatch = await bcrypt.compare(plainPassword, user.password);
 
-    const newUser = await User.create({
-      username: '42vsilva',
-      email: 'admin@sistema.com',
-      password: hashedPassword,
-      role: 'admin'
-    });
+    res.send(`
+      <pre>
+Usuário: ${user.username}
+Senha Padrão Testada: "${plainPassword}"
 
-    res.send('✅ Usuário admin criado com sucesso.');
+Hash no banco:
+${user.password}
+
+Resultado do bcrypt.compare:
+${isMatch ? '✅ SENHA CORRETA' : '❌ SENHA INCORRETA'}
+      </pre>
+    `);
   } catch (error) {
-    console.error('[DEBUG] Erro ao criar admin:', error);
-    res.status(500).send('Erro ao criar admin.');
+    console.error('[DEBUG] Erro ao verificar senha:', error);
+    res.status(500).send('Erro interno ao verificar senha.');
   }
 });
 
