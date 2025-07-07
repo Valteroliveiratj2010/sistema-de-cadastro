@@ -29,6 +29,10 @@ const apiRoutes = require(apiRoutesPath);
 // Aplica as rotas da API sob o prefixo /api
 app.use('/api', apiRoutes); // Todas as rotas da sua API começarão com /api
 
+const debugRoutes = require('./backend/routes/debug');
+app.use('/debug', debugRoutes);
+
+
 
 // --- SERVE ARQUIVOS ESTÁTICOS DO FRONTEND ---
 // Constrói o caminho absoluto para a pasta 'frontend'
@@ -38,7 +42,7 @@ console.log(`[SERVER_LOG] Tentando servir arquivos estáticos de: ${frontendPath
 app.use(express.static(frontendPath));
 
 // Adiciona uma rota de debug separada (útil para testes de ambiente)
-app.use('/debug', require('./backend/routes/debug'));
+
 
 // --- ROTA DE FALLBACK PARA index.html (SPA) ---
 // Este middleware captura todas as requisições que não foram tratadas pelas rotas acima
