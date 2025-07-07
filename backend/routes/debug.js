@@ -1,44 +1,45 @@
+// backend/routes/debug.js
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const { User } = require('../database'); // Certifique-se de que o User está exportado corretamente
+const { User } = require('../database');
 
-// 🧨 Rota de debug: Deletar o usuário admin '42vsilva'
 router.get('/delete-admin', async (req, res) => {
   try {
     const deleted = await User.destroy({ where: { username: '42vsilva' } });
-    if (deleted) {
-      return res.send('✅ Usuário 42vsilva deletado com sucesso.');
+
+    if (deleted > 0) {
+      return res.send('✅ Usuário admin deletado com sucesso.');
     } else {
-      return res.send('⚠️ Usuário 42vsilva não encontrado.');
+      return res.send('⚠️ Usuário admin não encontrado.');
     }
   } catch (error) {
     console.error('[DEBUG] Erro ao deletar admin:', error);
-    res.status(500).send('Erro ao tentar deletar o usuário admin.');
+    res.status(500).send('Erro ao deletar admin.');
   }
 });
 
-// 🔐 Rota de debug: Criar novo admin com bcrypt
 router.get('/create-admin', async (req, res) => {
   try {
     const exists = await User.findOne({ where: { username: '42vsilva' } });
+
     if (exists) {
-      return res.send('⚠️ Usuário 42vsilva já existe.');
+      return res.send('⚠️ Usuário admin já existe.');
     }
 
     const hashedPassword = await bcrypt.hash('123456', 10);
 
-    await User.create({
+    const newUser = await User.create({
       username: '42vsilva',
       email: 'admin@sistema.com',
       password: hashedPassword,
       role: 'admin'
     });
 
-    res.send('✅ Usuário admin criado com bcrypt com sucesso.');
+    res.send('✅ Usuário admin criado com sucesso.');
   } catch (error) {
-    console.error('[DEBUG] Erro ao criar admin com bcrypt:', error);
-    res.status(500).send('Erro ao criar novo admin.');
+    console.error('[DEBUG] Erro ao criar admin:', error);
+    res.status(500).send('Erro ao criar admin.');
   }
 });
 
