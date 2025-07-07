@@ -1,14 +1,4 @@
 const { Sequelize, DataTypes } = require('sequelize');
-const scrypt = require('scrypt-js'); // Scrypt principal
-// const { TextEncoder } = require('util'); // <-- NÃO PRECISA MAIS DO TEXTENCODER AQUI
-
-// Helper functions para Scrypt (agora usando Buffer para garantir consistência de bytes)
-const encodeUTF8 = (str) => Buffer.from(str, 'utf8');
-const toHex = (bytes) => Buffer.from(bytes).toString('hex');
-
-// --- Carrega a configuração do banco de dados do config.json ---
-// A Render definirá process.env.NODE_ENV como 'production'.
-// Localmente, ele será 'development' (ou o que você definir no seu .env).
 const env = process.env.NODE_ENV || 'development';
 // Importa o arquivo de configuração gerado pelo sequelize init
 const config = require('../config/config')[env]; 
