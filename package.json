@@ -1,11 +1,11 @@
 {
-  "name": "sistema-de-cadastro-frontend",
+  "name": "app-cadastro",
   "version": "1.0.0",
-  "private": true,
+  "main": "index.js",
   "scripts": {
-    "build": "echo \"const API_BASE_URL = \\\"$API_URL\\\";\" > js/apiConfig.js",
-    "start": "echo \"Frontend development server not needed for static files. Open index.html directly.\"",
-    "dev": "echo \"Frontend development server not needed for static files. Open index.html directly.\""
+    "start": "node server.js",
+    "migrate-db": "npx sequelize db:migrate",
+    "seed-db": "npx sequelize db:seed:all"
   },
   "keywords": [],
   "author": "",
