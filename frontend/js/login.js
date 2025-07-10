@@ -6,6 +6,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const passwordInput = document.getElementById('password');
     const loginMessage = document.getElementById('loginMessage');
 
+    // Define a URL base da API. Ela virá do apiConfig.js gerado pela Vercel.
+    // O fallback é para desenvolvimento local, caso apiConfig.js não exista.
+    const API_BASE_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://localhost:4000/api';
+
     // Função para exibir mensagens na tela
     function showMessage(message, type = 'danger') {
         loginMessage.textContent = message;
@@ -26,16 +30,14 @@ document.addEventListener('DOMContentLoaded', () => {
         hideMessage(); // Limpa mensagens anteriores
 
         // --- CORREÇÃO AQUI: Adicionar .trim() para remover espaços em branco ---
-        const username = usernameInput.value.trim(); 
+        const username = usernameInput.value.trim();
         const password = passwordInput.value.trim();
         // --- FIM DA CORREÇÃO ---
 
         try {
             // Requisição para a API de login do backend
-            // O caminho '/api/auth/login' é construído a partir de:
-            // '/api' (definido em server.js para o apiRoutes)
-            // '/auth/login' (definido em backend/routes/auth.js)
-            const response = await fetch('/api/auth/login', {
+            // Agora usa a API_BASE_URL completa, que aponta para o Railway
+            const response = await fetch(`${API_BASE_URL}/auth/login`, { // <--- MUDANÇA AQUI!
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -43,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ username, password })
             });
 
-            const data = await response.json();
+            const data = await response.json(); // Tenta parsear a resposta como JSON
 
             if (response.ok) { // Se a resposta for 2xx (sucesso)
                 // Salvar o token no localStorage
@@ -54,17 +56,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('userId', data.id);
 
                 showMessage('Login bem-sucedido! Redirecionando...', 'success');
-                
+
                 // Redirecionar para a página principal (dashboard)
-                window.location.href = 'index.html'; 
+                window.location.href = 'index.html';
             } else { // Se a resposta não for 2xx (erro)
+                // Tenta exibir a mensagem de erro do backend, ou uma genérica
                 showMessage(data.message || 'Erro desconhecido ao fazer login.');
                 // Opcional: Limpar campos de senha ou usuário para nova tentativa
-                // passwordInput.value = ''; 
+                // passwordInput.value = '';
             }
         } catch (error) {
             console.error('Erro na requisição de login:', error);
-            showMessage('Não foi possível conectar ao servidor. Tente novamente mais tarde.');
+            // Mensagem de erro mais específica para o usuário
+            if (error instanceof SyntaxError) {
+                showMessage('Resposta inesperada do servidor. Verifique a URL da API ou o status do backend.');
+            } else {
+                showMessage('Não foi possível conectar ao servidor. Tente novamente mais tarde.');
+            }
         }
     });
 });
