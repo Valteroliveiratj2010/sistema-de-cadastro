@@ -18,7 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 // Em desenvolvimento, permite todas as origens ('*') para facilitar os testes locais.
 const corsOptions = {
     origin: process.env.NODE_ENV === 'production'
-        ? 'https://sistema-de-cadastro-auldbgbsm-valteroliveiratj2010s-projects.vercel.app' // <--- SUBSTITUA PELA URL REAL DO SEU FRONTEND NA VERCEL!
+        ? 'https://sistema-de-cadastro-eosin.vercel.app' // <--- SUBSTITUA PELA URL REAL DO SEU FRONTEND NA VERCEL!
         : '*', // Permite todas as origens em ambiente de desenvolvimento
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Métodos HTTP permitidos
     credentials: true, // Permite o envio de cookies de credenciais (se você usar)
