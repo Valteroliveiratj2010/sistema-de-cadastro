@@ -1,19 +1,36 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const { User } = require('../database');
 
 const router = express.Router();
 
-// 🔐 Verifica o hash salvo no banco para o usuário 42vsilva
+// 💚 Rota de Health Check simples e rápida (RECOMENDADO PARA O RAILWAY)
+// Esta rota deve apenas verificar se o servidor Express está ativo.
+// Ela não deve fazer chamadas ao banco de dados ou operações complexas.
+router.get('/', (req, res) => {
+  console.log('[DEBUG] Health check recebido na rota /debug');
+  res.status(200).send('OK'); // Responde com status 200 OK e um texto simples
+});
+
+// 🔐 Sua rota original de verificação de senha (OPCIONAL: Mantenha se ainda precisar dela)
+// Se você quiser manter esta rota para depuração, ela agora estará em /debug/verify-password.
+// Se não precisar mais dela, pode removê-la completamente.
 router.get('/verify-password', async (req, res) => {
   try {
-    const user = await User.findOne({ where: { username: '42vsilva' } });
+    // Importar User aqui dentro da rota para garantir que o DB esteja conectado
+    // no momento da requisição, e não na inicialização do módulo.
+    const { User } = require('../database'); // Importa User aqui dentro da rota
+
+    // --- ATUALIZADO: Usuário e Senha do Seeder ---
+    const usernameToVerify = 'temedv'; // O novo username do seeder
+    const plainPassword = '1914144000sky'; // A nova senha do seeder
+    // --- FIM DA ATUALIZAÇÃO ---
+
+    const user = await User.findOne({ where: { username: usernameToVerify } });
 
     if (!user) {
-      return res.status(404).send('Usuário 42vsilva não encontrado.');
+      return res.status(404).send(`Usuário ${usernameToVerify} não encontrado.`);
     }
 
-    const plainPassword = '123456';
     const isMatch = await bcrypt.compare(plainPassword, user.password);
 
     res.send(`
