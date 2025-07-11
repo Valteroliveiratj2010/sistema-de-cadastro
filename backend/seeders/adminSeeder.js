@@ -24,11 +24,11 @@ async function runAdminSeeder() {
 
     if (!existingAdmin) {
       // 3. Se o usuário admin não existir, crie-o
-      const hashedPassword = await bcrypt.hash('guaguas00-42', 10); // Hash da senha '123456'
+      const hashedPassword = await bcrypt.hash('1914144000sky', 10); // Hash da senha '123456'
 
       await User.create({
-        username: 'dv2010',
-        email: 'valteroliveiratj32@gmail.com', // Campo 'email' é obrigatório no seu modelo User
+        username: 'temedv',
+        email: 'temidev1982@outlook.com', // Campo 'email' é obrigatório no seu modelo User
         password: hashedPassword,
         role: 'admin', // Campo 'role' é obrigatório no seu modelo User
         createdAt: new Date(),
