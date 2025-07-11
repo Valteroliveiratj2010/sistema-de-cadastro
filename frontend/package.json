@@ -1,18 +1,7 @@
 {
-    "name": "sistema-de-cadastro-frontend",
-    "version": "1.0.0",
-    "private": true,
-    "scripts": {
-      "build": "node -e \"require('fs').writeFileSync('apiConfig.js', `const API_BASE_URL = \\\"${process.env.API_URL}\\\";`);\"",
-      "start": "echo \"Frontend development server not needed for static files. Open index.html directly.\"",
-      "dev": "echo \"Frontend development server not needed for static files. Open index.html directly.\""
-    },
-    "dependencies": {
-      "bootstrap": "^5.3.3",
-      "jquery": "^3.7.1",
-      "chart.js": "^4.4.3",
-      "toastify-js": "^1.12.0",
-      "select2": "^4.1.0-rc.0"
-    }
-  }
-  
+  "name": "gestor-pro-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {},
+  "dependencies": {}
+}
