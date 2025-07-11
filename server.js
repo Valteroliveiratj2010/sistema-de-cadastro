@@ -1,3 +1,11 @@
+
+process.on('uncaughtException', (err) => {
+    console.error('[SERVER_FATAL] Uncaught Exception:', err);
+  });
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('[SERVER_FATAL] Unhandled Rejection at:', promise, 'reason:', reason);
+  });
+  
 // server.js (ESTE ARQUIVO ESTÁ NA RAIZ DO PROJETO)
 const express = require('express');
 const path = require('path');

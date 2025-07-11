@@ -17,6 +17,11 @@ const authorizeRole = require('../middleware/authorizationMiddleware');
 
 const router = express.Router();
 
+router.get('/ping', (req, res) => {
+    res.json({ message: 'Pong!' });
+  });
+  
+
 // ====================================================================
 // !!! IMPORTANTE: ROTAS DE AUTENTICAÇÃO DEVEM VIR AQUI PRIMEIRO !!!
 // Este é o ajuste crucial para permitir o login sem um token.
