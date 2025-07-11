@@ -17,9 +17,9 @@ async function runAdminSeeder() {
     // --- Credenciais do Usuário Admin para o Seeder ---
     // Mude 'temedv' e 'admin@gestorpro.com' para o username e email que você deseja
     // e 'SuaNovaSenhaForteAqui!' para a senha forte que você vai usar.
-    const newUsername = 'temidev'; // O username que o seeder vai tentar criar/encontrar
-    const newEmail = 'valteroliveirasilva29@hotmial.com'; // O email que o seeder vai tentar criar
-    const plainPassword = '1914144000'; // A senha em texto puro para o hash
+    const newUsername = '19vsilva'; // O username que o seeder vai tentar criar/encontrar
+    const newEmail = 'gestorpro42@gmail.com'; // O email que o seeder vai tentar criar
+    const plainPassword = 'dv201015'; // A senha em texto puro para o hash
     // --- Fim das Credenciais ---
 
     const hashedPassword = await bcrypt.hash(plainPassword, 10);
