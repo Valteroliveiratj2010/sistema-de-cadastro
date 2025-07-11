@@ -7,31 +7,41 @@ const config = require('../config/config')[env];
 
 let sequelize;
 
-// Prioriza as variáveis de ambiente do Railway (PGHOST, PGUSER, etc.)
-// Se elas não existirem (ex: em desenvolvimento local), usa as do config.js.
-sequelize = new Sequelize(
-  process.env.PGDATABASE || config.database, // Usa PGDATABASE ou config.database
-  process.env.PGUSER || config.username,     // Usa PGUSER ou config.username
-  process.env.PGPASSWORD || config.password, // Usa PGPASSWORD ou config.password
-  {
-    host: process.env.PGHOST || config.host, // Usa PGHOST ou config.host
-    port: process.env.PGPORT ? parseInt(process.env.PGPORT, 10) : config.port, // Usa PGPORT ou config.port, garante que é um número
-    dialect: 'postgres', // Define explicitamente o dialeto como 'postgres'
-    logging: config.logging || false, // Mantém a configuração de logging
-    dialectOptions: {
-      ssl: {
-        require: true, // Railway PostgreSQL exige SSL
-        rejectUnauthorized: false // Pode ser necessário para aceitar certificados autoassinados no ambiente de nuvem
-      }
-    },
-    // Outras opções de configuração do seu config.js podem ser adicionadas aqui se forem globais
-    // e não forem sobrescritas pelas variáveis de ambiente do Railway.
-    // Ex: seederStorage, migrationStorageTableName, etc.
+// Lógica de inicialização do Sequelize:
+// 1. Se 'use_env_variable' estiver configurado no config.js para o ambiente atual (produção),
+//    usa a URL completa da variável de ambiente (DATABASE_URL).
+// 2. Caso contrário (para desenvolvimento ou se 'use_env_variable' não for usado),
+//    constrói a conexão a partir das variáveis individuais (priorizando Railway PG* ou config.js).
+if (config.use_env_variable) {
+  // Em produção, o config.js define 'use_env_variable' como 'DATABASE_URL'.
+  // O Sequelize vai usar process.env.DATABASE_URL.
+  sequelize = new Sequelize(process.env[config.use_env_variable], {
+    dialect: config.dialect,
+    logging: config.logging || false,
+    dialectOptions: config.dialectOptions || {},
     seederStorage: config.seederStorage,
     migrationStorageTableName: config.migrationStorageTableName,
     seederStorageTableName: config.seederStorageTableName
-  }
-);
+  });
+} else {
+  // Para desenvolvimento, ou se 'use_env_variable' não for definido,
+  // usa as variáveis individuais (priorizando as do Railway se existirem).
+  sequelize = new Sequelize(
+    process.env.PGDATABASE || config.database,
+    process.env.PGUSER || config.username,
+    process.env.PGPASSWORD || config.password,
+    {
+      host: process.env.PGHOST || config.host,
+      port: process.env.PGPORT ? parseInt(process.env.PGPORT, 10) : config.port,
+      dialect: 'postgres', // Definir explicitamente o dialeto
+      logging: config.logging || false,
+      dialectOptions: config.dialectOptions || {}, // Garante que dialectOptions exista
+      seederStorage: config.seederStorage,
+      migrationStorageTableName: config.migrationStorageTableName,
+      seederStorageTableName: config.seederStorageTableName
+    }
+  );
+}
 
 const db = { sequelize, Sequelize };
 
