@@ -5,41 +5,45 @@ const cors = require('cors');
 const app = express();
 
 // Carrega variáveis de ambiente - SEMPRE NO INÍCIO!
+// Essencial para que process.env esteja populado.
 require('dotenv').config();
 
 // --- MIDDLEWARES GLOBAIS ---
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json()); // Para parsear requisições com corpo JSON
+app.use(express.urlencoded({ extended: true })); // Para parsear requisições com corpo URL-encoded
 
 // --- CONFIGURAÇÃO DE CORS ---
-// É importante definir o origin de forma mais segura em produção.
-// Para o deploy no Render, 'https://sistema-de-cadastro-eosin.vercel.app' seria o host do seu frontend.
-// Certifique-se de que é o URL EXATO.
+// Permite que o frontend Vercel (ou qualquer outro host) se comunique com este backend.
+// É CRÍTICO que o 'origin' em produção seja o URL EXATO do seu frontend.
+// Use 'https://sistema-de-cadastro-eosin.vercel.app' para seu frontend no Vercel.
+// Use 'https://sistema-de-cadastro-backend.onrender.com' para o URL do seu backend no Render.
 const corsOptions = {
     origin: process.env.NODE_ENV === 'production'
-        ? 'https://sistema-de-cadastro-frontend.onrender.com' // <-- ATUALIZE AQUI PARA O DOMÍNIO DO SEU FRONTEND NO RENDER/VERCEL, SE TIVER UM
-        : '*', // Permite qualquer origem em desenvolvimento
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true,
-    optionsSuccessStatus: 204
+        ? 'https://sistema-de-cadastro-eosin.vercel.app' // <-- COLOQUE A URL COMPLETA DO SEU FRONTEND VERIFICADA NO VERCEL
+        : '*', // Para desenvolvimento local, permite qualquer origem
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Métodos HTTP permitidos
+    credentials: true, // Permite o envio de cookies de credenciais (se usados)
+    optionsSuccessStatus: 204 // Para requisições OPTIONS (preflight CORS)
 };
 app.use(cors(corsOptions));
 
-// --- DEBUGGING (Para ajudar a rastrear) ---
+// --- DEBUGGING (Para ajudar a rastrear o diretório de trabalho no deploy) ---
 console.log(`[SERVER_DEBUG] Current Working Directory (CWD): ${process.cwd()}`);
 console.log(`[SERVER_DEBUG] __dirname: ${__dirname}`);
 
 // --- ROTAS DA API ---
 const apiRoutesPath = path.join(__dirname, 'backend', 'routes', 'api.js');
 console.log(`[SERVER_DEBUG] Caminho ABSOLUTO para api.js: ${apiRoutesPath}`);
-const apiRoutes = require(apiRoutesPath); // <-- LINHA 36
-app.use('/api', apiRoutes); // <-- LINHA 37
+const apiRoutes = require(apiRoutesPath);
+app.use('/api', apiRoutes); // Todas as rotas definidas em api.js serão prefixadas com '/api'
 
-// --- REMOVENDO ROTAS DE DEBUG SE O ARQUIVO FOI DELETADO ---
-// Remova estas 2 linhas se você DELETOU o arquivo backend/routes/debug.js
-// const debugRoutes = require(path.join(__dirname, 'backend', 'routes', 'debug')); // <-- Linha 39 original
-// app.use('/debug', debugRoutes); // <-- Linha 40 original
-// Se o debug.js ainda existe e você quer que ele rode SOMENTE em desenvolvimento:
+// --- REMOÇÃO DE ROTAS DE DEBUG EM PRODUÇÃO ---
+// Se o arquivo debug.js foi deletado, estas linhas não farão sentido.
+// Se ele existe e você quer que ele rode SOMENTE em desenvolvimento,
+// use a lógica condicional como no exemplo abaixo.
+// Eu vou REMOVER as linhas de 'require' e 'app.use' para 'debugRoutes'
+// para evitar erros de 'MODULE_NOT_FOUND' se o arquivo não estiver lá.
+// Se você quiser reintroduzi-las para o ambiente de desenvolvimento, use o bloco 'if' comentado.
 /*
 if (process.env.NODE_ENV !== 'production') {
     const debugRoutes = require(path.join(__dirname, 'backend', 'routes', 'debug'));
@@ -50,18 +54,15 @@ if (process.env.NODE_ENV !== 'production') {
 }
 */
 
-
-// --- SERVE ARQUIVOS ESTÁTICOS DO FRONTEND ---
-// É importante notar que, se você tem um frontend separado (ex: no Vercel/outro serviço do Render),
-// este bloco pode não ser necessário ou pode causar conflito se ambos tentam servir o index.html.
-// No Render, geralmente o frontend é um "Static Site" separado.
+// --- REMOÇÃO DE SERVIÇO DE ARQUIVOS ESTÁTICOS DO FRONTEND E ROTA DE FALLBACK ---
+// Se seu frontend está em um serviço separado (como Vercel ou Static Site no Render),
+// o backend NÃO deve servir os arquivos estáticos do frontend.
+// Remover este bloco evita conflitos e otimiza o backend para ser APENAS uma API.
+/*
 const frontendPath = path.join(__dirname, 'frontend');
 console.log(`[SERVER_LOG] Tentando servir arquivos estáticos de: ${frontendPath}`);
 app.use(express.static(frontendPath));
 
-// --- ROTA DE FALLBACK PARA index.html (SPA) ---
-// Similar ao comentário acima, se o frontend está separado, esta rota também não é necessária
-// e pode causar comportamento inesperado.
 app.use((req, res) => {
     console.log(`[SERVER_DEBUG] Requisição não tratada, tentando servir index.html para: ${req.path}`);
     res.sendFile(path.join(frontendPath, 'index.html'), (err) => {
@@ -72,9 +73,11 @@ app.use((req, res) => {
         }
     });
 });
+*/
 
 // --- INICIALIZAÇÃO DO SERVIDOR ---
-const port = process.env.PORT || 8080; // Render irá fornecer process.env.PORT automaticamente
+// Render irá fornecer process.env.PORT automaticamente em produção.
+const port = process.env.PORT || 8080;
 
 app.listen(port, () => {
     console.log(`Servidor Express rodando na porta: ${port}`);
