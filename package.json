@@ -12,10 +12,10 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "bcryptjs": "^3.0.2",
+    "bcryptjs": "^2.4.3",
     "compression": "^1.8.0",
     "cors": "^2.8.5",
-    "dotenv": "^17.0.0",
+    "dotenv": "^16.6.1",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.16.3",
@@ -29,4 +29,3 @@
     "node": ">=18"
   }
 }
-
