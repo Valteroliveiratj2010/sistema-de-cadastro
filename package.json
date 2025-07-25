@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "run-migrations": "sequelize db:migrate",  
+    "run-migrations": "sequelize db:migrate",
     "prestart": "npm run run-migrations && node backend/adminSeeder.js",
     "start": "node server.js",
     "migrate-db": "npx sequelize db:migrate",
@@ -22,10 +22,11 @@
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.16.3",
     "pg-hstore": "^2.3.4",
-    "sequelize": "^6.37.7"
+    "sequelize": "^6.37.7",
+    "sequelize-cli": "^6.6.2"  
   },
   "devDependencies": {
-    "sequelize-cli": "^6.6.2"
+    
   },
   "engines": {
     "node": ">=18"
