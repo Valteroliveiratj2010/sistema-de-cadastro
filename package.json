@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
+    "prestart": "npx sequelize db:migrate && node backend/adminSeeder.js",
     "start": "node server.js",
     "migrate-db": "npx sequelize db:migrate",
     "seed-db": "npx sequelize db:seed:all"
