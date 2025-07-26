@@ -392,6 +392,19 @@ h1, h2, h3, h4, h5, h6 {
         -webkit-overflow-scrolling: touch;
     }
 }
+
+/* Correção para modais ficarem na frente da sidebar */
+.modal {
+    z-index: 3000 !important;
+}
+
+.modal-backdrop {
+    z-index: 2999 !important;
+}
+
+.modal-dialog {
+    z-index: 3001 !important;
+}
 /* Correção para telas grandes: sidebar visível e botão oculto */
 @media (min-width: 992px) {
     .sidebar {
