@@ -21,7 +21,16 @@ module.exports = (sequelize) => {
             type: DataTypes.FLOAT,
             allowNull: false
         }
+    }, {
+        tableName: 'SaleProducts', // Nome da tabela no banco de dados
+        timestamps: true // Adiciona createdAt e updatedAt
     });
+
+    // Definindo associações
+    SaleProduct.associate = (models) => {
+        SaleProduct.belongsTo(models.Sale, { foreignKey: 'saleId', as: 'sale' });
+        SaleProduct.belongsTo(models.Product, { foreignKey: 'productId', as: 'Product' });
+    };
 
     return SaleProduct; // Retorna o modelo definido
 };

@@ -37,7 +37,15 @@ module.exports = (sequelize) => {
             allowNull: true,
             unique: true
         }
+    }, {
+        tableName: 'Products', // Nome da tabela no banco de dados
+        timestamps: true // Adiciona createdAt e updatedAt
     });
+
+    // Definindo associações
+    Product.associate = (models) => {
+        Product.hasMany(models.SaleProduct, { foreignKey: 'productId', as: 'saleProducts' });
+    };
 
     return Product; // Retorna o modelo definido
 };
