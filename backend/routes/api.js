@@ -533,7 +533,7 @@ router.post('/sales', authorizeRole(['admin', 'gerente', 'vendedor']), async (re
             const product = await Product.findByPk(item.productId, { transaction });
             if (!product) { throw new Error(`Produto com ID ${item.productId} não encontrado.`); }
             if (product.estoque < item.quantidade) { throw new Error(`Estoque insuficiente para o produto: ${product.nome}. Disponível: ${product.estoque}, Solicitado: ${item.quantidade}`); }
-            const precoUnitario = item.precoUnitario !== undefined ? parseFloat(item.precoUnitario) : product.precoVenda;
+            const precoUnitario = item.precoUnitario !== undefined ? parseFloat(item.precoUnitario) : product.preco;
             valorTotalCalculado += precoUnitario * item.quantidade;
         }
         const sale = await Sale.create({
@@ -558,7 +558,7 @@ router.post('/sales', authorizeRole(['admin', 'gerente', 'vendedor']), async (re
         }
         for (const item of saleProductsData) {
             const product = await Product.findByPk(item.productId, { transaction });
-            const precoUnitario = item.precoUnitario !== undefined ? parseFloat(item.precoUnitario) : product.precoVenda;
+            const precoUnitario = item.precoUnitario !== undefined ? parseFloat(item.precoUnitario) : product.preco;
             await SaleProduct.create({
                 saleId: sale.id,
                 productId: item.productId,
@@ -714,21 +714,21 @@ router.get('/rankings/produtos', authorizeRole(['admin', 'gerente', 'vendedor'])
                 'productId', 
                 'Product.id', 
                 'Product.nome', 
-                'Product.precoVenda' 
+                'Product.preco' 
             ], 
             order: [[fn('sum', col('quantidade')), 'DESC']],
             limit: 5,
             include: [{
                 model: Product, 
                 as: 'Product', 
-                attributes: ['nome', 'precoVenda'] 
+                attributes: ['nome', 'preco'] 
             }]
         });
         const formattedRanking = topProducts.map(item => ({
             id: item.productId,
             nome: item.Product ? item.Product.nome : 'Produto Desconhecido',
             totalQuantidadeVendida: item.dataValues.totalQuantidadeVendida,
-            precoVenda: item.Product ? item.Product.precoVenda : null
+            precoVenda: item.Product ? item.Product.preco : null
         }));
         res.json(formattedRanking);
     } catch (error) {
