@@ -36,15 +36,7 @@ module.exports = (sequelize) => {
             type: DataTypes.TEXT,
             allowNull: true
         },
-        // O userId aqui representaria quem REGISTROU a compra no sistema
-        userId: { 
-            type: DataTypes.INTEGER,
-            allowNull: false,
-            references: {
-                model: 'users', // Referencia a tabela de usuários
-                key: 'id'
-            }
-        }
+        // userId removido - não existe na tabela real
     }, {
         tableName: 'Purchases', // Nome da tabela no banco de dados (com P maiúsculo)
         timestamps: true // Adiciona createdAt e updatedAt
@@ -53,7 +45,7 @@ module.exports = (sequelize) => {
     // Definindo associações
     Purchase.associate = (models) => {
         Purchase.belongsTo(models.Supplier, { foreignKey: 'supplierId', as: 'supplier' });
-        Purchase.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+        // Associação com User removida - userId não existe na tabela
     };
 
     return Purchase;

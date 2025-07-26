@@ -21,14 +21,7 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING,
             allowNull: true
         },
-        userId: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-            references: {
-                model: 'Users', // OU: model: sequelize.models.User (em associações)
-                key: 'id'
-            }
-        }
+        // userId removido - não existe na tabela real
     }, {
         tableName: 'Clients', // Garante o nome exato da tabela no DB
         timestamps: true // Se quiser createdAt e updatedAt
@@ -36,7 +29,7 @@ module.exports = (sequelize) => {
 
     // Associações (declaradas fora do define)
     Client.associate = (models) => {
-        Client.belongsTo(models.User, { foreignKey: 'userId', as: 'usuario' });
+        // Associação removida - userId não existe na tabela
     };
 
     return Client;
