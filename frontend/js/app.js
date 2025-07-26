@@ -15,7 +15,7 @@
         // --- FIM DOS CONSOLE.LOGS ---
 
         // --- CONFIGURAÇÃO E ESTADO ---
-        const API_BASE = 'https://sistema-de-cadastro-gestor-pro.onrender.com/api'
+        const API_BASE = 'https://sistema-de-cadastro-backend.onrender.com/api'
         const state = {
             bootstrapClientModal: new bootstrap.Modal(document.getElementById('clientModal')),
             bootstrapSaleModal: new bootstrap.Modal(document.getElementById('saleModal')),

@@ -1,5 +1,8 @@
 'use strict';
 
+// Forçar ambiente de produção para garantir SSL
+process.env.NODE_ENV = 'production';
+
 const path = require('path');
 // Certifique-se de que o dotenv seja carregado no início da sua aplicação principal (server.js)
 // Para um seeder standalone, você pode precisar carregá-lo aqui também se ele não for

@@ -34,6 +34,10 @@
     {
       "source": "/test-app-js",
       "destination": "/test-app-js.html"
+    },
+    {
+      "source": "/debug-token",
+      "destination": "/debug-token.html"
     }
   ],
   "headers": [

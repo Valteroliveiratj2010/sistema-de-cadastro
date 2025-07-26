@@ -34,11 +34,28 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             const data = await response.json();
+            console.log('Resposta da API:', data); // Debug
             
             if (response.ok) {
                 // Login bem-sucedido
                 localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
+                if (data.user) {
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                } else {
+                    console.warn('API não retornou dados do usuário');
+                    // Criar dados básicos do usuário a partir do token
+                    try {
+                        const tokenPayload = JSON.parse(atob(data.token.split('.')[1]));
+                        const userData = {
+                            id: tokenPayload.id,
+                            username: tokenPayload.username,
+                            role: tokenPayload.role
+                        };
+                        localStorage.setItem('user', JSON.stringify(userData));
+                    } catch (error) {
+                        console.error('Erro ao decodificar token:', error);
+                    }
+                }
                 
                 messageDiv.innerHTML = '<div class="alert alert-success">Login realizado com sucesso! Redirecionando...</div>';
                 

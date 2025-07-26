@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Token</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">🔍 Debug de Token</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <h5>Status do Token:</h5>
+                            <div id="tokenStatus" class="alert alert-info">
+                                Verificando...
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h5>localStorage:</h5>
+                            <div id="localStorageInfo" class="border p-3 bg-light" style="font-family: monospace; font-size: 12px;">
+                                Carregando...
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h5>Teste de API:</h5>
+                            <div class="d-grid gap-2">
+                                <button id="testApiBtn" class="btn btn-primary">
+                                    🧪 Testar API com Token
+                                </button>
+                                <button id="clearTokenBtn" class="btn btn-warning">
+                                    🗑️ Limpar Token
+                                </button>
+                                <a href="login.html" class="btn btn-secondary">
+                                    🔐 Ir para Login
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h5>Resultado do Teste:</h5>
+                            <div id="apiResult" class="border p-3 bg-light" style="font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto;">
+                                Aguardando teste...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateTokenStatus() {
+            const tokenStatus = document.getElementById('tokenStatus');
+            const localStorageInfo = document.getElementById('localStorageInfo');
+            
+            const token = localStorage.getItem('token');
+            const jwtToken = localStorage.getItem('jwtToken');
+            const user = localStorage.getItem('user');
+            
+            if (token) {
+                tokenStatus.innerHTML = '<strong>✅ Token encontrado!</strong>';
+                tokenStatus.className = 'alert alert-success';
+            } else if (jwtToken) {
+                tokenStatus.innerHTML = '<strong>⚠️ JWT Token encontrado (formato antigo)</strong>';
+                tokenStatus.className = 'alert alert-warning';
+            } else {
+                tokenStatus.innerHTML = '<strong>❌ Nenhum token encontrado</strong>';
+                tokenStatus.className = 'alert alert-danger';
+            }
+            
+            // Mostrar informações do localStorage
+            let localStorageText = '';
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                localStorageText += `${key}: ${value}\n`;
+            }
+            
+            if (localStorageText === '') {
+                localStorageText = 'localStorage vazio';
+            }
+            
+            localStorageInfo.textContent = localStorageText;
+        }
+        
+        async function testApi() {
+            const apiResult = document.getElementById('apiResult');
+            const token = localStorage.getItem('token') || localStorage.getItem('jwtToken');
+            
+            if (!token) {
+                apiResult.textContent = '❌ Nenhum token encontrado para testar';
+                return;
+            }
+            
+            apiResult.textContent = '🧪 Testando API...';
+            
+            try {
+                const response = await fetch('https://sistema-de-cadastro-backend.onrender.com/api/dashboard/stats', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.text();
+                
+                apiResult.textContent = `📡 Status: ${response.status}\n📄 Headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}\n📝 Response: ${data.substring(0, 500)}...`;
+                
+                if (response.ok) {
+                    apiResult.style.backgroundColor = '#d4edda';
+                } else {
+                    apiResult.style.backgroundColor = '#f8d7da';
+                }
+                
+            } catch (error) {
+                apiResult.textContent = `❌ Erro: ${error.message}`;
+                apiResult.style.backgroundColor = '#f8d7da';
+            }
+        }
+        
+        function clearToken() {
+            localStorage.clear();
+            updateTokenStatus();
+            document.getElementById('apiResult').textContent = 'Token limpo';
+        }
+        
+        // Event listeners
+        document.getElementById('testApiBtn').addEventListener('click', testApi);
+        document.getElementById('clearTokenBtn').addEventListener('click', clearToken);
+        
+        // Atualizar status ao carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            updateTokenStatus();
+        });
+    </script>
+</body>
+</html> 
