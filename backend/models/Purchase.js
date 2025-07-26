@@ -46,9 +46,15 @@ module.exports = (sequelize) => {
             }
         }
     }, {
-        tableName: 'purchases', // Nome da tabela no banco de dados
+        tableName: 'Purchases', // Nome da tabela no banco de dados (com P maiúsculo)
         timestamps: true // Adiciona createdAt e updatedAt
     });
+
+    // Definindo associações
+    Purchase.associate = (models) => {
+        Purchase.belongsTo(models.Supplier, { foreignKey: 'supplierId', as: 'supplier' });
+        Purchase.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+    };
 
     return Purchase;
 };

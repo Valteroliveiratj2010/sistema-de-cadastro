@@ -35,9 +35,14 @@ module.exports = (sequelize) => {
             allowNull: true
         }
     }, {
-        tableName: 'suppliers', // Nome da tabela no banco de dados
+        tableName: 'Suppliers', // Nome da tabela no banco de dados (com S maiúsculo)
         timestamps: true // Adiciona createdAt e updatedAt
     });
+
+    // Definindo associações
+    Supplier.associate = (models) => {
+        Supplier.hasMany(models.Purchase, { foreignKey: 'supplierId', as: 'purchases' });
+    };
 
     return Supplier;
 };

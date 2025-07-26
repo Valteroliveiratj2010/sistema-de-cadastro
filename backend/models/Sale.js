@@ -55,10 +55,10 @@ module.exports = (sequelize) => {
     });
 
     // Definindo associações (serão chamadas no database/index.js)
-    // Sale.associate = (models) => {
-    //     Sale.belongsTo(models.Client, { foreignKey: 'clientId', as: 'client' });
-    //     Sale.belongsTo(models.User, { foreignKey: 'userId', as: 'user' }); // Nova associação
-    // };
+    Sale.associate = (models) => {
+        Sale.belongsTo(models.Client, { foreignKey: 'clientId', as: 'client' });
+        Sale.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+    };
 
     return Sale;
 };
