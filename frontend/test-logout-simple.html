@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Logout</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">🧪 Teste de Logout</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <h5>Status do localStorage:</h5>
+                            <div id="localStorageStatus" class="alert alert-info">
+                                Carregando...
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h5>Ações:</h5>
+                            <div class="d-grid gap-2">
+                                <button id="checkStorageBtn" class="btn btn-info">
+                                    🔍 Verificar localStorage
+                                </button>
+                                <button id="clearStorageBtn" class="btn btn-warning">
+                                    🗑️ Limpar localStorage
+                                </button>
+                                <button id="logoutBtn" class="btn btn-danger">
+                                    🚪 Fazer Logout
+                                </button>
+                                <a href="index.html" class="btn btn-secondary">
+                                    🏠 Ir para Dashboard
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h5>Log de ações:</h5>
+                            <div id="log" class="border p-3 bg-light" style="max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+                                Aguardando ações...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function checkLocalStorage() {
+            const statusDiv = document.getElementById('localStorageStatus');
+            const items = [];
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                items.push(`${key}: ${value}`);
+            }
+            
+            if (items.length === 0) {
+                statusDiv.innerHTML = '<strong>localStorage vazio</strong>';
+                statusDiv.className = 'alert alert-success';
+            } else {
+                statusDiv.innerHTML = `<strong>${items.length} item(s) encontrado(s):</strong><br>${items.join('<br>')}`;
+                statusDiv.className = 'alert alert-warning';
+            }
+            
+            log(`Verificação do localStorage: ${items.length} itens encontrados`);
+        }
+        
+        function clearLocalStorage() {
+            localStorage.clear();
+            log('localStorage limpo completamente');
+            checkLocalStorage();
+        }
+        
+        function performLogout() {
+            log('Iniciando logout...');
+            
+            // Limpar localStorage
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('jwtToken');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('userId');
+            
+            // Limpar tudo por segurança
+            localStorage.clear();
+            
+            log('Logout concluído - localStorage limpo');
+            checkLocalStorage();
+            
+            // Redirecionar após 2 segundos
+            setTimeout(() => {
+                log('Redirecionando para login.html...');
+                window.location.href = 'login.html';
+            }, 2000);
+        }
+        
+        // Event listeners
+        document.getElementById('checkStorageBtn').addEventListener('click', checkLocalStorage);
+        document.getElementById('clearStorageBtn').addEventListener('click', clearLocalStorage);
+        document.getElementById('logoutBtn').addEventListener('click', performLogout);
+        
+        // Verificar localStorage ao carregar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Página carregada');
+            checkLocalStorage();
+        });
+    </script>
+</body>
+</html> 

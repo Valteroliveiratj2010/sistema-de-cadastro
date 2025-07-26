@@ -36,7 +36,7 @@
                 <a class="nav-link" href="#" data-section="suppliersSection"><i
                         class="bi bi-truck me-2"></i>Fornecedores</a>
                 <a class="nav-link" href="#" data-section="purchasesSection"><i class="bi bi-bag me-2"></i>Compras</a>
-                <a class="nav-link mt-auto" href="#" id="logoutButton" data-section="logoutSection" onclick="performLogout()"><i
+                <a class="nav-link mt-auto" href="#" id="logoutButton" data-section="logoutSection"><i
                         class="bi bi-box-arrow-right me-2"></i>Sair</a>
             </nav>
         </aside>
@@ -520,14 +520,16 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="app.js"></script>
-    <script src="../debug-logout.js"></script>
-    <script src="../fix-logout.js"></script>
+    <script src="js/app.js"></script>
     
     <script>
-        // Função de logout inline
+        // Função de logout inline robusta
         function performLogout() {
+            console.log('Função performLogout chamada');
+            
             if (confirm('Tem certeza que deseja sair?')) {
+                console.log('Confirmado logout, limpando localStorage...');
+                
                 // Limpar localStorage
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
@@ -535,6 +537,11 @@
                 localStorage.removeItem('userRole');
                 localStorage.removeItem('userName');
                 localStorage.removeItem('userId');
+                
+                // Limpar tudo por segurança
+                localStorage.clear();
+                
+                console.log('localStorage limpo, redirecionando...');
                 
                 // Mostrar mensagem
                 alert('Logout realizado com sucesso!');
@@ -546,10 +553,26 @@
         
         // Função global para logout via console
         window.forceLogout = function() {
+            console.log('Logout forçado via console');
             localStorage.clear();
             alert('Logout forçado realizado!');
             window.location.href = 'login.html';
         };
+        
+        // Adicionar event listener ao botão de logout como backup
+        document.addEventListener('DOMContentLoaded', function() {
+            const logoutButton = document.getElementById('logoutButton');
+            if (logoutButton) {
+                console.log('Botão de logout encontrado, adicionando event listener...');
+                logoutButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Clique no botão de logout detectado');
+                    performLogout();
+                });
+            } else {
+                console.log('Botão de logout não encontrado!');
+            }
+        });
     </script>
 </body>
 

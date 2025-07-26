@@ -6,3 +6,4 @@ node_modules/
 
 # Ignora arquivos de log do npm
 npm-debug.log*
+.vercel

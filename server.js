@@ -19,7 +19,11 @@ app.use(express.urlencoded({ extended: true })); // Para parsear requisições c
 // Use 'https://sistema-de-cadastro-backend.onrender.com' para o URL do seu backend no Render.
 const corsOptions = {
     origin: process.env.NODE_ENV === 'production'
-        ? 'https://sistema-de-cadastro-eosin.vercel.app' // <-- COLOQUE A URL COMPLETA DO SEU FRONTEND VERIFICADA NO VERCEL
+        ? [
+            'https://sistema-de-cadastro-eosin.vercel.app',
+            'https://sistema-de-cadastro-fyfzsrrot-valteroliveiratj2010s-projects.vercel.app',
+            'https://sistema-de-cadastro-gestor-pro.vercel.app'
+          ]
         : '*', // Para desenvolvimento local, permite qualquer origem
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Métodos HTTP permitidos
     credentials: true, // Permite o envio de cookies de credenciais (se usados)

@@ -4,7 +4,7 @@
     // console.log para verificar o carregamento do arquivo app.js
     // Mude o valor de 'v' (versão) para a data e hora atual (AAAA-MM-DD-HHMMSS)
     // para garantir que o navegador sempre carregue a versão mais recente.
-    const APP_VERSION = "2025-07-04-105500"; // ATUALIZE ESTE NÚMERO SEMPRE QUE QUISER FORÇAR O CACHE
+    const APP_VERSION = "2025-01-07-120000"; // ATUALIZE ESTE NÚMERO SEMPRE QUE QUISER FORÇAR O CACHE
     console.log(`APP.JS CARREGADO - Versão: ${APP_VERSION}`);
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -219,15 +219,25 @@
                 return allowedRoles.includes(state.userRole);
             },
             logout: (message = 'Sessão expirada ou inválida. Faça login novamente.') => {
+                // Limpar todos os dados do localStorage
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
-                localStorage.removeItem('jwtToken'); // Para compatibilidade
+                localStorage.removeItem('jwtToken');
                 localStorage.removeItem('userRole');
                 localStorage.removeItem('userName');
                 localStorage.removeItem('userId');
+                
+                // Limpar tudo por segurança
+                localStorage.clear();
+                
+                // Limpar estado
                 state.userRole = null;
                 state.user = null;
+                
+                // Mostrar mensagem
                 utils.showToast(message, 'error');
+                
+                // Redirecionar após 1 segundo
                 setTimeout(() => {
                     window.location.href = 'login.html';
                 }, 1000);
