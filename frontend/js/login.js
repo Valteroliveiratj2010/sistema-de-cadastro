@@ -1,8 +1,7 @@
 // frontend/js/login.js
 
 // Se API_BASE_URL não estiver definido globalmente, usamos localhost como fallback para desenvolvimento
-const API_BASE_URL_FINAL = window.API_BASE_URL || 'http://localhost:4000/api';
-
+const API_BASE_URL_FINAL = 'https://sistema-de-cadastro-backend.onrender.com/api';
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
     const usernameInput = document.getElementById('username');
