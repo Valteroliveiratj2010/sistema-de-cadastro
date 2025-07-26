@@ -1,76 +1,83 @@
-// frontend/js/login.js
-
-// Se API_BASE_URL não estiver definido globalmente, usamos localhost como fallback para desenvolvimento
-const API_BASE_URL_FINAL = 'https://sistema-de-cadastro-backend.onrender.com/api';
-document.addEventListener('DOMContentLoaded', () => {
+// login.js - Lógica de login do frontend
+document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
-    const usernameInput = document.getElementById('username');
-    const passwordInput = document.getElementById('password');
-    const loginMessage = document.getElementById('loginMessage');
+    const messageDiv = document.getElementById('message');
+    const submitBtn = document.getElementById('submitBtn');
 
-    function showMessage(message, type = 'danger') {
-        loginMessage.textContent = message;
-        loginMessage.className = `mt-3 text-center text-${type}`;
-        loginMessage.classList.remove('d-none');
+    // Verificar se já existe um token (mas não redirecionar automaticamente)
+    const existingToken = localStorage.getItem('token');
+    if (existingToken) {
+        messageDiv.innerHTML = '<div class="alert alert-info">Você já está logado. Clique em "Limpar Sessão" para fazer login novamente.</div>';
     }
 
-    function hideMessage() {
-        loginMessage.classList.add('d-none');
-        loginMessage.textContent = '';
-    }
-
-    loginForm.addEventListener('submit', async (e) => {
+    loginForm.addEventListener('submit', async function(e) {
         e.preventDefault();
-
-        hideMessage();
-
-        const username = usernameInput.value.trim();
-        const password = passwordInput.value.trim();
-
-        if (!username || !password) {
-            showMessage('Por favor, preencha todos os campos.');
-            return;
-        }
-
+        
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        
+        // Mostrar loading
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = 'Entrando...';
+        messageDiv.innerHTML = '';
+        
         try {
+            // Usar a URL da API configurada
+            const API_BASE_URL_FINAL = window.API_BASE_URL || 'https://sistema-de-cadastro-backend.onrender.com/api';
+            
             const response = await fetch(`${API_BASE_URL_FINAL}/auth/login`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ username, password })
             });
-
-            let data = null;
-
-            try {
-                data = await response.json();
-            } catch (jsonError) {
-                console.error('Erro ao interpretar JSON:', jsonError);
-            }
-
+            
+            const data = await response.json();
+            
             if (response.ok) {
-                localStorage.setItem('jwtToken', data?.token || '');
-                localStorage.setItem('userRole', data?.role || '');
-                localStorage.setItem('userName', data?.username || '');
-                localStorage.setItem('userId', data?.id || '');
-
-                showMessage('Login bem-sucedido! Redirecionando...', 'success');
-
+                // Login bem-sucedido
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                
+                messageDiv.innerHTML = '<div class="alert alert-success">Login realizado com sucesso! Redirecionando...</div>';
+                
+                // Redirecionar para o dashboard após 1 segundo
                 setTimeout(() => {
                     window.location.href = 'index.html';
                 }, 1000);
             } else {
-                showMessage(data?.message || 'Usuário ou senha inválidos.');
+                // Erro no login
+                let errorMessage = 'Erro no login';
+                
+                if (response.status === 401) {
+                    errorMessage = 'Usuário ou senha incorretos';
+                } else if (response.status === 404) {
+                    errorMessage = 'Serviço não encontrado';
+                } else if (response.status === 500) {
+                    errorMessage = 'Erro interno do servidor';
+                } else if (data.message) {
+                    errorMessage = data.message;
+                }
+                
+                messageDiv.innerHTML = `<div class="alert alert-danger">${errorMessage}</div>`;
             }
         } catch (error) {
-            console.error('Erro na requisição de login:', error);
-
-            if (error instanceof TypeError) {
-                showMessage('Não foi possível conectar ao servidor. Verifique a URL da API e tente novamente.');
-            } else {
-                showMessage('Erro inesperado. Tente novamente.');
-            }
+            console.error('Erro na requisição:', error);
+            messageDiv.innerHTML = '<div class="alert alert-danger">Erro de conexão. Verifique sua internet e tente novamente.</div>';
+        } finally {
+            // Restaurar botão
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Entrar';
         }
+    });
+    
+    // Limpar mensagens quando o usuário digitar
+    document.getElementById('username').addEventListener('input', function() {
+        messageDiv.innerHTML = '';
+    });
+    
+    document.getElementById('password').addEventListener('input', function() {
+        messageDiv.innerHTML = '';
     });
 });

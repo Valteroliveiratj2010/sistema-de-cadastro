@@ -202,7 +202,7 @@
                 state.confirmAction = onConfirm;
                 state.bootstrapConfirmModal.show();
             },
-            getToken: () => localStorage.getItem('jwtToken'),
+            getToken: () => localStorage.getItem('token') || localStorage.getItem('jwtToken'),
             getUserRole: () => {
                 const token = utils.getToken();
                 if (!token) return null;
@@ -219,7 +219,12 @@
                 return allowedRoles.includes(state.userRole);
             },
             logout: (message = 'Sessão expirada ou inválida. Faça login novamente.') => {
-                localStorage.removeItem('jwtToken');
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                localStorage.removeItem('jwtToken'); // Para compatibilidade
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('userName');
+                localStorage.removeItem('userId');
                 state.userRole = null;
                 state.user = null;
                 utils.showToast(message, 'error');

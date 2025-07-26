@@ -5,11 +5,11 @@ const { Op } = require('sequelize');
 
 const router = express.Router();
 
-// Usa a chave secreta do JWT vinda do .env
-const JWT_SECRET = process.env.JWT_SECRET;
+// Usar variável de ambiente para a chave JWT ou fallback para desenvolvimento
+const JWT_SECRET = process.env.JWT_SECRET || 'X4A1D2BZ0GUBD2QRQQATWI1INGV6BDW0P1WSTV30C4APHBAYF1095MJVEQUJ076X686XT3GIRCX3YU959EU73ASLEB07TFX8XG';
 
-if (!JWT_SECRET) {
-  console.warn('[WARN] JWT_SECRET não definido no ambiente! Token não será gerado corretamente.');
+if (!process.env.JWT_SECRET) {
+  console.warn('[AUTH] JWT_SECRET não definido no ambiente! Usando chave padrão (não recomendado para produção).');
 }
 
 // Rota de Login

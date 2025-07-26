@@ -1,6 +1,5 @@
 'use strict';
 
-const bcrypt = require('bcryptjs');
 const path = require('path');
 // Certifique-se de que o dotenv seja carregado no início da sua aplicação principal (server.js)
 // Para um seeder standalone, você pode precisar carregá-lo aqui também se ele não for
@@ -27,14 +26,15 @@ async function runAdminSeeder() {
     }
     // --- Fim das Credenciais ---
 
-    const hashedPassword = await bcrypt.hash(plainPassword, 10);
+    // IMPORTANTE: NÃO fazer hash aqui! O modelo User.js fará isso automaticamente no hook beforeCreate
+    // const hashedPassword = await bcrypt.hash(plainPassword, 10); // REMOVIDO - causa hash duplo!
 
     const [user, created] = await User.findOrCreate({
       where: { username: newUsername },
       defaults: {
         username: newUsername,
         email: newEmail,
-        password: hashedPassword,
+        password: plainPassword, // Senha em texto plano - o modelo fará o hash
         role: 'admin',
         createdAt: new Date(),
         updatedAt: new Date()
@@ -43,6 +43,7 @@ async function runAdminSeeder() {
 
     if (created) {
       console.log(`✔ Usuário admin '${newUsername}' criado com sucesso!`);
+      console.log(`🔑 Senha configurada: ${plainPassword}`);
     } else {
       console.log(`ℹ Usuário admin '${newUsername}' já existe. Nenhuma ação necessária.`);
     }

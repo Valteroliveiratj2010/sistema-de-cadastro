@@ -3,160 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Gestor PRO</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <!-- Estilos personalizados para a tela de login -->
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: #111827; /* Cor de fundo escura */
-            font-family: -apple-system, BlinkMacMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-            color: #495057; /* Cor padrão para texto dentro do container branco */
-        }
-        .login-container {
-            width: 100%;
-            max-width: 420px;
-            padding: 40px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-            border-radius: 12px;
-            background-color: #ffffff;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-        .login-header {
-            margin-bottom: 35px;
-        }
-        .login-header .logo-text {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 10px;
-        }
-        .login-header .logo-text i {
-            font-size: 2.8rem;
-            color: #007bff;
-            margin-right: 10px;
-        }
-        .login-header .logo-text h1 {
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: #212529;
-            margin: 0;
-        }
-        .login-header h2 {
-            font-size: 1.3rem;
-            color: #6c757d;
-            margin-top: 5px;
-        }
-
-        .form-label {
-            font-weight: 600;
-            color: #343a40;
-            text-align: left;
-            display: block;
-            margin-bottom: 6px;
-        }
-        .form-control {
-            border-radius: 6px;
-            padding: 12px 18px;
-            font-size: 1.05rem;
-            border: 1px solid #ced4da;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-        .form-control:focus {
-            border-color: #80bdff;
-            box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
-        }
-        .btn-primary {
-            background-color: #007bff;
-            border-color: #007bff;
-            padding: 12px 25px;
-            font-size: 1.15rem;
-            font-weight: 700;
-            border-radius: 6px;
-            transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
-            margin-top: 20px;
-        }
-        .btn-primary:hover {
-            background-color: #0056b3;
-            border-color: #0056b3;
-            transform: translateY(-1px);
-        }
-        .btn-primary:active {
-            transform: translateY(0);
-        }
-        #loginMessage {
-            margin-top: 25px;
-            font-size: 0.95rem;
-            font-weight: 500;
-        }
-
-        /* --- RESPONSIVIDADE PARA TELA DE LOGIN --- */
-        @media (max-width: 575.98px) { /* Para telas muito pequenas, como celulares */
-            .login-container {
-                max-width: 90%; /* Ocupa mais largura da tela */
-                padding: 25px; /* Reduz o padding */
-                margin: 0 15px; /* Adiciona uma pequena margem lateral para não colar nas bordas */
-            }
-            .login-header {
-                margin-bottom: 25px;
-            }
-            .login-header .logo-text i {
-                font-size: 2.2rem; /* Ícone um pouco menor */
-            }
-            .login-header .logo-text h1 {
-                font-size: 1.8rem; /* Título menor */
-            }
-            .login-header h2 {
-                font-size: 1.1rem; /* Subtítulo menor */
-            }
-            .form-control {
-                padding: 10px 15px; /* Padding padrão */
-                font-size: 1rem; /* Fonte padrão */
-            }
-            .btn-primary {
-                padding: 10px 20px; /* Padding menor para o botão */
-                font-size: 1rem; /* Fonte menor para o botão */
-            }
-        }
-    </style>
+    <title>Login - Sistema de Cadastro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <div class="login-container">
-        <div class="login-header">
-            <div class="logo-text">
-                <i class="bi bi-shield-check"></i>
-                <h1>Gestor PRO</h1>
+<body class="bg-light">
+    <div class="container">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow">
+                    <div class="card-body p-4">
+                        <h3 class="text-center mb-4">Login</h3>
+                        
+                        <!-- Botão para limpar localStorage -->
+                        <div class="text-center mb-3">
+                            <button id="clearStorageBtn" class="btn btn-outline-secondary btn-sm">
+                                🔄 Limpar Sessão
+                            </button>
+                        </div>
+                        
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Usuário</label>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Senha</label>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary" id="submitBtn">
+                                    Entrar
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div id="message" class="mt-3"></div>
+                    </div>
+                </div>
             </div>
-            <h2>Acesse sua conta</h2>
         </div>
-
-        <form id="loginForm">
-            <div class="mb-3">
-                <label for="username" class="form-label">Usuário</label>
-                <input type="text" class="form-control" id="username" required autocomplete="username">
-            </div>
-            <div class="mb-4">
-                <label for="password" class="form-label">Senha</label>
-                <input type="password" class="form-control" id="password" required autocomplete="current-password">
-            </div>
-            <button type="submit" class="btn btn-primary w-100">Entrar</button>
-            <div id="loginMessage" class="text-center text-danger d-none"></div>
-        </form>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Carrega a configuração da API primeiro -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/apiConfig.js"></script>
-
-    <!-- Nosso script de lógica de login -->
     <script src="js/login.js"></script>
+    
+    <script>
+        // Script adicional para limpar localStorage
+        document.getElementById('clearStorageBtn').addEventListener('click', function() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            alert('Sessão limpa! Agora você pode fazer login novamente.');
+            location.reload();
+        });
+        
+        // Verificar se já está logado ao carregar a página
+        window.addEventListener('load', function() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                document.getElementById('message').innerHTML = 
+                    '<div class="alert alert-info">Você já está logado. Clique em "Limpar Sessão" para fazer login novamente.</div>';
+            }
+        });
+    </script>
 </body>
 </html>

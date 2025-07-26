@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sair - Sistema de Cadastro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow">
+                    <div class="card-body p-4 text-center">
+                        <h3 class="mb-4">🚪 Sair do Sistema</h3>
+                        
+                        <div id="status" class="mb-4">
+                            <div class="alert alert-info">
+                                Processando logout...
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button id="logoutBtn" class="btn btn-danger">
+                                🔄 Fazer Logout
+                            </button>
+                            <a href="index.html" class="btn btn-secondary">
+                                🏠 Voltar ao Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function fazerLogout() {
+            const statusDiv = document.getElementById('status');
+            
+            // Mostrar processo
+            statusDiv.innerHTML = '<div class="alert alert-warning">Limpando dados da sessão...</div>';
+            
+            // Limpar localStorage
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('jwtToken');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('userId');
+            
+            // Limpar tudo por segurança
+            localStorage.clear();
+            
+            // Atualizar status
+            setTimeout(() => {
+                statusDiv.innerHTML = '<div class="alert alert-success">✅ Logout realizado com sucesso!</div>';
+                
+                // Redirecionar após 2 segundos
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+            }, 500);
+        }
+        
+        // Executar logout automaticamente
+        fazerLogout();
+        
+        // Botão de logout manual
+        document.getElementById('logoutBtn').addEventListener('click', fazerLogout);
+    </script>
+</body>
+</html> 

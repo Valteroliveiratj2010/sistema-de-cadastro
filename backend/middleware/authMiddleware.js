@@ -1,9 +1,12 @@
 // backend/middleware/authMiddleware.js
 const jwt = require('jsonwebtoken');
 
-// A CHAVE SECRETA DO JWT DEVE SER EXATAMENTE A MESMA QUE EM backend/routes/auth.js
-// ATENÇÃO: Em produção, ambas DEVEM vir de variáveis de ambiente.
-const JWT_SECRET = 'X4A1D2BZ0GUBD2QRQQATWI1INGV6BDW0P1WSTV30C4APHBAYF1095MJVEQUJ076X686XT3GIRCX3YU959EU73ASLEB07TFX8XG'; // <-- Use A MESMA CHAVE AQUI!
+// Usar variável de ambiente para a chave JWT ou fallback para desenvolvimento
+const JWT_SECRET = process.env.JWT_SECRET || 'X4A1D2BZ0GUBD2QRQQATWI1INGV6BDW0P1WSTV30C4APHBAYF1095MJVEQUJ076X686XT3GIRCX3YU959EU73ASLEB07TFX8XG';
+
+if (!process.env.JWT_SECRET) {
+    console.warn('[AUTH_MIDDLEWARE] JWT_SECRET não definido no ambiente! Usando chave padrão (não recomendado para produção).');
+}
 
 module.exports = (req, res, next) => {
     // 1. Obter o token do cabeçalho da requisição

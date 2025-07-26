@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Login - Gestor PRO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .log-area {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h2 class="mb-4">🔧 Teste do Sistema de Login</h2>
+        
+        <div class="mb-3">
+            <label for="apiUrl" class="form-label">URL da API:</label>
+            <input type="text" class="form-control" id="apiUrl" value="https://sistema-de-cadastro-backend.onrender.com/api">
+        </div>
+        
+        <div class="mb-3">
+            <label for="username" class="form-label">Usuário:</label>
+            <input type="text" class="form-control" id="username" placeholder="Digite o usuário">
+        </div>
+        
+        <div class="mb-3">
+            <label for="password" class="form-label">Senha:</label>
+            <input type="password" class="form-control" id="password" placeholder="Digite a senha">
+        </div>
+        
+        <div class="d-grid gap-2">
+            <button class="btn btn-primary" onclick="testLogin()">🧪 Testar Login</button>
+            <button class="btn btn-secondary" onclick="testConnection()">🔗 Testar Conexão</button>
+            <button class="btn btn-info" onclick="clearLog()">🗑️ Limpar Log</button>
+        </div>
+        
+        <div class="log-area" id="logArea">
+            <div>Log de testes aparecerá aqui...</div>
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logArea = document.getElementById('logArea');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'blue';
+            logArea.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('logArea').innerHTML = '<div>Log limpo...</div>';
+        }
+
+        async function testConnection() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            log(`Testando conexão com: ${apiUrl}/ping`);
+            
+            try {
+                const response = await fetch(`${apiUrl}/ping`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ Conexão OK! Resposta: ${JSON.stringify(data)}`, 'success');
+                } else {
+                    log(`❌ Erro na conexão. Status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Erro de conexão: ${error.message}`, 'error');
+            }
+        }
+
+        async function testLogin() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                log('❌ Por favor, preencha usuário e senha', 'error');
+                return;
+            }
+            
+            log(`Tentando login para usuário: ${username}`);
+            log(`URL da API: ${apiUrl}/auth/login`);
+            
+            try {
+                const response = await fetch(`${apiUrl}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                log(`Status da resposta: ${response.status}`);
+                log(`Headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`);
+                
+                let data = null;
+                try {
+                    data = await response.json();
+                    log(`Dados da resposta: ${JSON.stringify(data, null, 2)}`);
+                } catch (jsonError) {
+                    const textResponse = await response.text();
+                    log(`Erro ao parsear JSON. Resposta bruta: ${textResponse}`, 'error');
+                }
+                
+                if (response.ok && data) {
+                    log('✅ Login bem-sucedido!', 'success');
+                    log(`Token: ${data.token ? data.token.substring(0, 20) + '...' : 'N/A'}`);
+                    log(`Role: ${data.role}`);
+                    log(`Username: ${data.username}`);
+                    log(`ID: ${data.id}`);
+                } else {
+                    log(`❌ Login falhou: ${data?.message || 'Erro desconhecido'}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Erro na requisição: ${error.message}`, 'error');
+            }
+        }
+
+        // Teste automático de conexão ao carregar a página
+        window.addEventListener('load', () => {
+            log('🚀 Página carregada. Iniciando teste de conexão...');
+            setTimeout(testConnection, 1000);
+        });
+    </script>
+</body>
+</html> 
