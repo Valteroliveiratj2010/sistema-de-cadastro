@@ -2218,6 +2218,9 @@
                 } catch (error) {
                     utils.showToast(error.message, 'error');
                 }
+                
+                // Abrir o modal de venda
+                state.bootstrapSaleModal.show();
             },
             handleAddProductToSale: () => {
                 if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
@@ -2893,6 +2896,9 @@
                 } catch (error) {
                     utils.showToast(error.message, 'error');
                 }
+                
+                // Abrir o modal de compra
+                state.bootstrapPurchaseModal.show();
             },
             handleAddPurchaseProduct: () => {
                 if (!utils.hasPermission(['admin', 'gerente'])) {
