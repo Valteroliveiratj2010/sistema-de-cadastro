@@ -17,13 +17,13 @@
         // --- CONFIGURAÇÃO E ESTADO ---
         const API_BASE = 'https://sistema-de-cadastro-backend.onrender.com/api'
         const state = {
-            bootstrapClientModal: new bootstrap.Modal(document.getElementById('clientModal')),
-            bootstrapSaleModal: new bootstrap.Modal(document.getElementById('saleModal')),
-            bootstrapConfirmModal: new bootstrap.Modal(document.getElementById('confirmModal')),
-            bootstrapProductModal: new bootstrap.Modal(document.getElementById('productModal')),
-            bootstrapUserModal: new bootstrap.Modal(document.getElementById('userModal')),
-            bootstrapSupplierModal: new bootstrap.Modal(document.getElementById('supplierModal')),
-            bootstrapPurchaseModal: new bootstrap.Modal(document.getElementById('purchaseModal')),
+            bootstrapClientModal: null,
+            bootstrapSaleModal: null,
+            bootstrapConfirmModal: null,
+            bootstrapProductModal: null,
+            bootstrapUserModal: null,
+            bootstrapSupplierModal: null,
+            bootstrapPurchaseModal: null,
             chartInstance: null, // Instância do gráfico de vendas mensais no Dashboard
             predictionChartInstance: null, // Instância do gráfico de predição de vendas
             confirmAction: null,
@@ -2220,7 +2220,11 @@
                 }
                 
                 // Abrir o modal de venda
-                state.bootstrapSaleModal.show();
+                if (state.bootstrapSaleModal) {
+                    state.bootstrapSaleModal.show();
+                } else {
+                    console.log('❌ Modal de venda não inicializado');
+                }
             },
             handleAddProductToSale: () => {
                 if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
@@ -2898,7 +2902,11 @@
                 }
                 
                 // Abrir o modal de compra
-                state.bootstrapPurchaseModal.show();
+                if (state.bootstrapPurchaseModal) {
+                    state.bootstrapPurchaseModal.show();
+                } else {
+                    console.log('❌ Modal de compra não inicializado');
+                }
             },
             handleAddPurchaseProduct: () => {
                 if (!utils.hasPermission(['admin', 'gerente'])) {
@@ -3033,6 +3041,17 @@
 
         // --- INITIALIZATION ---
         function initialize() {
+            // Inicializar modais Bootstrap
+            state.bootstrapClientModal = new bootstrap.Modal(document.getElementById('clientModal'));
+            state.bootstrapSaleModal = new bootstrap.Modal(document.getElementById('saleModal'));
+            state.bootstrapConfirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            state.bootstrapProductModal = new bootstrap.Modal(document.getElementById('productModal'));
+            state.bootstrapUserModal = new bootstrap.Modal(document.getElementById('userModal'));
+            state.bootstrapSupplierModal = new bootstrap.Modal(document.getElementById('supplierModal'));
+            state.bootstrapPurchaseModal = new bootstrap.Modal(document.getElementById('purchaseModal'));
+            
+            console.log('✅ Modais Bootstrap inicializados');
+            
             state.userRole = utils.getUserRole();
             const token = utils.getToken();
             if (token) {
