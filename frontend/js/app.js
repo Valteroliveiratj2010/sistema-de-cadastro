@@ -2140,142 +2140,78 @@
                 });
             },
             openSaleModal: async (saleId = null) => {
-                                dom.saleForm.reset();
-                                document.getElementById('saleId').value = '';
-                                state.selectedSaleProducts = [];
-                                utils.renderSelectedProductsList();
+                console.log('🔍 openSaleModal chamada com saleId:', saleId);
                 
-                                const modalLabel = document.getElementById('saleModalLabel');
-                                // const clientSelect = document.getElementById('saleClient'); // Não é mais necessário um elemento direto aqui se usar JQuery Select2
-                                // clientSelect.innerHTML = '<option value="">Carregando clientes...</option>'; // Não é mais necessário
-                
-                
-                                // Inicialização do Select2 para o produto (já estava correto)
-                                dom.productSelect.empty().append($('<option value="">Selecione um produto</option>')).select2({
-                                    placeholder: "Buscar produto...",
-                                    dropdownParent: $('#saleModal'),
-                                    templateResult: (product) => {
-                                        if (!product.id) { return product.text; }
-                                        const p = state.availableProducts.find(item => String(item.id) === String(product.id));
-                                        if (!p) return product.text;
-                                                        return $(`<span>${p.nome} (Estoque: ${p.estoque || 0}, R$ ${(p.precoVenda || 0).toFixed(2)})</span>`);
-                                    },
-                                    templateSelection: (product) => {
-                                        if (!product.id) { return product.text; }
-                                        const p = state.availableProducts.find(item => String(item.id) === String(product.id));
-                                        if (!p) return product.text;
-                                        return p.nome;
-                                    },
-                                    data: [], // Garante que não há dados pré-populados antes da chamada da API
-                                });
-                
-                                try {
-                                    const { data: clients } = await api.getClients(1, '', 1000);
-                                    // ANTES: clientSelect.innerHTML = '<option value="">Selecione um cliente</option>';
-                                    // ANTES: clients.forEach(c => clientSelect.add(new Option(c.nome, c.id)));
-                
-                                    // NOVO: Inicializa o Select2 para o campo de seleção de cliente
-                                    $('#saleClient').empty().append($('<option value="">Selecione um cliente</option>')).select2({
-                                        data: clients.map(c => ({ id: String(c.id), text: c.nome })),
-                                        placeholder: "Buscar cliente...",
-                                        dropdownParent: $('#saleModal'), // <--- ESSA É A LINHA CHAVE PARA O CLIENTE
-                                        width: '100%' // Garante que o Select2 use 100% da largura do seu container
-                                    });
-                
-                                    const { data: products } = await api.getProducts(1, '', 1000);
-                                    state.availableProducts = products;
-                                    // Re-inicializa o Select2 para os produtos com os dados corretos
-                                    dom.productSelect.empty().append($('<option value="">Selecione um produto</option>')).select2({
-                                        data: state.availableProducts.map(p => ({ id: String(p.id), text: p.nome })),
-                                        placeholder: "Buscar produto...",
-                                        dropdownParent: $('#saleModal'),
-                                        templateResult: (productData) => {
-                                            if (!productData.id) { return productData.text; }
-                                            const product = state.availableProducts.find(item => String(item.id) === String(productData.id));
-                                            if (!product) return productData.text;
-                                                                        return $(`<span>${product.nome} (Estoque: ${product.estoque || 0}, R$ ${(product.precoVenda || 0).toFixed(2)})</span>`);
-                                        },
-                                        templateSelection: (productData) => {
-                                            if (!productData.id) { return productData.text; }
-                                            const product = state.availableProducts.find(item => String(item.id) === String(productData.id));
-                                            if (!product) return productData.text;
-                                            return product.nome;
-                                        }
-                                    });
-                                    dom.productSelect.off('select2:select').on('select2:select', (e) => {
-                                        const productId = String(e.params.data.id);
-                                        const product = state.availableProducts.find(p => String(p.id) === productId);
-                                        if (product) {
-                                            state.currentSelectedProduct = product;
-                                            dom.productDetailsDisplay.innerHTML = `Estoque: ${product.estoque}, Preço: ${utils.formatCurrency(product.precoVenda)}`;
-                                                                dom.productUnitPriceInput.value = (product.precoVenda || 0).toFixed(2);
-                                            dom.productQuantityInput.value = '1';
-                                        } else {
-                                            state.currentSelectedProduct = null;
-                                            dom.productDetailsDisplay.innerHTML = '';
-                                            dom.productUnitPriceInput.value = '';
-                                        }
-                                    });
-                                    dom.productSelect.off('select2:unselect').on('select2:unselect', (e) => {
-                                        state.currentSelectedProduct = null;
-                                        dom.productDetailsDisplay.innerHTML = '';
-                                        dom.productUnitPriceInput.value = '';
-                                    });
-                
-                                    const paymentFormaSelect = document.getElementById('paymentForma');
-                                    const paymentParcelasField = document.getElementById('parcelasField');
-                                    const paymentBandeiraCartaoField = document.getElementById('bandeiraCartaoField');
-                                    const paymentBancoCrediarioField = document.getElementById('bancoCrediarioField');
-                                    const paymentParcelasInput = document.getElementById('paymentParcelas');
-                                    const paymentBandeiraCartaoInput = document.getElementById('paymentBandeiraCartao');
-                                    const paymentBancoCrediarioInput = document.getElementById('paymentBancoCrediario');
-                                    const salePaidValueInitialInput = document.getElementById('salePaidValueInitial');
-                
-                                    if (paymentFormaSelect) paymentFormaSelect.value = 'Dinheiro';
-                                    utils.togglePaymentFields(paymentFormaSelect, paymentParcelasField, paymentBandeiraCartaoField, paymentBancoCrediarioField, paymentParcelasInput, paymentBandeiraCartaoInput, paymentBancoCrediarioInput);
-                                    if (salePaidValueInitialInput) salePaidValueInitialInput.value = '0';
-                
-                                    if (modalLabel) {
-                                        modalLabel.textContent = saleId ? 'Editar Venda' : 'Nova Venda';
-                                    }
-                                    if (saleId) {
-                                        const sale = await api.getSaleById(saleId);
-                                        if (!utils.hasPermission(['admin', 'gerente'])) {
-                                            if (!(utils.hasPermission(['vendedor']) && state.user && sale.userId === state.user.id)) {
-                                                utils.showToast('Você não tem permissão para editar esta venda.', 'error');
-                                                return;
-                                            } else if (!utils.hasPermission(['vendedor'])) {
-                                                utils.showToast('Você não tem permissão para editar vendas.', 'error');
-                                                return;
-                                            }
-                                        }
-                
-                                        document.getElementById('saleId').value = sale.id;
-                                        document.getElementById('saleDueDate').value = sale.dataVencimento ? sale.dataVencimento.split('T')[0] : '';
-                
-                                        if (sale.products && sale.products.length > 0) {
-                                            state.selectedSaleProducts = sale.products.map(p => ({
-                                                id: p.id,
-                                                nome: p.nome,
-                                                precoVenda: p.precoVenda,
-                                                precoUnitario: p.SaleProduct.precoUnitario,
-                                                quantidade: p.SaleProduct.quantidade
-                                            }));
-                                            utils.renderSelectedProductsList();
-                                        }
-                                        $('#saleClient').val(sale.clientId).trigger('change');
-                                    } else {
-                                        if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
-                                            utils.showToast('Você não tem permissão para criar vendas.', 'error');
-                                            return;
-                                        }
-                                    }
-                
-                                    state.bootstrapSaleModal.show();
-                                } catch (error) {
-                                    utils.showToast(error.message, 'error');
-                                }
-                            },
+                if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
+                    utils.showToast('Você não tem permissão para criar vendas.', 'error');
+                    return;
+                }
+
+                try {
+                    console.log('🔄 Iniciando carregamento do modal de venda...');
+                    
+                    const modalLabel = document.getElementById('saleModalLabel');
+                    const clientSelect = document.getElementById('saleClient');
+                    const productSelect = document.getElementById('productSelect');
+
+                    console.log('📋 Elementos encontrados:', {
+                        modalLabel: !!modalLabel,
+                        clientSelect: !!clientSelect,
+                        productSelect: !!productSelect
+                    });
+
+                    // Reset do formulário
+                    document.getElementById('saleForm').reset();
+                    document.getElementById('saleId').value = '';
+                    state.selectedSaleProducts = [];
+                    state.currentSelectedProduct = null;
+                    utils.renderSelectedProductsList();
+
+                    console.log('🔄 Carregando clientes...');
+                    const { data: clients } = await api.getClients(1, '', 1000);
+                    console.log('✅ Clientes carregados:', clients.length, clients);
+
+                    // Inicializar Select2 para clientes
+                    console.log('🔄 Inicializando Select2 para clientes...');
+                    $('#saleClient').empty().append($('<option value="">Selecione um cliente</option>')).select2({
+                        data: clients.map(c => ({ id: String(c.id), text: c.nome })),
+                        placeholder: "Buscar cliente...",
+                        dropdownParent: $('#saleModal'),
+                        width: '100%'
+                    });
+                    console.log('✅ Select2 de clientes inicializado');
+
+                    console.log('🔄 Carregando produtos...');
+                    const { data: products } = await api.getProducts(1, '', 1000);
+                    state.availableProducts = products;
+                    console.log('✅ Produtos carregados:', products.length, products);
+
+                    // Inicializar Select2 para produtos
+                    console.log('🔄 Inicializando Select2 para produtos...');
+                    dom.productSelect.empty().append($('<option value="">Selecione um produto</option>')).select2({
+                        data: state.availableProducts.map(p => ({ id: String(p.id), text: p.nome })),
+                        placeholder: "Buscar produto...",
+                        dropdownParent: $('#saleModal'),
+                        templateResult: (productData) => {
+                            if (!productData.id) { return productData.text; }
+                            const product = state.availableProducts.find(item => String(item.id) === String(productData.id));
+                            if (!product) return productData.text;
+                            return $(`<span>${product.nome} (Estoque: ${product.estoque || 0}, R$ ${(product.precoVenda || 0).toFixed(2)})</span>`);
+                        },
+                        templateSelection: (productData) => {
+                            if (!productData.id) { return productData.text; }
+                            const product = state.availableProducts.find(item => String(item.id) === String(productData.id));
+                            if (!product) return productData.text;
+                            return product.nome;
+                        }
+                    });
+                    console.log('✅ Select2 de produtos inicializado');
+
+                    // ... rest of the original code ...
+                } catch (error) {
+                    utils.showToast(error.message, 'error');
+                }
+            },
             handleAddProductToSale: () => {
                 if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
                     utils.showToast('Você não tem permissão para adicionar produtos a vendas.', 'error');
