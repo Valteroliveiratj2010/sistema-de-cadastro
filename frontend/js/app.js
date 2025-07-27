@@ -648,9 +648,7 @@
                             break;
                         case 'suppliersSection':
                         case 'purchasesSection':
-                            if (!utils.hasPermission(['admin', 'gerente'])) {
-                                isVisible = false;
-                            }
+                            if (!utils.hasPermission(['admin', 'gerente'])) hasPermission = false;
                             break;
                         case 'logoutSection':
                             isVisible = true;
@@ -2167,47 +2165,56 @@
                     state.currentSelectedProduct = null;
                     utils.renderSelectedProductsList();
 
+                    // SOLUÇÃO ALTERNATIVA: Usar selects HTML nativos primeiro
                     console.log('🔄 Carregando clientes...');
                     const { data: clients } = await api.getClients(1, '', 1000);
-                    console.log('✅ Clientes carregados:', clients.length, clients);
+                    console.log('✅ Clientes carregados:', clients.length);
 
-                    // Inicializar Select2 para clientes
-                    console.log('🔄 Inicializando Select2 para clientes...');
-                    $('#saleClient').empty().append($('<option value="">Selecione um cliente</option>')).select2({
-                        data: clients.map(c => ({ id: String(c.id), text: c.nome })),
-                        placeholder: "Buscar cliente...",
-                        dropdownParent: $('#saleModal'),
-                        width: '100%'
+                    // Popular select de clientes de forma simples
+                    clientSelect.innerHTML = '<option value="">Selecione um cliente</option>';
+                    clients.forEach(client => {
+                        const option = document.createElement('option');
+                        option.value = client.id;
+                        option.textContent = client.nome;
+                        clientSelect.appendChild(option);
                     });
-                    console.log('✅ Select2 de clientes inicializado');
+                    console.log('✅ Select de clientes populado com', clients.length, 'clientes');
 
                     console.log('🔄 Carregando produtos...');
                     const { data: products } = await api.getProducts(1, '', 1000);
                     state.availableProducts = products;
-                    console.log('✅ Produtos carregados:', products.length, products);
+                    console.log('✅ Produtos carregados:', products.length);
 
-                    // Inicializar Select2 para produtos
-                    console.log('🔄 Inicializando Select2 para produtos...');
-                    dom.productSelect.empty().append($('<option value="">Selecione um produto</option>')).select2({
-                        data: state.availableProducts.map(p => ({ id: String(p.id), text: p.nome })),
-                        placeholder: "Buscar produto...",
-                        dropdownParent: $('#saleModal'),
-                        templateResult: (productData) => {
-                            if (!productData.id) { return productData.text; }
-                            const product = state.availableProducts.find(item => String(item.id) === String(productData.id));
-                            if (!product) return productData.text;
-                            return $(`<span>${product.nome} (Estoque: ${product.estoque || 0}, R$ ${(product.precoVenda || 0).toFixed(2)})</span>`);
-                        },
-                        templateSelection: (productData) => {
-                            if (!productData.id) { return productData.text; }
-                            const product = state.availableProducts.find(item => String(item.id) === String(productData.id));
-                            if (!product) return productData.text;
-                            return product.nome;
+                    // Popular select de produtos de forma simples
+                    productSelect.innerHTML = '<option value="">Selecione um produto</option>';
+                    products.forEach(product => {
+                        const option = document.createElement('option');
+                        option.value = product.id;
+                        option.textContent = `${product.nome} - R$ ${(product.precoVenda || 0).toFixed(2)}`;
+                        productSelect.appendChild(option);
+                    });
+                    console.log('✅ Select de produtos populado com', products.length, 'produtos');
+
+                    // Adicionar event listeners para os selects
+                    clientSelect.addEventListener('change', function() {
+                        console.log('Cliente selecionado:', this.value);
+                    });
+
+                    productSelect.addEventListener('change', function() {
+                        const productId = this.value;
+                        const product = state.availableProducts.find(p => String(p.id) === productId);
+                        if (product) {
+                            state.currentSelectedProduct = product;
+                            dom.productDetailsDisplay.innerHTML = `Estoque: ${product.estoque || 0}, Preço: ${utils.formatCurrency(product.precoVenda || 0)}`;
+                            dom.productUnitPriceInput.value = (product.precoVenda || 0).toFixed(2);
+                            dom.productQuantityInput.value = '1';
+                            console.log('Produto selecionado:', product.nome);
+                        } else {
+                            state.currentSelectedProduct = null;
+                            dom.productDetailsDisplay.innerHTML = '';
+                            dom.productUnitPriceInput.value = '';
                         }
                     });
-                    console.log('✅ Select2 de produtos inicializado');
-
-                    // ... rest of the original code ...
                 } catch (error) {
                     utils.showToast(error.message, 'error');
                 }
@@ -2814,10 +2821,13 @@
                 }
             },
             openPurchaseModal: async (purchaseId = null) => {
+                console.log('🔍 openPurchaseModal chamada com purchaseId:', purchaseId);
+                
                 if (!utils.hasPermission(['admin', 'gerente'])) {
                     utils.showToast('Você não tem permissão para gerenciar compras.', 'error');
                     return;
                 }
+                
                 dom.purchaseForm.reset();
                 dom.purchaseIdInput.value = '';
                 state.selectedPurchaseProducts = [];
@@ -2831,110 +2841,55 @@
                     modalLabel.textContent = purchaseId ? 'Editar Compra' : 'Nova Compra';
                 }
 
-                const supplierSelect = dom.purchaseSupplierSelect;
-                supplierSelect.empty().append($('<option value="">Selecione um fornecedor</option>')).select2({
-                    placeholder: "Buscar fornecedor...",
-                    dropdownParent: $('#purchaseModal'),
-                    data: [],
-                });
-
-                const productSelect = dom.purchaseProductSelect;
-                productSelect.empty().append($('<option value="">Selecione um produto</option>')).select2({
-                    placeholder: "Buscar produto...",
-                    dropdownParent: $('#purchaseModal'),
-                    templateResult: (product) => {
-                        if (!product.id) { return product.text; }
-                        const p = state.availableProductsForPurchase.find(item => String(item.id) === String(product.id));
-                        if (!p) return product.text;
-                        return $(`<span>${p.nome} (Estoque atual: ${p.estoque}, Preço venda: ${utils.formatCurrency(p.precoVenda)})</span>`);
-                    },
-                    templateSelection: (product) => {
-                        if (!product.id) { return product.text; }
-                        const p = state.availableProductsForPurchase.find(item => String(item.id) === String(product.id));
-                        if (!p) return product.text;
-                        return p.nome;
-                    },
-                    data: [],
-                });
-
                 try {
+                    console.log('🔄 Carregando fornecedores...');
                     const { data: suppliers } = await api.getSuppliers(1, '', 1000);
                     state.availableSuppliers = suppliers;
-                    supplierSelect.empty().append($('<option value="">Selecione um fornecedor</option>')).select2({
-                        data: state.availableSuppliers.map(s => ({ id: String(s.id), text: s.nome })),
-                        placeholder: "Buscar fornecedor...",
-                        dropdownParent: $('#purchaseModal'),
-                    });
+                    console.log('✅ Fornecedores carregados:', suppliers.length);
 
+                    // Popular select de fornecedores de forma simples
+                    const supplierSelect = document.getElementById('purchaseSupplier');
+                    supplierSelect.innerHTML = '<option value="">Selecione um fornecedor</option>';
+                    suppliers.forEach(supplier => {
+                        const option = document.createElement('option');
+                        option.value = supplier.id;
+                        option.textContent = supplier.nome;
+                        supplierSelect.appendChild(option);
+                    });
+                    console.log('✅ Select de fornecedores populado com', suppliers.length, 'fornecedores');
+
+                    console.log('🔄 Carregando produtos...');
                     const { data: products } = await api.getProducts(1, '', 1000);
                     state.availableProductsForPurchase = products;
-                    productSelect.empty().append($('<option value="">Selecione um produto</option>')).select2({
-                        data: state.availableProductsForPurchase.map(p => ({ id: String(p.id), text: p.nome })),
-                        placeholder: "Buscar produto...",
-                        dropdownParent: $('#purchaseModal'),
-                        templateResult: (productData) => {
-                            if (!productData.id) { return productData.text; }
-                            const product = state.availableProductsForPurchase.find(item => String(item.id) === String(productData.id));
-                            if (!product) return productData.text;
-                            return $(`<span>${product.nome} (Estoque atual: ${product.estoque}, Preço venda: ${utils.formatCurrency(product.precoVenda)})</span>`);
-                        },
-                        templateSelection: (productData) => {
-                            if (!productData.id) { return productData.text; }
-                            const product = state.availableProductsForPurchase.find(item => String(item.id) === String(productData.id));
-                            if (!product) return productData.text;
-                            return product.nome;
-                        }
-                    });
+                    console.log('✅ Produtos carregados:', products.length);
 
-                    productSelect.off('select2:select').on('select2:select', (e) => {
-                        const productId = String(e.params.data.id);
+                    // Popular select de produtos de forma simples
+                    const productSelect = document.getElementById('purchaseProductSelect');
+                    productSelect.innerHTML = '<option value="">Selecione um produto</option>';
+                    products.forEach(product => {
+                        const option = document.createElement('option');
+                        option.value = product.id;
+                        option.textContent = `${product.nome} - R$ ${(product.precoVenda || 0).toFixed(2)}`;
+                        productSelect.appendChild(option);
+                    });
+                    console.log('✅ Select de produtos populado com', products.length, 'produtos');
+
+                    // Adicionar event listener para seleção de produto
+                    productSelect.addEventListener('change', function() {
+                        const productId = this.value;
                         const product = state.availableProductsForPurchase.find(p => String(p.id) === productId);
                         if (product) {
                             state.currentSelectedProductForPurchase = product;
-                            dom.purchaseProductDetailsDisplay.innerHTML = `Estoque atual: ${product.estoque}, Preço de Venda: ${utils.formatCurrency(product.precoVenda)}`;
+                            dom.purchaseProductDetailsDisplay.innerHTML = `Estoque atual: ${product.estoque || 0}, Preço de Venda: ${utils.formatCurrency(product.precoVenda || 0)}`;
                             dom.purchaseProductCostInput.value = product.precoCusto ? (product.precoCusto || 0).toFixed(2) : (product.precoVenda || 0).toFixed(2);
                             dom.purchaseProductQuantityInput.value = '1';
+                            console.log('Produto selecionado para compra:', product.nome);
                         } else {
                             state.currentSelectedProductForPurchase = null;
                             dom.purchaseProductDetailsDisplay.innerHTML = '';
                             dom.purchaseProductCostInput.value = '';
                         }
                     });
-                    productSelect.off('select2:unselect').on('select2:unselect', () => {
-                        state.currentSelectedProductForPurchase = null;
-                        dom.purchaseProductDetailsDisplay.innerHTML = '';
-                        dom.purchaseProductCostInput.value = '';
-                    });
-
-
-                    if (purchaseId) {
-                        const purchase = await api.getPurchaseById(purchaseId);
-
-                        if (!utils.hasPermission(['admin', 'gerente'])) {
-                            utils.showToast('Você não tem permissão para editar esta compra.', 'error');
-                            return;
-                        }
-
-                        dom.purchaseIdInput.value = purchase.id;
-                        dom.purchaseDateInput.value = purchase.dataCompra ? new Date(purchase.dataCompra).toISOString().split('T')[0] : '';
-                        dom.purchaseStatusSelect.value = purchase.status;
-                        dom.purchaseObservationsInput.value = purchase.observacoes || '';
-                        supplierSelect.val(purchase.supplierId).trigger('change');
-
-                        if (purchase.products && purchase.products.length > 0) {
-                            state.selectedPurchaseProducts = purchase.products.map(p => ({
-                                id: p.id,
-                                nome: p.nome,
-                                precoCustoUnitario: p.PurchaseProduct.precoCustoUnitario,
-                                quantidade: p.PurchaseProduct.quantidade,
-                            }));
-                            utils.renderSelectedPurchaseProductsList();
-                        }
-                    } else {
-                        dom.purchaseDateInput.valueAsDate = new Date();
-                    }
-
-                    state.bootstrapPurchaseModal.show();
                 } catch (error) {
                     utils.showToast(error.message, 'error');
                 }
