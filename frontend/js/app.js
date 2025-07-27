@@ -2158,7 +2158,7 @@
                                         if (!product.id) { return product.text; }
                                         const p = state.availableProducts.find(item => String(item.id) === String(product.id));
                                         if (!p) return product.text;
-                                        return $(`<span>${p.nome} (Estoque: ${p.estoque}, R$ ${p.precoVenda.toFixed(2)})</span>`);
+                                                        return $(`<span>${p.nome} (Estoque: ${p.estoque || 0}, R$ ${(p.precoVenda || 0).toFixed(2)})</span>`);
                                     },
                                     templateSelection: (product) => {
                                         if (!product.id) { return product.text; }
@@ -2193,7 +2193,7 @@
                                             if (!productData.id) { return productData.text; }
                                             const product = state.availableProducts.find(item => String(item.id) === String(productData.id));
                                             if (!product) return productData.text;
-                                            return $(`<span>${product.nome} (Estoque: ${product.estoque}, R$ ${product.precoVenda.toFixed(2)})</span>`);
+                                                                        return $(`<span>${product.nome} (Estoque: ${product.estoque || 0}, R$ ${(product.precoVenda || 0).toFixed(2)})</span>`);
                                         },
                                         templateSelection: (productData) => {
                                             if (!productData.id) { return productData.text; }
@@ -2208,7 +2208,7 @@
                                         if (product) {
                                             state.currentSelectedProduct = product;
                                             dom.productDetailsDisplay.innerHTML = `Estoque: ${product.estoque}, Preço: ${utils.formatCurrency(product.precoVenda)}`;
-                                            dom.productUnitPriceInput.value = product.precoVenda.toFixed(2);
+                                                                dom.productUnitPriceInput.value = (product.precoVenda || 0).toFixed(2);
                                             dom.productQuantityInput.value = '1';
                                         } else {
                                             state.currentSelectedProduct = null;
@@ -2956,7 +2956,7 @@
                         if (product) {
                             state.currentSelectedProductForPurchase = product;
                             dom.purchaseProductDetailsDisplay.innerHTML = `Estoque atual: ${product.estoque}, Preço de Venda: ${utils.formatCurrency(product.precoVenda)}`;
-                            dom.purchaseProductCostInput.value = product.precoCusto ? product.precoCusto.toFixed(2) : product.precoVenda.toFixed(2);
+                            dom.purchaseProductCostInput.value = product.precoCusto ? (product.precoCusto || 0).toFixed(2) : (product.precoVenda || 0).toFixed(2);
                             dom.purchaseProductQuantityInput.value = '1';
                         } else {
                             state.currentSelectedProductForPurchase = null;
