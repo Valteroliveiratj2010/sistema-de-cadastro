@@ -3437,21 +3437,30 @@
                     modalDialog.style.maxWidth = '600px';
                     modalDialog.style.width = '600px';
                     modalDialog.style.margin = '1.75rem auto';
+                    // Mover para a direita para sair de trás da sidebar
+                    modalDialog.style.marginLeft = '320px';
+                    modalDialog.style.marginRight = '20px';
                 }
                 // Tablet (telas médias)
                 else if (screenWidth >= 769 && screenWidth <= 1024) {
                     modalDialog.style.maxWidth = '650px';
                     modalDialog.style.width = '650px';
                     modalDialog.style.margin = '1.75rem auto';
+                    // Mover um pouco para a direita
+                    modalDialog.style.marginLeft = '300px';
+                    modalDialog.style.marginRight = '20px';
                 }
                 // Mobile (telas pequenas)
                 else {
                     modalDialog.style.maxWidth = '95%';
                     modalDialog.style.width = '95%';
                     modalDialog.style.margin = '0.5rem auto';
+                    // Em mobile, manter centralizado
+                    modalDialog.style.marginLeft = 'auto';
+                    modalDialog.style.marginRight = 'auto';
                 }
                 
-                console.log(`🔧 Modal ${modalId} corrigido para tela ${screenWidth}px`);
+                console.log(`🔧 Modal ${modalId} corrigido para tela ${screenWidth}px - margin-left: ${modalDialog.style.marginLeft}`);
             }
         }
         
