@@ -3421,4 +3421,53 @@
 
         initialize();
     });
+
+    // CORREÇÃO FORÇADA PARA TAMANHO DOS MODAIS DE VENDA E COMPRA
+    document.addEventListener('DOMContentLoaded', function() {
+        // Função para corrigir tamanho dos modais
+        function fixModalSize(modalId) {
+            const modal = document.getElementById(modalId);
+            const modalDialog = modal.querySelector('.modal-dialog');
+            
+            if (modalDialog) {
+                // Forçar largura específica
+                modalDialog.style.maxWidth = '600px';
+                modalDialog.style.width = '600px';
+                modalDialog.style.margin = '1.75rem auto';
+                
+                // Em telas menores
+                if (window.innerWidth <= 768) {
+                    modalDialog.style.maxWidth = '95%';
+                    modalDialog.style.width = '95%';
+                    modalDialog.style.margin = '0.5rem auto';
+                }
+            }
+        }
+        
+        // Aplicar correção quando os modais são abertos
+        const saleModal = document.getElementById('saleModal');
+        const purchaseModal = document.getElementById('purchaseModal');
+        
+        if (saleModal) {
+            saleModal.addEventListener('show.bs.modal', function() {
+                setTimeout(() => fixModalSize('saleModal'), 10);
+            });
+        }
+        
+        if (purchaseModal) {
+            purchaseModal.addEventListener('show.bs.modal', function() {
+                setTimeout(() => fixModalSize('purchaseModal'), 10);
+            });
+        }
+        
+        // Aplicar correção também no resize da janela
+        window.addEventListener('resize', function() {
+            if (saleModal.classList.contains('show')) {
+                fixModalSize('saleModal');
+            }
+            if (purchaseModal.classList.contains('show')) {
+                fixModalSize('purchaseModal');
+            }
+        });
+    });
 })();

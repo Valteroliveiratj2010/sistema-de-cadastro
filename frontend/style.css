@@ -530,6 +530,61 @@ body .modal-backdrop {
     padding: 1rem !important;
 }
 
+/* SOLUÇÃO FORÇADA PARA OS MODAIS DE VENDA E COMPRA */
+#saleModal,
+#purchaseModal {
+    z-index: 9999 !important;
+}
+
+#saleModal .modal-dialog,
+#purchaseModal .modal-dialog {
+    max-width: 600px !important;
+    width: 600px !important;
+    margin: 1.75rem auto !important;
+    position: relative !important;
+    transform: none !important;
+}
+
+/* Forçar largura específica em diferentes breakpoints */
+@media (max-width: 768px) {
+    #saleModal .modal-dialog,
+    #purchaseModal .modal-dialog {
+        max-width: 95% !important;
+        width: 95% !important;
+        margin: 0.5rem auto !important;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    #saleModal .modal-dialog,
+    #purchaseModal .modal-dialog {
+        max-width: 650px !important;
+        width: 650px !important;
+    }
+}
+
+/* Override completo do Bootstrap */
+.modal.show #saleModal .modal-dialog,
+.modal.show #purchaseModal .modal-dialog {
+    max-width: 600px !important;
+    width: 600px !important;
+    transform: none !important;
+}
+
+/* Garantir que o conteúdo interno não force largura */
+#saleModal .modal-content,
+#purchaseModal .modal-content {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+/* Forçar quebra de linha em elementos que possam estar causando overflow */
+#saleModal .row > *,
+#purchaseModal .row > * {
+    flex-shrink: 1 !important;
+    min-width: 0 !important;
+}
+
 /* Correção para telas grandes: sidebar visível e botão oculto */
 @media (min-width: 992px) {
     .sidebar {
