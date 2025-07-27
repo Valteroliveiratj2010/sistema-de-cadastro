@@ -459,6 +459,77 @@ body .modal-backdrop {
     z-index: 2000 !important;
 }
 
+/* Controle específico do tamanho dos modais de venda e compra */
+#saleModal .modal-dialog,
+#purchaseModal .modal-dialog {
+    max-width: 600px !important;
+    width: 90% !important;
+    margin: 1.75rem auto !important;
+}
+
+/* Garantir que os modais não fiquem muito largos */
+.modal-dialog {
+    max-width: 500px !important;
+    width: 90% !important;
+}
+
+/* Exceção para modais que precisam ser um pouco maiores */
+#saleModal .modal-dialog,
+#purchaseModal .modal-dialog {
+    max-width: 700px !important;
+}
+
+/* Responsividade para telas menores */
+@media (max-width: 768px) {
+    #saleModal .modal-dialog,
+    #purchaseModal .modal-dialog {
+        max-width: 95% !important;
+        margin: 0.5rem auto !important;
+    }
+}
+
+/* Controle do layout interno dos modais de venda e compra */
+#saleModal .modal-body,
+#purchaseModal .modal-body {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+/* Ajustar colunas dentro dos modais para evitar overflow */
+#saleModal .row,
+#purchaseModal .row {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+#saleModal .col-md-5,
+#saleModal .col-md-2,
+#saleModal .col-md-3,
+#purchaseModal .col-md-5,
+#purchaseModal .col-md-2,
+#purchaseModal .col-md-3 {
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+}
+
+/* Garantir que os selects não forcem largura excessiva */
+#saleModal select,
+#purchaseModal select {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+/* Ajustar cards dentro dos modais */
+#saleModal .card,
+#purchaseModal .card {
+    margin-bottom: 1rem !important;
+}
+
+#saleModal .card-body,
+#purchaseModal .card-body {
+    padding: 1rem !important;
+}
+
 /* Correção para telas grandes: sidebar visível e botão oculto */
 @media (min-width: 992px) {
     .sidebar {
