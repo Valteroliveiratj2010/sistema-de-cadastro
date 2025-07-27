@@ -395,16 +395,70 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Correção para modais ficarem na frente da sidebar */
 .modal {
-    z-index: 3000 !important;
+    z-index: 9999 !important;
 }
 
 .modal-backdrop {
-    z-index: 2999 !important;
+    z-index: 9998 !important;
 }
 
 .modal-dialog {
-    z-index: 3001 !important;
+    z-index: 10000 !important;
 }
+
+/* Regras mais específicas para garantir que funcionem */
+#saleModal,
+#purchaseModal {
+    z-index: 9999 !important;
+}
+
+#saleModal .modal-dialog,
+#purchaseModal .modal-dialog {
+    z-index: 10000 !important;
+}
+
+/* Garantir que o backdrop também esteja correto */
+#saleModal + .modal-backdrop,
+#purchaseModal + .modal-backdrop {
+    z-index: 9998 !important;
+}
+
+/* Override qualquer z-index do Bootstrap */
+.modal.show {
+    z-index: 9999 !important;
+}
+
+.modal.show .modal-dialog {
+    z-index: 10000 !important;
+}
+
+/* Regras específicas para Bootstrap 5 */
+.modal.fade.show {
+    z-index: 9999 !important;
+}
+
+.modal.fade.show .modal-dialog {
+    z-index: 10000 !important;
+}
+
+/* Forçar z-index alto para todos os modais */
+body .modal {
+    z-index: 9999 !important;
+}
+
+body .modal .modal-dialog {
+    z-index: 10000 !important;
+}
+
+body .modal-backdrop {
+    z-index: 9998 !important;
+}
+
+/* Garantir que a sidebar não sobreponha os modais */
+.sidebar {
+    z-index: 2000 !important;
+}
+
 /* Correção para telas grandes: sidebar visível e botão oculto */
 @media (min-width: 992px) {
     .sidebar {
