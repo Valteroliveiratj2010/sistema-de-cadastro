@@ -459,24 +459,10 @@ body .modal-backdrop {
     z-index: 2000 !important;
 }
 
-/* Controle específico do tamanho dos modais de venda e compra */
-#saleModal .modal-dialog,
-#purchaseModal .modal-dialog {
-    max-width: 600px !important;
-    width: 90% !important;
-    margin: 1.75rem auto !important;
-}
-
-/* Garantir que os modais não fiquem muito largos */
+/* Garantir que os modais padrão não fiquem muito largos */
 .modal-dialog {
     max-width: 500px !important;
     width: 90% !important;
-}
-
-/* Exceção para modais que precisam ser um pouco maiores */
-#saleModal .modal-dialog,
-#purchaseModal .modal-dialog {
-    max-width: 700px !important;
 }
 
 /* Responsividade para telas menores */
@@ -560,6 +546,16 @@ body .modal-backdrop {
     #purchaseModal .modal-dialog {
         max-width: 650px !important;
         width: 650px !important;
+    }
+}
+
+/* REGRAS ESPECÍFICAS PARA DESKTOP (telas grandes) */
+@media (min-width: 1025px) {
+    #saleModal .modal-dialog,
+    #purchaseModal .modal-dialog {
+        max-width: 600px !important;
+        width: 600px !important;
+        margin: 1.75rem auto !important;
     }
 }
 

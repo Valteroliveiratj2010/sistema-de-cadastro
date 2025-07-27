@@ -3430,17 +3430,28 @@
             const modalDialog = modal.querySelector('.modal-dialog');
             
             if (modalDialog) {
-                // Forçar largura específica
-                modalDialog.style.maxWidth = '600px';
-                modalDialog.style.width = '600px';
-                modalDialog.style.margin = '1.75rem auto';
+                const screenWidth = window.innerWidth;
                 
-                // Em telas menores
-                if (window.innerWidth <= 768) {
+                // Desktop (telas grandes)
+                if (screenWidth >= 1025) {
+                    modalDialog.style.maxWidth = '600px';
+                    modalDialog.style.width = '600px';
+                    modalDialog.style.margin = '1.75rem auto';
+                }
+                // Tablet (telas médias)
+                else if (screenWidth >= 769 && screenWidth <= 1024) {
+                    modalDialog.style.maxWidth = '650px';
+                    modalDialog.style.width = '650px';
+                    modalDialog.style.margin = '1.75rem auto';
+                }
+                // Mobile (telas pequenas)
+                else {
                     modalDialog.style.maxWidth = '95%';
                     modalDialog.style.width = '95%';
                     modalDialog.style.margin = '0.5rem auto';
                 }
+                
+                console.log(`🔧 Modal ${modalId} corrigido para tela ${screenWidth}px`);
             }
         }
         
@@ -3462,12 +3473,20 @@
         
         // Aplicar correção também no resize da janela
         window.addEventListener('resize', function() {
-            if (saleModal.classList.contains('show')) {
+            if (saleModal && saleModal.classList.contains('show')) {
                 fixModalSize('saleModal');
             }
-            if (purchaseModal.classList.contains('show')) {
+            if (purchaseModal && purchaseModal.classList.contains('show')) {
                 fixModalSize('purchaseModal');
             }
         });
+        
+        // Aplicar correção imediatamente se os modais já estiverem abertos
+        if (saleModal && saleModal.classList.contains('show')) {
+            fixModalSize('saleModal');
+        }
+        if (purchaseModal && purchaseModal.classList.contains('show')) {
+            fixModalSize('purchaseModal');
+        }
     });
 })();
