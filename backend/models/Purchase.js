@@ -46,6 +46,15 @@ module.exports = (sequelize) => {
     Purchase.associate = (models) => {
         Purchase.belongsTo(models.Supplier, { foreignKey: 'supplierId', as: 'supplier' });
         // Associação com User removida - userId não existe na tabela
+        
+        // Associações para PurchaseProduct
+        Purchase.hasMany(models.PurchaseProduct, { foreignKey: 'purchaseId', as: 'purchaseProducts' });
+        Purchase.belongsToMany(models.Product, { 
+            through: models.PurchaseProduct, 
+            foreignKey: 'purchaseId',
+            otherKey: 'productId',
+            as: 'products'
+        });
     };
 
     return Purchase;

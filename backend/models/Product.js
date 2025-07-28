@@ -45,6 +45,21 @@ module.exports = (sequelize) => {
     // Definindo associações
     Product.associate = (models) => {
         Product.hasMany(models.SaleProduct, { foreignKey: 'productId', as: 'saleProducts' });
+        Product.belongsToMany(models.Sale, { 
+            through: models.SaleProduct, 
+            foreignKey: 'productId',
+            otherKey: 'saleId',
+            as: 'sales'
+        });
+        
+        // Associações para PurchaseProduct
+        Product.hasMany(models.PurchaseProduct, { foreignKey: 'productId', as: 'purchaseProducts' });
+        Product.belongsToMany(models.Purchase, { 
+            through: models.PurchaseProduct, 
+            foreignKey: 'productId',
+            otherKey: 'purchaseId',
+            as: 'purchases'
+        });
     };
 
     return Product; // Retorna o modelo definido

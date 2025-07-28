@@ -1,6 +1,23 @@
 (() => { // IIFE para encapsular todo o script e evitar conflitos de escopo
     'use strict';
 
+    // --- VERIFICAÇÃO DE CONFIGURAÇÃO DA API ---
+    if (!window.API_BASE_URL) {
+        // Se apiConfig.js não foi carregado, configurar manualmente
+        const isLocalhost = window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1' || 
+                           window.location.hostname === '';
+        
+        if (isLocalhost) {
+            window.API_BASE_URL = 'http://localhost:8080/api';
+            console.log('🌐 Ambiente: DESENVOLVIMENTO LOCAL (configurado manualmente)');
+        } else {
+            window.API_BASE_URL = 'https://sistema-de-cadastro-backend.onrender.com/api';
+            console.log('🌐 Ambiente: PRODUÇÃO (configurado manualmente)');
+        }
+        console.log('🔗 API URL:', window.API_BASE_URL);
+    }
+
     // console.log para verificar o carregamento do arquivo app.js
     // Mude o valor de 'v' (versão) para a data e hora atual (AAAA-MM-DD-HHMMSS)
     // para garantir que o navegador sempre carregue a versão mais recente.
@@ -15,7 +32,7 @@
         // --- FIM DOS CONSOLE.LOGS ---
 
         // --- CONFIGURAÇÃO E ESTADO ---
-        const API_BASE = 'https://sistema-de-cadastro-backend.onrender.com/api'
+        const API_BASE = window.API_BASE_URL || 'http://localhost:8080/api';
         const state = {
             bootstrapClientModal: null,
             bootstrapSaleModal: null,
@@ -164,15 +181,20 @@
 
             purchaseForm: document.getElementById('purchaseForm'),
             purchaseIdInput: document.getElementById('purchaseId'),
+            purchaseSupplier: document.getElementById('purchaseSupplier'),
+            purchaseDate: document.getElementById('purchaseDate'),
             purchaseDateInput: document.getElementById('purchaseDate'),
             purchaseProductsList: document.getElementById('purchaseProductsList'),
+            purchaseProductSelect: document.getElementById('purchaseProductSelect'),
             purchaseProductQuantityInput: document.getElementById('purchaseProductQuantity'),
             purchaseProductCostInput: document.getElementById('purchaseProductCost'),
             btnAddPurchaseProduct: document.getElementById('btnAddPurchaseProduct'),
             purchaseProductDetailsDisplay: document.getElementById('purchaseProductDetailsDisplay'),
             purchaseTotalValueDisplay: document.getElementById('purchaseTotalValueDisplay'),
             purchaseTotalValueHidden: document.getElementById('purchaseTotalValue'),
+            purchaseStatus: document.getElementById('purchaseStatus'),
             purchaseStatusSelect: document.getElementById('purchaseStatus'),
+            purchaseObservations: document.getElementById('purchaseObservations'),
             purchaseObservationsInput: document.getElementById('purchaseObservations'),
             
             accountingReportForm: document.getElementById('accountingReportForm'),
@@ -618,16 +640,38 @@
         // --- UI AND RENDERING LOGIC ---
         const ui = {
             showSection: (sectionId) => {
-                document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
-                const section = document.getElementById(sectionId);
-                if (section) section.style.display = 'block';
+                    console.log('🔄 showSection chamada com:', sectionId);
+                    
+                    // Limpar seções de detalhes se existirem
+                    const saleDetailSection = document.getElementById('saleDetailSection');
+                    if (saleDetailSection && sectionId !== 'saleDetailSection') {
+                        saleDetailSection.remove();
+                        console.log('✅ Seção de detalhes de venda removida');
+                    }
+                    
+                    const purchaseDetailSection = document.getElementById('purchaseDetailSection');
+                    if (purchaseDetailSection && sectionId !== 'purchaseDetailSection') {
+                        purchaseDetailSection.style.display = 'none';
+                        console.log('✅ Seção de detalhes de compra ocultada');
+                    }
+                    
+                    document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+                    const section = document.getElementById(sectionId);
+                    console.log('📍 Seção encontrada:', section);
+                    
+                    if (section) {
+                        section.style.display = 'block';
+                        console.log('✅ Seção exibida:', sectionId);
+                    } else {
+                        console.error('❌ Seção não encontrada:', sectionId);
+                    }
 
-                dom.navLinks.forEach(l => l.classList.remove('active'));
-                const navLink = document.querySelector(`[data-section="${sectionId}"]`);
-                if (navLink) navLink.classList.add('active');
+                    dom.navLinks.forEach(l => l.classList.remove('active'));
+                    const navLink = document.querySelector(`[data-section="${sectionId}"]`);
+                    if (navLink) navLink.classList.add('active');
 
-                ui.updateSidebarVisibility();
-            },
+                    ui.updateSidebarVisibility();
+                },
             updateSidebarVisibility: () => {
                 const userRole = state.userRole;
                 dom.navLinks.forEach(link => {
@@ -1099,6 +1143,8 @@
                 container.innerHTML = paginationHTML;
             },
             renderSalesByPeriod: ({ sales, summary }) => {
+                console.log('📊 Dados do relatório recebidos:', { sales, summary });
+                
                 const reportResultsDiv = dom.reportResults;
                 let resultsHtml = '';
 
@@ -1114,12 +1160,25 @@
                         `;
                     }
 
+                    // Garantir que os valores sejam números
+                    const totalSalesAmount = parseFloat(summary.totalSalesAmount) || 0;
+                    const totalPaidAmount = parseFloat(summary.totalPaidAmount) || 0;
+                    const totalDueAmount = parseFloat(summary.totalDueAmount) || 0;
+                    const numberOfSales = parseInt(summary.numberOfSales) || 0;
+
+                    console.log('💰 Valores processados:', {
+                        totalSalesAmount,
+                        totalPaidAmount,
+                        totalDueAmount,
+                        numberOfSales
+                    });
+
                     resultsHtml += `
                         <div class="row g-3 mb-4">
-                            <div class="col-md-3"><div class="card p-3"><h6>Total de Vendas</h6><p class="fs-4 fw-bold">${utils.formatCurrency(summary.totalSalesAmount)}</p></div></div>
-                            <div class="col-md-3"><div class="card p-3"><h6>Total Pago</h6><p class="fs-4 fw-bold">${utils.formatCurrency(summary.totalPaidAmount)}</p></div></div>
-                            <div class="col-md-3"><div class="card p-3 bg-danger text-white"><h6>Total Devido</h6><p class="fs-4 fw-bold">${utils.formatCurrency(summary.totalDueAmount)}</p></div></div>
-                            <div class="col-md-3"><div class="card p-3"><h6>Qtd. de Vendas</h6><p class="fs-4 fw-bold">${summary.numberOfSales}</p></div></div>
+                            <div class="col-md-3"><div class="card p-3"><h6>Total de Vendas</h6><p class="fs-4 fw-bold">${utils.formatCurrency(totalSalesAmount)}</p></div></div>
+                            <div class="col-md-3"><div class="card p-3"><h6>Total Pago</h6><p class="fs-4 fw-bold">${utils.formatCurrency(totalPaidAmount)}</p></div></div>
+                            <div class="col-md-3"><div class="card p-3 bg-danger text-white"><h6>Total Devido</h6><p class="fs-4 fw-bold">${utils.formatCurrency(totalDueAmount)}</p></div></div>
+                            <div class="col-md-3"><div class="card p-3"><h6>Qtd. de Vendas</h6><p class="fs-4 fw-bold">${numberOfSales}</p></div></div>
                         </div>
                         ${exportButtonHtml}
                         <div class="table-responsive">
@@ -1270,22 +1329,49 @@
                 }
             },
             renderSaleDetail: (sale) => {
-                const section = document.getElementById('saleDetailSection');
+                console.log('🎨 renderSaleDetail iniciada');
+                
+                // Remover a seção original se existir
+                const oldSection = document.getElementById('saleDetailSection');
+                if (oldSection) {
+                    oldSection.remove();
+                }
+                
+                // Criar uma nova seção que funciona
+                const newSection = document.createElement('section');
+                newSection.id = 'saleDetailSection';
+                newSection.className = 'content-section';
+                newSection.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 280px;
+                    right: 0;
+                    bottom: 0;
+                    background-color: #ffffff;
+                    padding: 20px;
+                    overflow-y: auto;
+                    z-index: 1000;
+                `;
+                
                 const valorDevido = sale.valorTotal - sale.valorPago;
+                console.log('💰 Valor devido:', valorDevido);
+                
                 let productsHtml = '';
-                if (sale.products && sale.products.length > 0) {
+                if (sale.saleProducts && sale.saleProducts.length > 0) {
+                    console.log('📦 Produtos encontrados:', sale.saleProducts.length);
                     productsHtml = `
                         <h6>Itens da Venda:</h6>
                         <ul class="list-group mb-3">
-                            ${sale.products.map(item => `
+                            ${sale.saleProducts.map(item => `
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span>${item.nome} (${item.SaleProduct.quantidade}x)</span>
-                                    <span class="fw-bold">${utils.formatCurrency(item.SaleProduct.quantidade * item.SaleProduct.precoUnitario)}</span>
+                                    <span>${item.Product ? item.Product.nome : 'Produto não encontrado'} (${item.quantidade}x)</span>
+                                    <span class="fw-bold">${utils.formatCurrency(item.quantidade * item.precoUnitario)}</span>
                                 </li>
                             `).join('')}
                         </ul>
                     `;
                 } else {
+                    console.log('❌ Nenhum produto encontrado na venda');
                     productsHtml = `<p>Nenhum produto associado.</p>`;
                 }
 
@@ -1365,105 +1451,160 @@
                     `;
                 }
 
-                section.innerHTML = `
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="#" class="nav-back" data-section="salesSection">Vendas</a></li>
-                            <li class="breadcrumb-item active" aria-current="page">Detalhes da Venda #${sale.id}</li>
-                        </ol>
-                    </nav>
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="card mb-4">
-                                <div class="card-header">
-                                    <h4>Itens da Venda</h4>
-                                </div>
-                                <div class="card-body">
-                                    ${productsHtml}
-                                </div>
-                            </div>
-                            <div class="card mb-4">
-                                <div class="card-header">
-                                    <h4>Histórico de Pagamentos</h4>
-                                </div>
-                                <div class="card-body">
-                                    ${paymentsHTML}
-                                </div>
-                            </div>
+                newSection.innerHTML = `
+                    <div class="container-fluid h-100">
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="#" class="nav-back" data-section="salesSection">Vendas</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Detalhes da Venda #${sale.id}</li>
+                            </ol>
+                        </nav>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3>Detalhes da Venda #${sale.id}</h3>
+                            <button class="btn btn-outline-secondary nav-back" data-section="salesSection">
+                                <i class="bi bi-arrow-left"></i> Voltar para Vendas
+                            </button>
                         </div>
-                        <div class="col-md-4">
-                            <div class="card mb-4">
-                                <div class="card-header">
-                                    <h5>Resumo da Venda</h5>
+                        <div class="row">
+                            <div class="col-lg-8">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h4>Itens da Venda</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        ${productsHtml}
+                                    </div>
                                 </div>
-                                <div class="card-body">
-                                    <p><strong>Cliente:</strong> ${sale.client?.nome || 'Cliente não informado'}</p>
-                                    <p><strong>Valor Total:</strong> ${utils.formatCurrency(sale.valorTotal)}</p>
-                                    <p><strong>Total Pago:</strong> ${utils.formatCurrency(sale.valorPago)}</p>
-                                    <p class="fs-5"><strong>Valor Devido: <span class="text-danger">${utils.formatCurrency(valorDevido)}</span></strong></p>
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h4>Histórico de Pagamentos</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        ${paymentsHTML}
+                                    </div>
                                 </div>
                             </div>
-                            ${paymentFormHtml}
+                            <div class="col-lg-4">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h5>Resumo da Venda</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Cliente:</strong> ${sale.client?.nome || 'Cliente não informado'}</p>
+                                        <p><strong>Valor Total:</strong> ${utils.formatCurrency(sale.valorTotal)}</p>
+                                        <p><strong>Total Pago:</strong> ${utils.formatCurrency(sale.valorPago)}</p>
+                                        <p class="fs-5"><strong>Valor Devido: <span class="text-danger">${utils.formatCurrency(valorDevido)}</span></strong></p>
+                                    </div>
+                                </div>
+                                ${paymentFormHtml}
+                            </div>
                         </div>
                     </div>
                 `;
+                console.log('✅ HTML definido na seção');
+                console.log('📄 Tamanho do HTML:', newSection.innerHTML.length, 'caracteres');
+                console.log('📄 Primeiros 200 caracteres:', newSection.innerHTML.substring(0, 200));
+                console.log('🔍 Verificando se o botão está no HTML...');
+                console.log('🔍 HTML contém "Voltar para Vendas":', newSection.innerHTML.includes('Voltar para Vendas'));
+
+                // Adicionar a nova seção ao body
+                document.body.appendChild(newSection);
             },
             // Adicionado: Função para renderizar detalhes da compra
             renderPurchaseDetail: (purchase) => {
-                console.log("Chamado: ui.renderPurchaseDetail", purchase);
-                const section = document.getElementById('purchaseDetailSection'); // Certifique-se de ter esta div no seu HTML
+                console.log("🎨 renderPurchaseDetail iniciada");
+                
+                // Remover a seção original se existir
+                const oldSection = document.getElementById('purchaseDetailSection');
+                if (oldSection) {
+                    oldSection.remove();
+                }
+                
+                // Criar uma nova seção que funciona
+                const newSection = document.createElement('section');
+                newSection.id = 'purchaseDetailSection';
+                newSection.className = 'content-section';
+                newSection.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 280px;
+                    right: 0;
+                    bottom: 0;
+                    background-color: #ffffff;
+                    padding: 20px;
+                    overflow-y: auto;
+                    z-index: 1000;
+                `;
 
                 let productsHtml = '';
-                if (purchase.products && purchase.products.length > 0) {
+                if (purchase.purchaseProducts && purchase.purchaseProducts.length > 0) {
+                    console.log('📦 Produtos encontrados:', purchase.purchaseProducts.length);
                     productsHtml = `
                         <h6>Itens da Compra:</h6>
                         <ul class="list-group mb-3">
-                            ${purchase.products.map(item => `
+                            ${purchase.purchaseProducts.map(item => `
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span>${item.nome} (${item.PurchaseProduct.quantidade}x)</span>
-                                    <span class="fw-bold">${utils.formatCurrency(item.PurchaseProduct.quantidade * item.PurchaseProduct.precoCustoUnitario)}</span>
+                                    <span>${item.product.nome} (${item.quantidade}x)</span>
+                                    <span class="fw-bold">${utils.formatCurrency(item.quantidade * item.precoCustoUnitario)}</span>
                                 </li>
                             `).join('')}
                         </ul>
                     `;
                 } else {
-                    productsHtml = `<p>Nenhum produto associado a esta compra.</p>`;
+                    console.log('❌ Nenhum produto encontrado na compra');
+                    productsHtml = `<p>Nenhum produto associado.</p>`;
                 }
 
-                section.innerHTML = `
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="#" class="nav-back" data-section="purchasesSection">Compras</a></li>
-                            <li class="breadcrumb-item active" aria-current="page">Detalhes da Compra #${purchase.id}</li>
-                        </ol>
-                    </nav>
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="card mb-4">
-                                <div class="card-header">
-                                    <h4>Detalhes da Compra</h4>
-                                </div>
-                                <div class="card-body">
-                                    <p><strong>Fornecedor:</strong> ${purchase.supplier?.nome || 'Fornecedor não informado'}</p>
-                                    <p><strong>Data da Compra:</strong> ${utils.formatDate(purchase.dataCompra)}</p>
-                                    <p><strong>Valor Total:</strong> ${utils.formatCurrency(purchase.valorTotal)}</p>
-                                    <p><strong>Status:</strong> <span class="badge bg-secondary">${purchase.status}</span></p>
-                                    <p><strong>Observações:</strong> ${purchase.observacoes || 'N/A'}</p>
+                newSection.innerHTML = `
+                    <div class="container-fluid h-100">
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="#" class="nav-back" data-section="purchasesSection">Compras</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Detalhes da Compra #${purchase.id}</li>
+                            </ol>
+                        </nav>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3>Detalhes da Compra #${purchase.id}</h3>
+                            <button class="btn btn-outline-secondary nav-back" data-section="purchasesSection">
+                                <i class="bi bi-arrow-left"></i> Voltar para Compras
+                            </button>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-8">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h4>Itens da Compra</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        ${productsHtml}
+                                    </div>
                                 </div>
                             </div>
-                            <div class="card mb-4">
-                                <div class="card-header">
-                                    <h4>Itens da Compra</h4>
-                                </div>
-                                <div class="card-body">
-                                    ${productsHtml}
+                            <div class="col-lg-4">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h5>Resumo da Compra</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Fornecedor:</strong> ${purchase.supplier?.nome || 'Fornecedor não informado'}</p>
+                                        <p><strong>Data da Compra:</strong> ${utils.formatDate(purchase.dataCompra)}</p>
+                                        <p><strong>Valor Total:</strong> ${utils.formatCurrency(purchase.valorTotal)}</p>
+                                        <p><strong>Status:</strong> <span class="badge bg-secondary">${purchase.status}</span></p>
+                                        <p><strong>Observações:</strong> ${purchase.observacoes || 'N/A'}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            </div>
                     </div>
                 `;
+                console.log('✅ HTML definido na seção');
+                console.log('📄 Tamanho do HTML:', newSection.innerHTML.length, 'caracteres');
+                console.log('📄 Primeiros 200 caracteres:', newSection.innerHTML.substring(0, 200));
+                console.log('🔍 Verificando se o botão está no HTML...');
+                console.log('🔍 HTML contém "Voltar para Compras":', newSection.innerHTML.includes('Voltar para Compras'));
+
+                // Adicionar a nova seção ao body
+                document.body.appendChild(newSection);
             },
             renderProducts: () => {
                 const { data, total } = state.products;
@@ -1473,7 +1614,7 @@
                         <td>${product.id}</td>
                         <td><strong>${product.nome}</strong></td>
                         <td>${product.sku || 'N/A'}</td>
-                        <td>${utils.formatCurrency(product.precoVenda)}</td>
+                        <td>${utils.formatCurrency(product.preco)}</td>
                         <td>${product.estoque}</td>
                         <td>
                             ${utils.hasPermission(['admin', 'gerente']) ?
@@ -1857,18 +1998,26 @@
                 }
             },
             loadSales: async (force = false) => {
+                console.log('🚀 loadSales iniciada, force:', force);
                 if (state.sales.loaded && !force) {
+                    console.log('✅ Vendas já carregadas, renderizando...');
                     ui.renderSales();
                     return;
                 }
                 try {
+                    console.log('🔄 Carregando vendas da API...');
                     const { page, query, limit } = state.sales;
                     const apiData = await api.getSales(page, query, limit);
+                    console.log('✅ Dados recebidos da API:', apiData);
                     state.sales.data = apiData.data;
                     state.sales.total = apiData.total;
                     state.sales.loaded = true;
                     ui.renderSales();
-                } catch (error) { utils.showToast(error.message, 'error'); }
+                    console.log('✅ Vendas renderizadas');
+                } catch (error) { 
+                    console.error('❌ Erro ao carregar vendas:', error);
+                    utils.showToast(error.message, 'error'); 
+                }
             },
             handleExportSalesCsv: async () => {
                 if (!utils.hasPermission(['admin', 'gerente', 'vendedor'])) {
@@ -2165,6 +2314,46 @@
                     state.currentSelectedProduct = null;
                     utils.renderSelectedProductsList();
 
+                    // Carregar dados da venda se for edição
+                    if (saleId) {
+                        console.log('🔄 Carregando dados da venda para edição...');
+                        try {
+                            const sale = await api.getSaleById(saleId);
+                            console.log('✅ Dados da venda carregados:', sale);
+                            
+                            // Preencher o formulário com os dados da venda
+                            document.getElementById('saleId').value = sale.id;
+                            document.getElementById('saleClient').value = sale.clientId || '';
+                            
+                            // Carregar produtos da venda
+                            if (sale.saleProducts && sale.saleProducts.length > 0) {
+                                state.selectedSaleProducts = sale.saleProducts.map(item => ({
+                                    id: item.Product.id,
+                                    nome: item.Product.nome,
+                                    quantidade: item.quantidade,
+                                    precoUnitario: item.precoUnitario,
+                                    total: item.quantidade * item.precoUnitario
+                                }));
+                                utils.renderSelectedProductsList();
+                            }
+                            
+                            // Atualizar label do modal
+                            if (modalLabel) {
+                                modalLabel.textContent = `Editar Venda #${sale.id}`;
+                            }
+                            
+                        } catch (error) {
+                            console.error('❌ Erro ao carregar dados da venda:', error);
+                            utils.showToast('Erro ao carregar dados da venda para edição.', 'error');
+                            return;
+                        }
+                    } else {
+                        // Nova venda - atualizar label do modal
+                        if (modalLabel) {
+                            modalLabel.textContent = 'Nova Venda';
+                        }
+                    }
+
                     // SOLUÇÃO ALTERNATIVA: Usar selects HTML nativos primeiro
                     console.log('🔄 Carregando clientes...');
                     const { data: clients } = await api.getClients(1, '', 1000);
@@ -2190,7 +2379,8 @@
                     products.forEach(product => {
                         const option = document.createElement('option');
                         option.value = product.id;
-                        option.textContent = `${product.nome} - R$ ${(product.precoVenda || 0).toFixed(2)}`;
+                        const preco = parseFloat(product.preco) || 0;
+                        option.textContent = `${product.nome} - R$ ${preco.toFixed(2)}`;
                         productSelect.appendChild(option);
                     });
                     console.log('✅ Select de produtos populado com', products.length, 'produtos');
@@ -2205,8 +2395,9 @@
                         const product = state.availableProducts.find(p => String(p.id) === productId);
                         if (product) {
                             state.currentSelectedProduct = product;
-                            dom.productDetailsDisplay.innerHTML = `Estoque: ${product.estoque || 0}, Preço: ${utils.formatCurrency(product.precoVenda || 0)}`;
-                            dom.productUnitPriceInput.value = (product.precoVenda || 0).toFixed(2);
+                            const preco = parseFloat(product.preco) || 0;
+                            dom.productDetailsDisplay.innerHTML = `Estoque: ${product.estoque || 0}, Preço: ${utils.formatCurrency(preco)}`;
+                            dom.productUnitPriceInput.value = preco.toFixed(2);
                             dom.productQuantityInput.value = '1';
                             console.log('Produto selecionado:', product.nome);
                         } else {
@@ -2269,7 +2460,7 @@
                     state.selectedSaleProducts.push({
                         id: product.id,
                         nome: product.nome,
-                        precoVenda: product.precoVenda,
+                        precoVenda: product.preco,
                         precoUnitario: unitPrice,
                         quantidade: quantity,
                     });
@@ -2404,11 +2595,18 @@
             },
             loadSaleDetail: async (saleId) => {
                 try {
+                    console.log('🚀 loadSaleDetail iniciada');
                     const sale = await api.getSaleById(saleId);
-                    ui.renderSaleDetail(sale);
+                    console.log('✅ Dados recebidos da API');
+                    
+                    // Primeiro mostrar a seção
                     ui.showSection('saleDetailSection');
+                    console.log('✅ Seção exibida');
+                    
+                    // Depois renderizar o conteúdo
+                    ui.renderSaleDetail(sale);
+                    console.log('✅ renderSaleDetail executada');
                 } catch (error) {
-                    // CORREÇÃO: Adicionado console.error para melhor depuração do erro 500.
                     console.error("Falha ao carregar detalhes da venda:", error);
                     utils.showToast(error.message, 'error');
                 }
@@ -2503,8 +2701,8 @@
                         document.getElementById('productId').value = product.id;
                         document.getElementById('productName').value = product.nome;
                         document.getElementById('productDescription').value = product.descricao;
-                        document.getElementById('productPrice').value = product.precoVenda;
-                        document.getElementById('productCost').value = product.precoCusto;
+                        document.getElementById('productPrice').value = product.preco;
+                        document.getElementById('productCost').value = product.custo;
                         document.getElementById('productStock').value = product.estoque;
                         document.getElementById('productSku').value = product.sku;
                     } catch (error) {
@@ -2525,8 +2723,8 @@
                 const data = {
                     nome: document.getElementById('productName').value,
                     descricao: document.getElementById('productDescription').value,
-                    precoVenda: parseFloat(document.getElementById('productPrice').value),
-                    precoCusto: parseFloat(document.getElementById('productCost').value),
+                    preco: parseFloat(document.getElementById('productPrice').value),
+                    custo: parseFloat(document.getElementById('productCost').value),
                     estoque: parseInt(document.getElementById('productStock').value),
                     sku: document.getElementById('productSku').value,
                 };
@@ -2818,12 +3016,65 @@
                     utils.showToast('Você não tem permissão para ver os detalhes das compras.', 'error');
                     return;
                 }
+                
+                // Verificar token
+                const token = localStorage.getItem('token');
+                console.log('🔑 Token disponível:', !!token);
+                
                 try {
+                    console.log('🔄 Fazendo chamada para API getPurchaseById com ID:', purchaseId);
                     const purchase = await api.getPurchaseById(purchaseId);
+                    console.log('✅ Resposta da API recebida:', purchase);
+                    
+                    if (!purchase) {
+                        throw new Error('Nenhum dado recebido da API');
+                    }
+                    
+                    // Criar uma nova seção sempre para garantir
+                    console.log('🔧 Criando nova seção purchaseDetailSection');
+                    
+                    // Remover seção anterior se existir
+                    const existingSection = document.getElementById('purchaseDetailSection');
+                    if (existingSection) {
+                        existingSection.remove();
+                        console.log('✅ Seção anterior removida');
+                    }
+                    
+                    // Criar nova seção
+                    const section = document.createElement('div');
+                    section.id = 'purchaseDetailSection';
+                    section.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 280px;
+                        right: 0;
+                        bottom: 0;
+                        background: white;
+                        z-index: 9999;
+                        padding: 20px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    `;
+                    document.body.appendChild(section);
+                    
+                    console.log('✅ Nova seção criada e adicionada ao body');
+                    
+                    // Renderizar o conteúdo
                     ui.renderPurchaseDetail(purchase);
-                    ui.showSection('purchaseDetailSection');
+                    
+                    // Ocultar outras seções
+                    document.querySelectorAll('.content-section').forEach(s => {
+                        if (s.id !== 'purchaseDetailSection') {
+                            s.style.display = 'none';
+                        }
+                    });
+                    
+                    console.log('✅ Seção de detalhes da compra exibida diretamente');
                 } catch (error) {
-                    console.error("Falha ao carregar detalhes da compra:", error);
+                    console.error("❌ Falha ao carregar detalhes da compra:", error);
+                    console.error("   - Mensagem:", error.message);
+                    console.error("   - Stack:", error.stack);
                     utils.showToast(error.message, 'error');
                 }
             },
@@ -2876,7 +3127,8 @@
                     products.forEach(product => {
                         const option = document.createElement('option');
                         option.value = product.id;
-                        option.textContent = `${product.nome} - R$ ${(product.precoVenda || 0).toFixed(2)}`;
+                        const preco = parseFloat(product.preco) || 0;
+                        option.textContent = `${product.nome} - R$ ${preco.toFixed(2)}`;
                         productSelect.appendChild(option);
                     });
                     console.log('✅ Select de produtos populado com', products.length, 'produtos');
@@ -2887,8 +3139,8 @@
                         const product = state.availableProductsForPurchase.find(p => String(p.id) === productId);
                         if (product) {
                             state.currentSelectedProductForPurchase = product;
-                            dom.purchaseProductDetailsDisplay.innerHTML = `Estoque atual: ${product.estoque || 0}, Preço de Venda: ${utils.formatCurrency(product.precoVenda || 0)}`;
-                            dom.purchaseProductCostInput.value = product.precoCusto ? (product.precoCusto || 0).toFixed(2) : (product.precoVenda || 0).toFixed(2);
+                            dom.purchaseProductDetailsDisplay.innerHTML = `Estoque atual: ${product.estoque || 0}, Preço de Venda: ${utils.formatCurrency(product.preco || 0)}`;
+                            dom.purchaseProductCostInput.value = product.custo ? (parseFloat(product.custo) || 0).toFixed(2) : (parseFloat(product.preco) || 0).toFixed(2);
                             dom.purchaseProductQuantityInput.value = '1';
                             console.log('Produto selecionado para compra:', product.nome);
                         } else {
@@ -2897,13 +3149,44 @@
                             dom.purchaseProductCostInput.value = '';
                         }
                     });
+
+                    // Se purchaseId foi fornecido, carregar dados da compra existente
+                    if (purchaseId) {
+                        console.log('🔄 Carregando dados da compra existente...');
+                        const purchase = await api.getPurchaseById(purchaseId);
+                        console.log('✅ Dados da compra carregados:', purchase);
+                        
+                        // Preencher campos do formulário
+                        dom.purchaseIdInput.value = purchase.id;
+                        dom.purchaseSupplier.value = purchase.supplierId;
+                        dom.purchaseDate.value = purchase.dataCompra;
+                        dom.purchaseTotalValueDisplay.value = utils.formatCurrency(purchase.valorTotal);
+                        dom.purchaseTotalValueHidden.value = purchase.valorTotal;
+                        dom.purchaseStatus.value = purchase.status;
+                        dom.purchaseObservations.value = purchase.observacoes || '';
+                        
+                        // Carregar produtos da compra
+                        if (purchase.purchaseProducts && purchase.purchaseProducts.length > 0) {
+                            state.selectedPurchaseProducts = purchase.purchaseProducts.map(item => ({
+                                id: item.product.id,
+                                nome: item.product.nome,
+                                quantidade: item.quantidade,
+                                precoCustoUnitario: item.precoCustoUnitario,
+                                precoTotal: item.quantidade * item.precoCustoUnitario
+                            }));
+                            utils.renderSelectedPurchaseProductsList();
+                        }
+                    }
                 } catch (error) {
+                    console.error('❌ Erro ao carregar dados:', error);
                     utils.showToast(error.message, 'error');
                 }
                 
                 // Abrir o modal de compra
                 if (state.bootstrapPurchaseModal) {
+                    console.log('✅ Modal de compra inicializado, chamando show()...');
                     state.bootstrapPurchaseModal.show();
+                    console.log('✅ show() executado');
                 } else {
                     console.log('❌ Modal de compra não inicializado');
                 }
@@ -2914,7 +3197,7 @@
                     return;
                 }
 
-                const productId = dom.purchaseProductSelect.val();
+                const productId = dom.purchaseProductSelect.value;
                 const quantity = parseInt(dom.purchaseProductQuantityInput.value);
                 const unitCost = parseFloat(dom.purchaseProductCostInput.value);
 
@@ -2950,7 +3233,7 @@
                     });
                 }
                 utils.renderSelectedPurchaseProductsList();
-                dom.purchaseProductSelect.val(null).trigger('change');
+                dom.purchaseProductSelect.value = '';
                 dom.purchaseProductQuantityInput.value = '1';
                 dom.purchaseProductCostInput.value = '';
                 dom.purchaseProductDetailsDisplay.innerHTML = '';
@@ -2972,11 +3255,11 @@
                 }
 
                 const id = dom.purchaseIdInput.value;
-                const supplierId = dom.purchaseSupplierSelect.val();
-                const dataCompra = dom.purchaseDateInput.value;
+                const supplierId = dom.purchaseSupplier.value;
+                const dataCompra = dom.purchaseDate.value;
                 const valorTotal = utils.calculatePurchaseTotal();
-                const status = dom.purchaseStatusSelect.value;
-                const observacoes = dom.purchaseObservationsInput.value;
+                const status = dom.purchaseStatus.value;
+                const observacoes = dom.purchaseObservations.value;
 
                 if (!supplierId) {
                     utils.showToast('Selecione um fornecedor para a compra.', 'error');
@@ -3037,6 +3320,12 @@
                     }
                 });
             },
+            removeSaleDetailSection: () => {
+                const saleDetailSection = document.getElementById('saleDetailSection');
+                if (saleDetailSection) {
+                    saleDetailSection.remove();
+                }
+            }
         };
 
         // --- INITIALIZATION ---
@@ -3088,6 +3377,7 @@
                 link.addEventListener('click', e => {
                     e.preventDefault();
                     const sectionId = e.currentTarget.dataset.section;
+                    console.log('🖱️ Link clicado:', sectionId);
                     let hasPermission = true;
                     switch (sectionId) {
                         case 'productsSection':
@@ -3114,6 +3404,7 @@
                         return;
                     }
 
+                    console.log('✅ Permissão concedida, mostrando seção:', sectionId);
                     ui.showSection(sectionId);
                     if (window.innerWidth < 992) {
                         dom.sidebar.classList.remove('active');
@@ -3121,10 +3412,13 @@
                     }
                     if (sectionId === 'dashboardSection') handlers.loadDashboard();
                     if (sectionId === 'clientsSection') handlers.loadClients();
-                    if (sectionId === 'salesSection') handlers.loadSales();
+                    if (sectionId === 'salesSection') {
+                        console.log('🚀 Chamando handlers.loadSales()');
+                        handlers.loadSales();
+                    }
                     if (sectionId === 'reportsSection') {
                         dom.reportResults.innerHTML = '<p class="text-center text-muted">Selecione um período e clique em "Gerar Relatório" para ver os resultados.</p>';
-                        dom.cashFlowReportResults.innerHTML = '<p class="text-center text-muted">Selecione um período e clique em "Gerar Fluxo" para ver o fluxo de caixa.</p>';
+                        dom.cashFlowReportResults.innerHTML = '<p class="text-center text-muted">Selecione um período e clique em "Gerar Relatório" para ver o fluxo de caixa.</p>';
                         if (dom.salesPredictionResults) dom.salesPredictionResults.innerHTML = '<p class="text-center text-muted">Selecione o histórico de meses e clique em "Gerar Projeção" para ver a análise.</p>';
                         if (state.predictionChartInstance) {
                             state.predictionChartInstance.destroy();
@@ -3139,8 +3433,13 @@
             });
 
             document.body.addEventListener('click', (e) => {
+                // Só executa se for realmente um clique do usuário
+                if (!e.isTrusted) return;
+                
                 const button = e.target.closest('button');
                 if (button) {
+                    console.log('🖱️ Botão clicado:', button.id || button.className);
+                    
                     if (button.id === 'btnNewClient') handlers.openClientModal();
                     if (button.id === 'btnNewSale') handlers.openSaleModal();
                     if (button.id === 'btnExportClientsCsv') handlers.handleExportClientsCsv();
@@ -3176,8 +3475,9 @@
                                 utils.showToast('Você não tem permissão para compartilhar detalhes desta venda.', 'error');
                                 return;
                             }
+                            const message = utils.generateSaleMessage(sale);
                             const subject = encodeURIComponent(`Detalhes da sua compra #${sale.id} no Gestor PRO`);
-                            const body = encodeURIComponent(utils.generateSaleMessage(sale));
+                            const body = encodeURIComponent(message);
                             const clientEmail = sale.client?.email || '';
                             const mailtoUrl = `mailto:${clientEmail}?subject=${subject}&body=${body}`;
                             window.open(mailtoUrl, '_blank');
@@ -3213,16 +3513,24 @@
                         if (type === 'purchase') handlers.handleDeletePurchase(id);
                     }
                     if (button.classList.contains('action-detail')) {
-                        if (type === 'sale') handlers.loadSaleDetail(id);
-                        if (type === 'purchase') handlers.loadPurchaseDetail(id); // Adicionado: Carregar detalhes da compra
+                        console.log('🔍 Botão action-detail clicado, type:', type, 'id:', id);
+                        if (type === 'sale') {
+                            console.log('🚀 Chamando loadSaleDetail para venda ID:', id);
+                            handlers.loadSaleDetail(id);
+                        }
+                        if (type === 'purchase') handlers.loadPurchaseDetail(id);
                     }
                     if (button.classList.contains('action-edit')) {
+                        console.log('🔧 Botão action-edit clicado, type:', type, 'id:', id);
                         if (type === 'client') handlers.openClientModal(id);
                         if (type === 'product') handlers.openProductModal(id);
                         if (type === 'sale') handlers.openSaleModal(id);
                         if (type === 'user') handlers.openUserModal(id);
                         if (type === 'supplier') handlers.openSupplierModal(id);
-                        if (type === 'purchase') handlers.openPurchaseModal(id);
+                        if (type === 'purchase') {
+                            console.log('🛒 Chamando openPurchaseModal para compra ID:', id);
+                            handlers.openPurchaseModal(id);
+                        }
                     }
                 }
 
@@ -3237,7 +3545,20 @@
                 const backLink = e.target.closest('.nav-back');
                 if (backLink) {
                     e.preventDefault();
-                    ui.showSection(backLink.dataset.section);
+                    const sectionId = backLink.dataset.section;
+                    console.log('🔙 Nav-back clicado, seção:', sectionId);
+                    
+                    // Remover seção de detalhes se existir
+                    handlers.removeSaleDetailSection();
+                    
+                    // Mostrar a seção solicitada
+                    ui.showSection(sectionId);
+                    
+                    // Carregar dados se necessário
+                    if (sectionId === 'salesSection') {
+                        console.log('🚀 Carregando vendas após nav-back');
+                        handlers.loadSales();
+                    }
                 }
             });
 
@@ -3353,18 +3674,18 @@
                     modalDialog.style.maxWidth = '600px';
                     modalDialog.style.width = '600px';
                     modalDialog.style.margin = '1.75rem auto';
-                    // Mover para a direita para sair de trás da sidebar
-                    modalDialog.style.marginLeft = '320px';
-                    modalDialog.style.marginRight = '20px';
+                    // Centralizar melhor considerando a sidebar
+                    modalDialog.style.marginLeft = 'calc(280px + 50px)';
+                    modalDialog.style.marginRight = '50px';
                 }
                 // Tablet (telas médias)
                 else if (screenWidth >= 769 && screenWidth <= 1024) {
                     modalDialog.style.maxWidth = '650px';
                     modalDialog.style.width = '650px';
                     modalDialog.style.margin = '1.75rem auto';
-                    // Mover um pouco para a direita
-                    modalDialog.style.marginLeft = '300px';
-                    modalDialog.style.marginRight = '20px';
+                    // Centralizar melhor
+                    modalDialog.style.marginLeft = 'calc(280px + 30px)';
+                    modalDialog.style.marginRight = '30px';
                 }
                 // Mobile (telas pequenas)
                 else {
@@ -3374,6 +3695,13 @@
                     // Em mobile, manter centralizado
                     modalDialog.style.marginLeft = 'auto';
                     modalDialog.style.marginRight = 'auto';
+                }
+                
+                // Remover overflow desnecessário
+                const modalBody = modal.querySelector('.modal-body');
+                if (modalBody) {
+                    modalBody.style.maxHeight = '70vh';
+                    modalBody.style.overflowY = 'auto';
                 }
                 
                 console.log(`🔧 Modal ${modalId} corrigido para tela ${screenWidth}px - margin-left: ${modalDialog.style.marginLeft}`);
@@ -3412,6 +3740,16 @@
         }
         if (purchaseModal && purchaseModal.classList.contains('show')) {
             fixModalSize('purchaseModal');
+        }
+    });
+
+    document.body.addEventListener('mousedown', (e) => {
+        // Só executa se for realmente um clique do usuário
+        if (!e.isTrusted || e.detail === 0) return;
+        
+        const button = e.target.closest('button');
+        if (button) {
+            console.log('🖱️ Botão clicado:', button.id || button.className);
         }
     });
 })();

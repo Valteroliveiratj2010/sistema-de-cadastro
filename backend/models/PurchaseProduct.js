@@ -33,9 +33,15 @@ module.exports = (sequelize) => {
             allowNull: false
         }
     }, {
-        tableName: 'purchase_products', // Nome da tabela no banco de dados
-        timestamps: false // Não precisamos de timestamps nesta tabela de junção
+        tableName: 'PurchaseProducts', // Nome da tabela no banco de dados
+        timestamps: true // Precisamos de timestamps para esta tabela
     });
+
+    // Definindo associações
+    PurchaseProduct.associate = (models) => {
+        PurchaseProduct.belongsTo(models.Purchase, { foreignKey: 'purchaseId', as: 'purchase' });
+        PurchaseProduct.belongsTo(models.Product, { foreignKey: 'productId', as: 'product' });
+    };
 
     return PurchaseProduct;
 };

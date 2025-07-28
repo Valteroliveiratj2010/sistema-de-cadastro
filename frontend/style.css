@@ -142,6 +142,15 @@ h1, h2, h3, h4, h5, h6 {
     box-shadow: var(--shadow-base);
     background-color: var(--bg-card);
 }
+
+/* Garantir que as seções de conteúdo tenham altura mínima */
+.content-section {
+    min-height: 200px;
+    padding: 20px 0;
+    position: relative;
+    z-index: 1;
+}
+
 .card-header {
     background-color: var(--primary-color);
     color: var(--white-color);
@@ -637,5 +646,818 @@ body .modal-backdrop {
         margin: 0 !important;
         /* Ajustar posição para sair de trás da sidebar */
         left: calc(50% + 140px) !important;
+    }
+}
+
+/* CORREÇÕES ESPECÍFICAS PARA MODAIS DE COMPRA E VENDA */
+
+/* 1. Corrigir botão Adicionar para não quebrar texto */
+#btnAddPurchaseProduct,
+#btnAddProduct {
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    min-width: 150px !important;
+    height: 40px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 14px !important;
+    padding: 8px 20px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    margin-top: 10px !important;
+}
+
+/* 2. ELIMINAR COMPLETAMENTE O SCROLL - ABORDAGEM AGRESSIVA */
+.modal-body {
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
+    overflow-x: hidden !important;
+    padding: 15px !important;
+}
+
+/* 3. Ajustar modal para não ter scroll interno */
+.modal {
+    overflow: visible !important;
+    overflow-y: visible !important;
+}
+
+.modal-dialog {
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+/* 4. Garantir que o conteúdo do modal não force scroll */
+.modal-content {
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+/* 5. Ajustar seção de produtos para não ter scroll */
+.purchase-products-section,
+.sale-products-section {
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+/* 6. Garantir que os campos de input não quebrem */
+.form-control, .form-select {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* 7. ELIMINAR SCROLL ESPECÍFICO DOS MODAIS DE COMPRA E VENDA */
+#purchaseModal .modal-body,
+#saleModal .modal-body {
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
+    overflow-x: hidden !important;
+    padding: 15px !important;
+}
+
+#purchaseModal .modal-dialog,
+#saleModal .modal-dialog {
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+#purchaseModal .modal-content,
+#saleModal .modal-content {
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+/* 8. REDUZIR ESPAÇAMENTOS INTERNOS */
+#purchaseModal .mb-3,
+#saleModal .mb-3 {
+    margin-bottom: 0.75rem !important;
+}
+
+#purchaseModal .card,
+#saleModal .card {
+    margin-bottom: 0.75rem !important;
+}
+
+#purchaseModal .card-body,
+#saleModal .card-body {
+    padding: 0.75rem !important;
+}
+
+#purchaseModal .card-header,
+#saleModal .card-header {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.9rem !important;
+}
+
+/* 9. ELIMINAR SCROLL DAS LISTAS DE PRODUTOS */
+#purchaseProductsList,
+#saleProductsList {
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin-bottom: 0.5rem !important;
+}
+
+/* 10. REDUZIR ESPAÇAMENTO DOS CAMPOS */
+#purchaseModal .form-label,
+#saleModal .form-label {
+    margin-bottom: 0.25rem !important;
+    font-size: 0.85rem !important;
+}
+
+#purchaseModal .form-control,
+#purchaseModal .form-select,
+#saleModal .form-control,
+#saleModal .form-select {
+    padding: 0.375rem 0.5rem !important;
+    font-size: 0.85rem !important;
+    height: auto !important;
+}
+
+/* 11. REDUZIR ALTURA DO TEXTAREA */
+#purchaseModal textarea,
+#saleModal textarea {
+    min-height: 60px !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+/* 12. Garantir que botões em modais não quebrem */
+.modal .btn {
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+}
+
+/* 13. Ajustar altura dos modais para evitar scroll */
+@media (min-height: 600px) {
+    .modal-dialog {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+}
+
+/* 14. Corrigir overflow em telas menores */
+@media (max-height: 700px) {
+    .modal-dialog {
+        margin-top: 0.25rem !important;
+        margin-bottom: 0.25rem !important;
+        max-height: none !important;
+        height: auto !important;
+    }
+    
+    .modal-body {
+        padding: 10px !important;
+        max-height: none !important;
+        height: auto !important;
+    }
+    
+    #purchaseProductsList,
+    #saleProductsList {
+        max-height: none !important;
+        height: auto !important;
+    }
+}
+
+/* 15. Responsividade para telas menores */
+@media (max-width: 768px) {
+    #btnAddPurchaseProduct,
+    #btnAddProduct {
+        width: 100% !important;
+        margin-top: 15px !important;
+    }
+    
+    #purchaseModal .modal-dialog,
+    #saleModal .modal-dialog {
+        max-height: none !important;
+        height: auto !important;
+        margin: 0.25rem auto !important;
+    }
+}
+
+/* 16. FORÇAR ELIMINAÇÃO DE SCROLL EM TODOS OS ELEMENTOS DOS MODAIS */
+#purchaseModal *,
+#saleModal * {
+    max-height: none !important;
+    height: auto !important;
+}
+
+#purchaseModal .card-body,
+#saleModal .card-body {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+}
+
+#purchaseModal .card,
+#saleModal .card {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+}
+
+/* 17. Ajustar altura máxima dos modais */
+@media (max-height: 800px) {
+    .modal-dialog {
+        max-height: none !important;
+        height: auto !important;
+        margin-top: 0.25rem !important;
+        margin-bottom: 0.25rem !important;
+    }
+}
+
+/* 18. OVERRIDE FINAL - FORÇAR SEM SCROLL */
+.modal.show .modal-dialog {
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+.modal.show .modal-content {
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+.modal.show .modal-body {
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+/* ========================================
+   RESPONSIVIDADE COMPLETA DO SISTEMA
+   ======================================== */
+
+/* 1. RESPONSIVIDADE GERAL - LAYOUT PRINCIPAL */
+@media (max-width: 1200px) {
+    .main-content {
+        margin-left: 250px !important;
+    }
+    
+    .sidebar {
+        width: 250px !important;
+    }
+    
+    .content-wrapper {
+        padding: 1.5rem !important;
+    }
+}
+
+@media (max-width: 992px) {
+    .main-content {
+        margin-left: 200px !important;
+    }
+    
+    .sidebar {
+        width: 200px !important;
+    }
+    
+    .content-wrapper {
+        padding: 1rem !important;
+    }
+    
+    .card {
+        margin-bottom: 1rem !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+    
+    .sidebar {
+        transform: translateX(-100%) !important;
+        width: 280px !important;
+    }
+    
+    .sidebar.active {
+        transform: translateX(0) !important;
+    }
+    
+    .content-wrapper {
+        padding: 0.75rem !important;
+    }
+    
+    .card-header {
+        padding: 0.75rem !important;
+    }
+    
+    .card-body {
+        padding: 0.75rem !important;
+    }
+    
+    .table-responsive {
+        font-size: 0.85rem !important;
+    }
+    
+    .btn {
+        font-size: 0.85rem !important;
+        padding: 0.375rem 0.75rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .content-wrapper {
+        padding: 0.5rem !important;
+    }
+    
+    .card-header {
+        padding: 0.5rem !important;
+    }
+    
+    .card-body {
+        padding: 0.5rem !important;
+    }
+    
+    .table {
+        font-size: 0.8rem !important;
+    }
+    
+    .btn {
+        font-size: 0.8rem !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+    
+    .form-control, .form-select {
+        font-size: 0.85rem !important;
+        padding: 0.375rem 0.5rem !important;
+    }
+}
+
+/* 2. RESPONSIVIDADE DOS MODAIS */
+@media (max-width: 1200px) {
+    .modal-dialog {
+        max-width: 90% !important;
+        margin: 1rem auto !important;
+    }
+    
+    #purchaseModal .modal-dialog,
+    #saleModal .modal-dialog {
+        max-width: 90% !important;
+        width: 90% !important;
+    }
+}
+
+@media (max-width: 992px) {
+    .modal-dialog {
+        max-width: 95% !important;
+        margin: 0.5rem auto !important;
+    }
+    
+    #purchaseModal .modal-dialog,
+    #saleModal .modal-dialog {
+        max-width: 95% !important;
+        width: 95% !important;
+    }
+    
+    .modal-body {
+        padding: 1rem !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .modal-dialog {
+        max-width: 98% !important;
+        margin: 0.25rem auto !important;
+    }
+    
+    #purchaseModal .modal-dialog,
+    #saleModal .modal-dialog {
+        max-width: 98% !important;
+        width: 98% !important;
+        margin: 0.25rem auto !important;
+    }
+    
+    .modal-body {
+        padding: 0.75rem !important;
+    }
+    
+    /* Ajustar layout dos campos nos modais */
+    #purchaseModal .row,
+    #saleModal .row {
+        margin-left: -0.25rem !important;
+        margin-right: -0.25rem !important;
+    }
+    
+    #purchaseModal .col-md-5,
+    #purchaseModal .col-md-2,
+    #saleModal .col-md-5,
+    #saleModal .col-md-2 {
+        padding-left: 0.25rem !important;
+        padding-right: 0.25rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    /* Botão Adicionar em linha separada */
+    #purchaseModal .row:last-child,
+    #saleModal .row:last-child {
+        margin-top: 0.5rem !important;
+    }
+    
+    #btnAddPurchaseProduct,
+    #btnAddProduct {
+        width: 100% !important;
+        margin-top: 0.5rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .modal-dialog {
+        max-width: 100% !important;
+        margin: 0 !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+    }
+    
+    #purchaseModal .modal-dialog,
+    #saleModal .modal-dialog {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+    }
+    
+    .modal-body {
+        padding: 0.5rem !important;
+        height: calc(100vh - 120px) !important;
+        overflow-y: auto !important;
+    }
+    
+    /* Campos em coluna única */
+    #purchaseModal .col-md-5,
+    #purchaseModal .col-md-2,
+    #saleModal .col-md-5,
+    #saleModal .col-md-2 {
+        width: 100% !important;
+        margin-bottom: 0.75rem !important;
+    }
+    
+    .form-label {
+        font-size: 0.8rem !important;
+        margin-bottom: 0.25rem !important;
+    }
+    
+    .form-control, .form-select {
+        font-size: 0.8rem !important;
+        padding: 0.5rem !important;
+        height: 40px !important;
+    }
+    
+    .btn {
+        font-size: 0.8rem !important;
+        padding: 0.5rem 1rem !important;
+        height: 40px !important;
+    }
+}
+
+/* 3. RESPONSIVIDADE DAS TABELAS */
+@media (max-width: 992px) {
+    .table-responsive {
+        border: none !important;
+    }
+    
+    .table {
+        margin-bottom: 0 !important;
+    }
+    
+    .table thead th {
+        font-size: 0.85rem !important;
+        padding: 0.5rem 0.25rem !important;
+    }
+    
+    .table tbody td {
+        font-size: 0.8rem !important;
+        padding: 0.5rem 0.25rem !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .table thead th {
+        font-size: 0.8rem !important;
+        padding: 0.375rem 0.125rem !important;
+    }
+    
+    .table tbody td {
+        font-size: 0.75rem !important;
+        padding: 0.375rem 0.125rem !important;
+    }
+    
+    /* Ocultar colunas menos importantes */
+    .table th:nth-child(4),
+    .table td:nth-child(4) {
+        display: none !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .table thead th {
+        font-size: 0.75rem !important;
+        padding: 0.25rem 0.125rem !important;
+    }
+    
+    .table tbody td {
+        font-size: 0.7rem !important;
+        padding: 0.25rem 0.125rem !important;
+    }
+    
+    /* Mostrar apenas colunas essenciais */
+    .table th:nth-child(3),
+    .table td:nth-child(3) {
+        display: none !important;
+    }
+}
+
+/* 4. RESPONSIVIDADE DOS CARDS E KPIs */
+@media (max-width: 1200px) {
+    .kpi-card {
+        margin-bottom: 1rem !important;
+    }
+    
+    .kpi-card .fs-2 {
+        font-size: 1.5rem !important;
+    }
+}
+
+@media (max-width: 992px) {
+    .kpi-card {
+        margin-bottom: 0.75rem !important;
+    }
+    
+    .kpi-card h6 {
+        font-size: 0.8rem !important;
+    }
+    
+    .kpi-card .fs-2 {
+        font-size: 1.25rem !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .kpi-card {
+        margin-bottom: 0.5rem !important;
+        padding: 0.75rem !important;
+    }
+    
+    .kpi-card h6 {
+        font-size: 0.75rem !important;
+        margin-bottom: 0.25rem !important;
+    }
+    
+    .kpi-card .fs-2 {
+        font-size: 1rem !important;
+    }
+}
+
+/* 5. RESPONSIVIDADE DOS FORMULÁRIOS */
+@media (max-width: 768px) {
+    .form-group {
+        margin-bottom: 0.75rem !important;
+    }
+    
+    .form-label {
+        font-size: 0.85rem !important;
+        margin-bottom: 0.25rem !important;
+    }
+    
+    .form-control, .form-select {
+        font-size: 0.85rem !important;
+        padding: 0.5rem !important;
+    }
+    
+    .input-group {
+        margin-bottom: 0.75rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .form-group {
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .form-label {
+        font-size: 0.8rem !important;
+        margin-bottom: 0.25rem !important;
+    }
+    
+    .form-control, .form-select {
+        font-size: 0.8rem !important;
+        padding: 0.5rem !important;
+    }
+}
+
+/* 6. RESPONSIVIDADE DOS BOTÕES */
+@media (max-width: 768px) {
+    .btn {
+        font-size: 0.85rem !important;
+        padding: 0.5rem 0.75rem !important;
+    }
+    
+    .btn-sm {
+        font-size: 0.8rem !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+    
+    .btn-lg {
+        font-size: 0.9rem !important;
+        padding: 0.75rem 1rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .btn {
+        font-size: 0.8rem !important;
+        padding: 0.5rem 0.75rem !important;
+    }
+    
+    .btn-sm {
+        font-size: 0.75rem !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+    
+    .btn-lg {
+        font-size: 0.85rem !important;
+        padding: 0.75rem 1rem !important;
+    }
+}
+
+/* 7. RESPONSIVIDADE DA SIDEBAR */
+@media (max-width: 768px) {
+    .sidebar {
+        z-index: 1050 !important;
+    }
+    
+    .sidebar .nav-link {
+        padding: 0.75rem 1rem !important;
+        font-size: 0.9rem !important;
+    }
+    
+    .sidebar .nav-link i {
+        font-size: 1rem !important;
+        margin-right: 0.5rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .sidebar {
+        width: 100% !important;
+    }
+    
+    .sidebar .nav-link {
+        padding: 1rem !important;
+        font-size: 1rem !important;
+    }
+    
+    .sidebar .nav-link i {
+        font-size: 1.1rem !important;
+        margin-right: 0.75rem !important;
+    }
+}
+
+/* 8. RESPONSIVIDADE DO HEADER E NAVEGAÇÃO */
+@media (max-width: 768px) {
+    .navbar {
+        padding: 0.5rem 1rem !important;
+    }
+    
+    .navbar-brand {
+        font-size: 1.1rem !important;
+    }
+    
+    .navbar-toggler {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.9rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .navbar {
+        padding: 0.5rem !important;
+    }
+    
+    .navbar-brand {
+        font-size: 1rem !important;
+    }
+    
+    .navbar-toggler {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.8rem !important;
+    }
+}
+
+/* 9. RESPONSIVIDADE ESPECÍFICA PARA TELAS MUITO PEQUENAS */
+@media (max-width: 480px) {
+    .content-wrapper {
+        padding: 0.25rem !important;
+    }
+    
+    .card {
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .card-header {
+        padding: 0.5rem !important;
+    }
+    
+    .card-body {
+        padding: 0.5rem !important;
+    }
+    
+    .modal-body {
+        padding: 0.25rem !important;
+    }
+    
+    .btn {
+        font-size: 0.75rem !important;
+        padding: 0.375rem 0.5rem !important;
+    }
+    
+    .form-control, .form-select {
+        font-size: 0.75rem !important;
+        padding: 0.375rem 0.5rem !important;
+    }
+}
+
+/* 10. RESPONSIVIDADE PARA TELAS ALTAS */
+@media (min-height: 800px) {
+    .modal-dialog {
+        margin-top: 2rem !important;
+        margin-bottom: 2rem !important;
+    }
+    
+    .content-wrapper {
+        padding: 2rem !important;
+    }
+}
+
+/* 11. RESPONSIVIDADE PARA TELAS LANDSCAPE */
+@media (max-height: 500px) and (orientation: landscape) {
+    .modal-dialog {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+        max-height: 95vh !important;
+    }
+    
+    .modal-body {
+        padding: 0.5rem !important;
+        max-height: 80vh !important;
+        overflow-y: auto !important;
+    }
+    
+    .content-wrapper {
+        padding: 0.5rem !important;
+    }
+}
+
+/* 12. UTILITÁRIOS RESPONSIVOS */
+@media (max-width: 768px) {
+    .d-md-none {
+        display: block !important;
+    }
+    
+    .d-md-block {
+        display: none !important;
+    }
+    
+    .text-md-start {
+        text-align: center !important;
+    }
+    
+    .text-md-end {
+        text-align: center !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .d-sm-none {
+        display: block !important;
+    }
+    
+    .d-sm-block {
+        display: none !important;
+    }
+    
+    .text-sm-start {
+        text-align: center !important;
+    }
+    
+    .text-sm-end {
+        text-align: center !important;
     }
 }

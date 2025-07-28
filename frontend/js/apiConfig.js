@@ -1,6 +1,16 @@
-// Configuração da URL da API
-// Esta URL deve apontar para o seu backend no Render
-window.API_BASE_URL = 'https://sistema-de-cadastro-backend.onrender.com/api';
+// Configuração da API - Detecta automaticamente ambiente local vs produção
+const isLocalhost = window.location.hostname === 'localhost' || 
+                   window.location.hostname === '127.0.0.1' || 
+                   window.location.hostname === '';
 
-// Para desenvolvimento local, você pode usar:
-// window.API_BASE_URL = 'http://localhost:8080/api';
+if (isLocalhost) {
+    // Desenvolvimento local
+    window.API_BASE_URL = 'http://localhost:8080/api';
+    console.log('🌐 Ambiente: DESENVOLVIMENTO LOCAL');
+} else {
+    // Produção (Vercel)
+    window.API_BASE_URL = 'https://sistema-de-cadastro-backend.onrender.com/api';
+    console.log('🌐 Ambiente: PRODUÇÃO');
+}
+
+console.log('🔗 API URL:', window.API_BASE_URL);

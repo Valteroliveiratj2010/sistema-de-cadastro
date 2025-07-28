@@ -48,7 +48,7 @@ module.exports = (sequelize) => {
             defaultValue: 0.00,
         },
         status: {
-            type: DataTypes.ENUM('Pendente', 'Paga', 'Cancelada'),
+            type: DataTypes.ENUM('Pendente', 'Pago', 'Cancelado'),
             allowNull: false,
             defaultValue: 'Pendente',
         },
@@ -59,6 +59,13 @@ module.exports = (sequelize) => {
         Sale.belongsTo(models.Client, { foreignKey: 'clientId', as: 'client' });
         Sale.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
         Sale.hasMany(models.SaleProduct, { foreignKey: 'saleId', as: 'saleProducts' });
+        Sale.hasMany(models.Payment, { foreignKey: 'saleId', as: 'payments' });
+        Sale.belongsToMany(models.Product, { 
+            through: models.SaleProduct, 
+            foreignKey: 'saleId',
+            otherKey: 'productId',
+            as: 'products'
+        });
     };
 
     return Sale;

@@ -9,7 +9,7 @@ const toHex = (bytes) => Buffer.from(bytes).toString('hex');
 
 
 // Importar os modelos
-const { Client, Sale, Payment, User, Product, SaleProduct, Supplier, Purchase, PurchaseProduct } = require('../database'); 
+const { Client, Sale, Payment, User, Product, SaleProduct, Supplier, Purchase, PurchaseProduct, sequelize } = require('../database'); 
 
 // Importar os middlewares
 const authMiddleware = require('../middleware/authMiddleware'); 
@@ -436,9 +436,21 @@ router.get('/sales/report-by-period', authorizeRole(['admin', 'gerente', 'vended
             order: [['dataVenda', 'ASC']],
             include: [{ model: Client, as: 'client', attributes: ['nome'] }]
         });
-        const totalSalesAmount = sales.reduce((sum, sale) => sum + sale.valorTotal, 0);
-        const totalPaidAmount = sales.reduce((sum, sale) => sum + sale.valorPago, 0);
+        
+        console.log('📊 Vendas encontradas:', sales.length);
+        console.log('💰 Valores das vendas:', sales.map(s => ({ id: s.id, valorTotal: s.valorTotal, valorPago: s.valorPago })));
+        
+        const totalSalesAmount = sales.reduce((sum, sale) => sum + parseFloat(sale.valorTotal || 0), 0);
+        const totalPaidAmount = sales.reduce((sum, sale) => sum + parseFloat(sale.valorPago || 0), 0);
         const totalDueAmount = totalSalesAmount - totalPaidAmount;
+        
+        console.log('📈 Resumo calculado:', {
+            totalSalesAmount,
+            totalPaidAmount,
+            totalDueAmount,
+            numberOfSales: sales.length
+        });
+        
         res.json({
             sales,
             summary: {
@@ -500,11 +512,11 @@ router.get('/sales/:id', authorizeRole(['admin', 'gerente', 'vendedor']), async 
                     attributes: ['valor', 'dataPagamento', 'formaPagamento', 'parcelas', 'bandeiraCartao', 'bancoCrediario'] 
                 },
                 { 
-                    model: Product, 
-                    as: 'products', 
-                    through: {
-                        attributes: ['quantidade', 'precoUnitario'] 
-                    }
+                    model: SaleProduct, 
+                    as: 'saleProducts',
+                    include: [
+                        { model: Product, as: 'Product' }
+                    ]
                 }
             ]
         });
@@ -543,9 +555,12 @@ router.post('/sales', authorizeRole(['admin', 'gerente', 'vendedor']), async (re
             dataVencimento: dataVencimento || null,
             valorTotal: valorTotalCalculado,
             valorPago: (initialPayment && initialPayment.valor) ? parseFloat(initialPayment.valor) : 0, 
-            status: (initialPayment && parseFloat(initialPayment.valor) >= valorTotalCalculado) ? 'Paga' : 'Pendente'
+            status: (initialPayment && parseFloat(initialPayment.valor) >= valorTotalCalculado) ? 'Pago' : 'Pendente'
         }, { transaction });
+        console.log('✅ Venda criada com ID:', sale.id);
+        
         if (initialPayment && parseFloat(initialPayment.valor) > 0) {
+            console.log('🔄 Criando pagamento inicial para venda ID:', sale.id);
             await Payment.create({
                 valor: parseFloat(initialPayment.valor),
                 dataPagamento: new Date(),
@@ -555,6 +570,7 @@ router.post('/sales', authorizeRole(['admin', 'gerente', 'vendedor']), async (re
                 bandeiraCartao: initialPayment.bandeiraCartao || null,
                 bancoCrediario: initialPayment.bancoCrediario || null
             }, { transaction });
+            console.log('✅ Pagamento inicial criado com sucesso');
         }
         for (const item of saleProductsData) {
             const product = await Product.findByPk(item.productId, { transaction });
@@ -670,7 +686,7 @@ router.post('/sales/:saleId/payments', authorizeRole(['admin', 'gerente', 'vende
         const totalPaid = await Payment.sum('valor', { where: { saleId: sale.id }, transaction });
         sale.valorPago = totalPaid;
         if (sale.valorPago >= sale.valorTotal) {
-            sale.status = 'Paga';
+            sale.status = 'Pago';
         } else {
             sale.status = 'Pendente';
         }
@@ -705,31 +721,31 @@ router.get('/products/low-stock', authorizeRole(['admin', 'gerente', 'vendedor']
 
 router.get('/rankings/produtos', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     try {
-        const topProducts = await SaleProduct.findAll({
-            attributes: [
-                'productId',
-                [fn('sum', col('quantidade')), 'totalQuantidadeVendida']
-            ],
-            group: [
-                'productId', 
-                'Product.id', 
-                'Product.nome', 
-                'Product.preco' 
-            ], 
-            order: [[fn('sum', col('quantidade')), 'DESC']],
-            limit: 5,
-            include: [{
-                model: Product, 
-                as: 'Product', 
-                attributes: ['nome', 'preco'] 
-            }]
+        // Usar raw query para evitar problemas com GROUP BY e includes
+        const query = `
+            SELECT 
+                sp."productId",
+                p.nome,
+                p.preco,
+                SUM(sp.quantidade) as "totalQuantidadeVendida"
+            FROM "SaleProducts" sp
+            JOIN "Products" p ON sp."productId" = p.id
+            GROUP BY sp."productId", p.nome, p.preco
+            ORDER BY "totalQuantidadeVendida" DESC
+            LIMIT 5
+        `;
+        
+        const topProducts = await sequelize.query(query, {
+            type: sequelize.QueryTypes.SELECT
         });
+        
         const formattedRanking = topProducts.map(item => ({
             id: item.productId,
-            nome: item.Product ? item.Product.nome : 'Produto Desconhecido',
-            totalQuantidadeVendida: item.dataValues.totalQuantidadeVendida,
-            precoVenda: item.Product ? item.Product.preco : null
+            nome: item.nome || 'Produto Desconhecido',
+            totalQuantidadeVendida: parseInt(item.totalQuantidadeVendida),
+            precoVenda: parseFloat(item.preco) || 0
         }));
+        
         res.json(formattedRanking);
     } catch (error) {
         console.error('❌ ERRO AO OBTTER RANKING DE PRODUTOS:', error);
@@ -1065,11 +1081,11 @@ router.get('/purchases/:id', authorizeRole(['admin', 'gerente']), async (req, re
             include: [
                 { model: Supplier, as: 'supplier' },
                 { 
-                    model: Product, 
-                    as: 'products', 
-                    through: {
-                        attributes: ['quantidade', 'precoCustoUnitario'] 
-                    }
+                    model: PurchaseProduct, 
+                    as: 'purchaseProducts',
+                    include: [
+                        { model: Product, as: 'product' }
+                    ]
                 }
             ]
         });

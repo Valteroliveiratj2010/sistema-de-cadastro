@@ -18,12 +18,25 @@ app.use(express.urlencoded({ extended: true })); // Para parsear requisições c
 // Use 'https://sistema-de-cadastro-eosin.vercel.app' para seu frontend no Vercel.
 // Use 'https://sistema-de-cadastro-backend.onrender.com' para o URL do seu backend no Render.
 const corsOptions = {
-    origin: process.env.NODE_ENV === 'production'
-        ? /^https:\/\/sistema-de-cadastro.*\.vercel\.app$/ // Aceita qualquer subdomínio do Vercel
-        : '*', // Para desenvolvimento local, permite qualquer origem
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Métodos HTTP permitidos
-    credentials: true, // Permite o envio de cookies de credenciais (se usados)
-    optionsSuccessStatus: 204 // Para requisições OPTIONS (preflight CORS)
+    origin: function (origin, callback) {
+        // Permitir localhost para desenvolvimento
+        if (!origin || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
+            console.log(`[CORS] Permitindo origem local: ${origin}`);
+            return callback(null, true);
+        }
+        
+        // Permitir URLs do Vercel em produção
+        if (process.env.NODE_ENV === 'production' && /^https:\/\/sistema-de-cadastro.*\.vercel\.app$/.test(origin)) {
+            console.log(`[CORS] Permitindo origem Vercel: ${origin}`);
+            return callback(null, true);
+        }
+        
+        console.log(`[CORS] Bloqueando origem: ${origin}`);
+        callback(new Error('Not allowed by CORS'));
+    },
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+    optionsSuccessStatus: 204
 };
 app.use(cors(corsOptions));
 

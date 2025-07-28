@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "run-migrations": "sequelize db:migrate",
-    "prestart": "npm run run-migrations && node ./backend/seeders/adminSeeder.js", 
     "start": "node server.js",
-    "migrate-db": "npx sequelize db:migrate",
-    "seed-db": "npx sequelize db:seed:all"
+    "dev": "nodemon server.js",
+    "dev:frontend": "cd frontend && npx http-server -p 3000",
+    "dev:backend": "nodemon server.js",
+    "dev:full": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",

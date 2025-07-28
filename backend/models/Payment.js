@@ -9,6 +9,16 @@ module.exports = (sequelize) => {
             autoIncrement: true,
             primaryKey: true
         },
+        saleId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            references: {
+                model: 'Sales',
+                key: 'id',
+            },
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE',
+        },
         valor: {
             // CORREÇÃO: Alterado de DataTypes.FLOAT para DataTypes.DECIMAL(10, 2)
             // DECIMAL é mais preciso para valores monetários, evitando problemas de ponto flutuante.
@@ -42,6 +52,11 @@ module.exports = (sequelize) => {
             allowNull: true
         }
     });
+
+    // Definindo associações
+    Payment.associate = (models) => {
+        Payment.belongsTo(models.Sale, { foreignKey: 'saleId', as: 'sale' });
+    };
 
     return Payment; // Retorna o modelo definido
 };
