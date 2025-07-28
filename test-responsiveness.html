@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Responsividade - Gestor PRO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="frontend/style.css">
+    <style>
+        .test-section {
+            margin: 2rem 0;
+            padding: 1rem;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+        }
+        
+        .breakpoint-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #333;
+            color: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            z-index: 9999;
+            font-size: 0.8rem;
+        }
+        
+        .responsive-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .test-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
+        }
+        
+        .test-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        
+        .test-table th,
+        .test-table td {
+            border: 1px solid #ddd;
+            padding: 0.5rem;
+            text-align: left;
+        }
+        
+        .test-table th {
+            background: #f8f9fa;
+        }
+        
+        .test-modal {
+            max-width: 600px;
+            margin: 2rem auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .device-simulator {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        
+        .device-simulator button {
+            margin: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="breakpoint-indicator" id="breakpointIndicator">
+        Breakpoint: <span id="currentBreakpoint">-</span>
+    </div>
+    
+    <div class="device-simulator">
+        <h6>Simulador de Dispositivo</h6>
+        <button onclick="simulateDevice('mobile')">📱 Mobile</button>
+        <button onclick="simulateDevice('tablet')">📱 Tablet</button>
+        <button onclick="simulateDevice('desktop')">💻 Desktop</button>
+        <button onclick="resetDevice()">🔄 Reset</button>
+    </div>
+
+    <div id="app-container">
+        <aside class="sidebar">
+            <h1 class="sidebar-title"><i class="bi bi-shield-check me-2"></i>Gestor PRO</h1>
+            <nav class="nav flex-column">
+                <a class="nav-link active" href="#" data-section="dashboardSection">
+                    <i class="bi bi-grid-1x2-fill me-2"></i>Dashboard
+                </a>
+                <a class="nav-link" href="#" data-section="clientsSection">
+                    <i class="bi bi-people-fill me-2"></i>Clientes
+                </a>
+                <a class="nav-link" href="#" data-section="salesSection">
+                    <i class="bi bi-cart-check-fill me-2"></i>Vendas
+                </a>
+                <a class="nav-link" href="#" data-section="productsSection">
+                    <i class="bi bi-box-seam me-2"></i>Produtos
+                </a>
+                <a class="nav-link" href="#" data-section="purchasesSection">
+                    <i class="bi bi-bag me-2"></i>Compras
+                </a>
+                <a class="nav-link mt-auto" href="#" id="logoutButton">
+                    <i class="bi bi-box-arrow-right me-2"></i>Sair
+                </a>
+            </nav>
+        </aside>
+
+        <button class="btn navbar-toggler d-lg-none" type="button" id="sidebarToggle" aria-label="Menu">
+            <i class="bi bi-list text-white"></i>
+        </button>
+
+        <main class="main-content" id="mainContent">
+            <div class="content-wrapper">
+                <h1 class="mb-4">🧪 Teste de Responsividade</h1>
+                
+                <div class="test-section">
+                    <h3>📱 Teste de Sidebar</h3>
+                    <p>Teste o comportamento da sidebar em diferentes tamanhos de tela:</p>
+                    <ul>
+                        <li><strong>Desktop (≥992px):</strong> Sidebar sempre visível</li>
+                        <li><strong>Tablet (768px-991px):</strong> Sidebar colapsável</li>
+                        <li><strong>Mobile (&lt;768px):</strong> Sidebar fullscreen</li>
+                    </ul>
+                    <button class="btn btn-primary" onclick="testSidebar()">Testar Sidebar</button>
+                </div>
+
+                <div class="test-section">
+                    <h3>📊 Teste de KPI Cards</h3>
+                    <div class="row g-4">
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <div class="kpi-card">
+                                <h6>Vendas Totais</h6>
+                                <div class="fs-2">R$ 45.230</div>
+                                <small>+12% vs mês anterior</small>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <div class="kpi-card kpi-success">
+                                <h6>Clientes Ativos</h6>
+                                <div class="fs-2">1.247</div>
+                                <small>+8% vs mês anterior</small>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <div class="kpi-card kpi-warning">
+                                <h6>Pedidos Pendentes</h6>
+                                <div class="fs-2">23</div>
+                                <small>-5% vs mês anterior</small>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <div class="kpi-card kpi-danger">
+                                <h6>Produtos em Falta</h6>
+                                <div class="fs-2">7</div>
+                                <small>+2 vs mês anterior</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-section">
+                    <h3>📋 Teste de Tabelas</h3>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nome</th>
+                                    <th>Email</th>
+                                    <th>Telefone</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td>João Silva</td>
+                                    <td>joao@email.com</td>
+                                    <td>(11) 99999-9999</td>
+                                    <td><span class="badge bg-success">Ativo</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary">Editar</button>
+                                        <button class="btn btn-sm btn-danger">Excluir</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>Maria Santos</td>
+                                    <td>maria@email.com</td>
+                                    <td>(11) 88888-8888</td>
+                                    <td><span class="badge bg-warning">Pendente</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary">Editar</button>
+                                        <button class="btn btn-sm btn-danger">Excluir</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td>Pedro Costa</td>
+                                    <td>pedro@email.com</td>
+                                    <td>(11) 77777-7777</td>
+                                    <td><span class="badge bg-danger">Inativo</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary">Editar</button>
+                                        <button class="btn btn-sm btn-danger">Excluir</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="test-section">
+                    <h3>📝 Teste de Formulários</h3>
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Formulário de Teste</h5>
+                        </div>
+                        <div class="card-body">
+                            <form>
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-6">
+                                        <label for="testName" class="form-label">Nome</label>
+                                        <input type="text" class="form-control" id="testName" required>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label for="testEmail" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="testEmail" required>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label for="testPhone" class="form-label">Telefone</label>
+                                        <input type="tel" class="form-control" id="testPhone">
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label for="testStatus" class="form-label">Status</label>
+                                        <select class="form-select" id="testStatus">
+                                            <option value="">Selecione...</option>
+                                            <option value="ativo">Ativo</option>
+                                            <option value="inativo">Inativo</option>
+                                            <option value="pendente">Pendente</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="testNotes" class="form-label">Observações</label>
+                                        <textarea class="form-control" id="testNotes" rows="3"></textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary">Salvar</button>
+                                        <button type="button" class="btn btn-secondary">Cancelar</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-section">
+                    <h3>🎨 Teste de Grid Responsivo</h3>
+                    <div class="responsive-grid">
+                        <div class="test-card">
+                            <h5>Card 1</h5>
+                            <p>Este card se adapta automaticamente ao tamanho da tela.</p>
+                        </div>
+                        <div class="test-card">
+                            <h5>Card 2</h5>
+                            <p>Grid responsivo usando CSS Grid com auto-fit.</p>
+                        </div>
+                        <div class="test-card">
+                            <h5>Card 3</h5>
+                            <p>Os cards se reorganizam conforme o espaço disponível.</p>
+                        </div>
+                        <div class="test-card">
+                            <h5>Card 4</h5>
+                            <p>Mínimo de 250px por card, máximo flexível.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="test-section">
+                    <h3>🔍 Informações do Sistema</h3>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-12 col-md-6">
+                                    <h6>Dimensões da Tela</h6>
+                                    <p><strong>Largura:</strong> <span id="screenWidth">-</span>px</p>
+                                    <p><strong>Altura:</strong> <span id="screenHeight">-</span>px</p>
+                                    <p><strong>Orientação:</strong> <span id="screenOrientation">-</span></p>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <h6>Classes Aplicadas</h6>
+                                    <p><strong>Breakpoint:</strong> <span id="currentBreakpointClass">-</span></p>
+                                    <p><strong>Dispositivo:</strong> <span id="deviceType">-</span></p>
+                                    <p><strong>Sidebar:</strong> <span id="sidebarState">-</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="sidebar-overlay" class="overlay"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="frontend/js/responsive.js"></script>
+    
+    <script>
+        // Atualizar informações da tela
+        function updateScreenInfo() {
+            document.getElementById('screenWidth').textContent = window.innerWidth;
+            document.getElementById('screenHeight').textContent = window.innerHeight;
+            document.getElementById('screenOrientation').textContent = 
+                window.innerWidth > window.innerHeight ? 'Landscape' : 'Portrait';
+            
+            if (window.responsiveManager) {
+                document.getElementById('currentBreakpointClass').textContent = 
+                    window.responsiveManager.getCurrentBreakpoint();
+                document.getElementById('deviceType').textContent = 
+                    window.responsiveManager.isMobile() ? 'Mobile' : 
+                    window.responsiveManager.isTablet() ? 'Tablet' : 'Desktop';
+                document.getElementById('sidebarState').textContent = 
+                    window.responsiveManager.getSidebarState();
+                document.getElementById('currentBreakpoint').textContent = 
+                    window.responsiveManager.getCurrentBreakpoint();
+            }
+        }
+
+        // Simular dispositivo
+        function simulateDevice(type) {
+            const container = document.getElementById('app-container');
+            container.style.width = type === 'mobile' ? '375px' : 
+                                   type === 'tablet' ? '768px' : '100%';
+            container.style.margin = '0 auto';
+            container.style.border = '2px solid #ccc';
+            container.style.borderRadius = '8px';
+            
+            // Forçar atualização do responsive manager
+            if (window.responsiveManager) {
+                window.responsiveManager.forceUpdate();
+            }
+            
+            updateScreenInfo();
+        }
+
+        function resetDevice() {
+            const container = document.getElementById('app-container');
+            container.style.width = '';
+            container.style.margin = '';
+            container.style.border = '';
+            container.style.borderRadius = '';
+            
+            if (window.responsiveManager) {
+                window.responsiveManager.forceUpdate();
+            }
+            
+            updateScreenInfo();
+        }
+
+        // Testar sidebar
+        function testSidebar() {
+            if (window.responsiveManager) {
+                window.responsiveManager.toggleSidebar();
+            }
+        }
+
+        // Atualizar informações periodicamente
+        setInterval(updateScreenInfo, 1000);
+        
+        // Atualizar na mudança de orientação
+        window.addEventListener('orientationchange', () => {
+            setTimeout(updateScreenInfo, 100);
+        });
+        
+        // Atualizar no resize
+        window.addEventListener('resize', updateScreenInfo);
+        
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            updateScreenInfo();
+        });
+    </script>
+</body>
+</html> 

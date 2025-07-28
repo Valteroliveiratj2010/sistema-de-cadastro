@@ -29,6 +29,20 @@
     --border-radius-base: 0.75rem;
     --shadow-base: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
     --shadow-lg: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
+    
+    /* Variáveis responsivas */
+    --sidebar-width-desktop: 280px;
+    --sidebar-width-tablet: 240px;
+    --sidebar-width-mobile: 100%;
+    --header-height: 60px;
+    --mobile-padding: 1rem;
+    --tablet-padding: 1.5rem;
+    --desktop-padding: 2rem;
+}
+
+/* Reset e configurações base */
+* {
+    box-sizing: border-box;
 }
 
 body {
@@ -38,1426 +52,1121 @@ body {
     margin: 0;
     padding: 0;
     overflow-x: hidden;
+    line-height: 1.6;
 }
 
 h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
     color: var(--text-color);
+    margin-bottom: 0.5rem;
 }
 
+/* Container principal */
 #app-container {
     display: flex;
     min-height: 100vh;
+    position: relative;
 }
 
-/* Sidebar */
+/* Sidebar responsiva */
 .sidebar {
-    width: 280px;
+    width: var(--sidebar-width-desktop);
     background-color: var(--primary-dark);
     color: var(--white-color);
-    padding: 20px;
+    padding: var(--desktop-padding);
     display: flex;
     flex-direction: column;
     position: fixed;
-    height: 100%;
+    height: 100vh;
     left: 0;
     top: 0;
     z-index: 2000;
     box-shadow: var(--shadow-lg);
-    transition: left 0.3s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .sidebar-title {
     font-size: 1.8rem;
     font-weight: 600;
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 2rem;
     color: var(--white-color);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    padding: 0 0.5rem;
 }
 
 .sidebar .nav-link {
     color: rgba(255, 255, 255, 0.8);
-    padding: 12px 15px;
-    margin-bottom: 5px;
+    padding: 0.875rem 1rem;
+    margin-bottom: 0.25rem;
     border-radius: var(--border-radius-base);
-    transition: background-color 0.2s ease, color 0.2s ease;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
+    text-decoration: none;
+    font-weight: 500;
+    position: relative;
 }
+
 .sidebar .nav-link:hover,
 .sidebar .nav-link.active {
     background-color: var(--primary-color);
     color: var(--white-color);
-    font-weight: 500;
-}
-.sidebar .nav-link i {
-    font-size: 1.1rem;
+    transform: translateX(4px);
 }
 
-/* Main Content */
-.main-content {
-    flex-grow: 1;
-    margin-left: 280px;
-    padding: 20px;
-    transition: margin-left 0.3s;
+.sidebar .nav-link i {
+    font-size: 1.1rem;
+    margin-right: 0.75rem;
+    width: 1.25rem;
+    text-align: center;
 }
+
+/* Botão toggle do sidebar */
+.navbar-toggler {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 2001;
+    background-color: var(--primary-color);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    color: white;
+    display: none;
+    transition: all 0.3s ease;
+}
+
+.navbar-toggler:hover {
+    background-color: var(--primary-dark);
+    transform: scale(1.05);
+}
+
+.navbar-toggler:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(29, 78, 137, 0.3);
+}
+
+/* Overlay para mobile */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Conteúdo principal */
+.main-content {
+    flex: 1;
+    margin-left: var(--sidebar-width-desktop);
+    min-height: 100vh;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .content-wrapper {
-    max-width: 1200px;
+    padding: var(--desktop-padding);
+    max-width: 1400px;
     margin: 0 auto;
 }
 
-.navbar-toggler {
-    position: fixed;
-    top: 15px;
-    left: 15px;
-    z-index: 2100;
-    background-color: var(--primary-dark);
-    border-color: var(--primary-light);
-    color: var(--white-color);
-    display: none; /* só aparece em mobile */
-}
-.navbar-toggler:focus {
-    box-shadow: 0 0 0 .25rem rgba(29, 78, 137, 0.5);
-}
-
-/* Overlay para sidebar mobile */
-.overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1999;
-    display: none;
-}
-.overlay.active {
-    display: block;
-}
-
-/* Cards e visual dos KPIs */
+/* Cards responsivos */
 .card {
-    border: 1px solid var(--border-color);
+    background: var(--bg-card);
     border-radius: var(--border-radius-base);
     box-shadow: var(--shadow-base);
-    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
 }
 
-/* Garantir que as seções de conteúdo tenham altura mínima */
-.content-section {
-    min-height: 200px;
-    padding: 20px 0;
-    position: relative;
-    z-index: 1;
+.card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
 }
 
 .card-header {
     background-color: var(--primary-color);
     color: var(--white-color);
-    border-top-left-radius: var(--border-radius-base);
-    border-top-right-radius: var(--border-radius-base);
-    font-weight: 500;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: var(--border-radius-base) var(--border-radius-base) 0 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 1.25rem;
-}
-.card-header h1, .card-header h2, .card-header h3, .card-header h4, .card-header h5, .card-header h6 {
-    color: var(--white-color);
-    margin-bottom: 0;
-}
-.card-header .btn {
-    color: var(--white-color);
-    border-color: rgba(255, 255, 255, 0.5);
-}
-.card-header .btn:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-color: var(--white-color);
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
-/* KPI Cards Dashboard */
-.kpi-card {
-    padding: 1.25rem;
-    border-radius: var(--border-radius-base);
-    min-height: 120px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    color: var(--text-color);
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow-base);
+.card-header h1, .card-header h2, .card-header h3, .card-header h4, .card-header h5, .card-header h6 {
+    margin: 0;
+    color: var(--white-color);
+    font-weight: 600;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    word-wrap: break-word !important;
+    word-break: normal !important;
+    min-width: 0 !important;
+    flex: 1 !important;
 }
-.kpi-card h6 {
-    font-size: 0.9rem;
-    color: var(--text-light);
-    margin-bottom: 0.5rem;
-}
-.kpi-card .fs-2 {
-    font-size: 1.25rem !important;
-    white-space: normal;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: var(--text-color);
-    margin-bottom: 0;
-    line-height: 1.2;
-}
-.kpi-card.kpi-danger {
-    background-color: var(--danger-color);
+
+.card-header .btn {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     color: var(--white-color);
 }
+
+.card-header .btn:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* KPI Cards responsivos */
+.kpi-card {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    color: var(--white-color);
+    border-radius: var(--border-radius-base);
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+    transition: all 0.3s ease;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1));
+    pointer-events: none;
+}
+
+.kpi-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.kpi-card h6 {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    opacity: 0.9;
+}
+
+.kpi-card .fs-2 {
+    font-size: 2.5rem !important;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    line-height: 1;
+}
+
+.kpi-card.kpi-danger {
+    background: linear-gradient(135deg, var(--danger-color), #e74c3c);
+}
+
 .kpi-card.kpi-danger h6, .kpi-card.kpi-danger .fs-2 {
     color: var(--white-color);
 }
+
 .kpi-card.kpi-warning {
-    background-color: var(--warning-color);
-    color: var(--text-color);
-}
-.kpi-card.kpi-warning h6, .kpi-card.kpi-warning .fs-2 {
-    color: var(--text-color);
+    background: linear-gradient(135deg, var(--warning-color), #f39c12);
 }
 
-/* Tabelas e responsividade */
+.kpi-card.kpi-warning h6, .kpi-card.kpi-warning .fs-2 {
+    color: var(--white-color);
+}
+
+/* Tabelas responsivas */
 .table {
+    width: 100%;
+    margin-bottom: 1rem;
+    background-color: var(--bg-card);
     border-radius: var(--border-radius-base);
     overflow: hidden;
+    box-shadow: var(--shadow-base);
 }
+
+/* Melhorias para botões de ação nas tabelas */
+.table .btn {
+    margin: 0.125rem;
+    min-width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.table .btn i {
+    font-size: 0.875rem;
+}
+
+/* Garantir que os botões de ação sejam sempre visíveis */
+.table td:last-child {
+    white-space: nowrap;
+    min-width: 100px;
+}
+
+/* Melhorar visibilidade dos ícones */
+.table .btn-outline-primary,
+.table .btn-outline-danger,
+.table .btn-outline-info {
+    border-width: 1px;
+    font-weight: 500;
+}
+
+.table .btn-outline-primary:hover,
+.table .btn-outline-danger:hover,
+.table .btn-outline-info:hover {
+    transform: scale(1.05);
+}
+
 .table thead th {
     background-color: var(--primary-color);
     color: var(--white-color);
-    border-bottom: none;
-}
-.table-hover tbody tr:hover {
-    background-color: rgba(29, 78, 137, 0.08);
-}
-.table-responsive {
-    overflow-x: auto;
-    margin-bottom: 1rem;
-}
-.table-responsive table td {
-    word-break: break-word;
-    white-space: normal;
+    border: none;
+    padding: 1rem;
+    font-weight: 600;
+    text-align: left;
+    vertical-align: middle;
 }
 
-/* Paginação */
+.table-hover tbody tr:hover {
+    background-color: rgba(29, 78, 137, 0.05);
+}
+
+.table-responsive {
+    border-radius: var(--border-radius-base);
+    overflow: hidden;
+}
+
+.table-responsive table td {
+    padding: 0.875rem 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Paginação responsiva */
 .pagination .page-link {
     color: var(--primary-color);
-    border-color: var(--border-color);
-    border-radius: var(--border-radius-base);
-    margin: 0 2px;
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 0.75rem;
+    transition: all 0.2s ease;
 }
+
 .pagination .page-item.active .page-link {
     background-color: var(--primary-color);
     border-color: var(--primary-color);
     color: var(--white-color);
 }
 
-/* Formulários */
+/* Formulários responsivos */
 .form-control, .form-select {
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius-base);
-    border-color: var(--border-color);
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
 }
+
 .form-control:focus, .form-select:focus {
-    border-color: var(--primary-light);
-    box-shadow: 0 0 0 0.2rem rgba(29, 78, 137, 0.18);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(29, 78, 137, 0.1);
 }
+
+/* Botões responsivos */
 .btn {
     border-radius: var(--border-radius-base);
+    padding: 0.75rem 1.5rem;
     font-weight: 500;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    font-size: 0.95rem;
 }
+
 .btn-primary {
     background-color: var(--primary-color);
-    border-color: var(--primary-color);
+    color: var(--white-color);
 }
+
 .btn-primary:hover {
     background-color: var(--primary-dark);
-    border-color: var(--primary-dark);
+    transform: translateY(-1px);
 }
+
 .btn-success {
-    background-color: var(--secondary-color);
-    border-color: var(--secondary-color);
+    background-color: var(--success-color);
+    color: var(--white-color);
 }
+
 .btn-success:hover {
     background-color: var(--secondary-dark);
-    border-color: var(--secondary-dark);
+    transform: translateY(-1px);
 }
+
 .btn-danger {
     background-color: var(--danger-color);
-    border-color: var(--danger-color);
+    color: var(--white-color);
 }
+
 .btn-danger:hover {
-    background-color: #bb3944;
-    border-color: #bb3944;
+    background-color: #c0392b;
+    transform: translateY(-1px);
 }
+
 .btn-info {
     background-color: var(--info-color);
-    border-color: var(--info-color);
     color: var(--white-color);
 }
+
 .btn-info:hover {
-    background-color: #3d7ad6;
-    border-color: #3d7ad6;
+    background-color: #3498db;
+    transform: translateY(-1px);
 }
+
 .btn-dark {
     background-color: var(--neutral-dark);
-    border-color: var(--neutral-dark);
     color: var(--white-color);
 }
+
 .btn-dark:hover {
-    background-color: #333333;
-    border-color: #333333;
+    background-color: #2c3e50;
+    transform: translateY(-1px);
 }
 
-/* Outros elementos */
-.badge { border-radius: var(--border-radius-base); }
-.alert { border-radius: var(--border-radius-base); }
+/* Utilitários */
+.badge { 
+    border-radius: var(--border-radius-base); 
+    padding: 0.5rem 0.75rem;
+    font-weight: 500;
+}
+
+.alert { 
+    border-radius: var(--border-radius-base); 
+    border: none;
+    padding: 1rem 1.5rem;
+}
+
 .content-section h3, .content-section h4 {
+    color: var(--text-color);
     margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
 }
 
-/* RESPONSIVIDADE */
-/* Laptops/tablets */
+/* ===== RESPONSIVIDADE ===== */
+
+/* Desktop Large (1200px+) */
+@media (min-width: 1200px) {
+    .content-wrapper {
+        padding: var(--desktop-padding);
+    }
+    
+    .kpi-card .fs-2 {
+        font-size: 3rem !important;
+    }
+    
+    .modal-dialog {
+        max-width: 800px;
+    }
+}
+
+/* Desktop (992px - 1199px) */
 @media (max-width: 1199.98px) {
     .content-wrapper {
-        max-width: 100%;
-        padding: 0 12px;
+        padding: var(--tablet-padding);
+    }
+    
+    .sidebar {
+        width: var(--sidebar-width-tablet);
+    }
+    
+    .main-content {
+        margin-left: var(--sidebar-width-tablet);
+    }
+    
+    .kpi-card .fs-2 {
+        font-size: 2.25rem !important;
     }
 }
-/* Sidebar responsiva */
+
+/* Tablet (768px - 991px) */
 @media (max-width: 991.98px) {
     .sidebar {
-        left: -280px;
-        width: 280px;
-        box-shadow: none;
-        transition: left 0.3s;
+        width: var(--sidebar-width-mobile);
+        transform: translateX(-100%);
+        z-index: 2000;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
+    
     .sidebar.active {
-        left: 0;
-        box-shadow: var(--shadow-lg);
+        transform: translateX(0);
     }
-    .main-content {
-        margin-left: 0 !important;
-        padding-top: 60px;
-    }
-    .navbar-toggler {
-        display: block !important;
-    }
-    .sidebar .nav.flex-column {
-        height: calc(100% - 80px);
-        overflow-y: auto;
-    }
-    .content-wrapper {
+    
+    /* Garantir que a sidebar cubra toda a tela em mobile */
+    .sidebar {
+        width: 100%;
         max-width: 100%;
-        padding: 0 1rem;
+    }
+    
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    .navbar-toggler {
+        display: block;
+    }
+    
+    .sidebar .nav.flex-column {
+        margin-top: 2rem;
+    }
+    
+    .content-wrapper {
+        padding: var(--mobile-padding);
+        margin-top: 4rem;
+    }
+    
+    .kpi-card {
+        margin-bottom: 1rem;
+    }
+    
+    .kpi-card .fs-2 {
+        font-size: 2rem !important;
+    }
+    
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .row.g-4 {
+        --bs-gutter-x: 1rem;
+        --bs-gutter-y: 1rem;
+    }
+    
+    .row.g-3 > [class*="col-"] {
+        margin-bottom: 1rem;
     }
 }
+
+/* Mobile Large (576px - 767px) */
 @media (max-width: 767.98px) {
     .content-wrapper {
-        padding: 0 10px;
+        padding: 1rem;
     }
-    .kpi-card {
-        font-size: 0.9rem;
-        padding: 0.75rem;
-        text-align: center;
-    }
-    .kpi-card .fs-2 {
-        font-size: 1.1rem !important;
-    }
-    .card-header {
-        font-size: 1rem;
-        padding: 0.75rem 1rem;
-    }
-    .row.g-4 {
-        --bs-gutter-x: 0.5rem;
-        --bs-gutter-y: 0.5rem;
-    }
-    .row.g-3 > [class*="col-"] {
-        padding-left: 0.5rem;
-        padding-right: 0.5rem;
-    }
-}
-@media (max-width: 575.98px) {
-    .card-header, .card-body {
-        padding-left: 0.75rem;
-        padding-right: 0.75rem;
-    }
-    .kpi-card {
-        padding: 0.5rem;
-    }
-    .navbar-toggler {
-        left: 10px;
-        top: 10px;
-    }
-    .list-group-item span:first-child {
-        word-break: break-all;
-    }
-    .list-group-item {
-        padding: 0.5rem;
-    }
-    .modal-body {
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-}
-
-/* CORREÇÃO FORÇADA PARA Z-INDEX DOS MODAIS */
-.modal {
-    z-index: 99999 !important;
-}
-
-.modal-backdrop {
-    z-index: 99998 !important;
-}
-
-.modal-dialog {
-    z-index: 100000 !important;
-}
-
-/* Regras mais específicas para garantir que funcionem */
-#saleModal,
-#purchaseModal {
-    z-index: 99999 !important;
-}
-
-#saleModal .modal-dialog,
-#purchaseModal .modal-dialog {
-    z-index: 100000 !important;
-}
-
-/* Garantir que o backdrop também esteja correto */
-#saleModal + .modal-backdrop,
-#purchaseModal + .modal-backdrop {
-    z-index: 99998 !important;
-}
-
-/* Override qualquer z-index do Bootstrap */
-.modal.show {
-    z-index: 99999 !important;
-}
-
-.modal.show .modal-dialog {
-    z-index: 100000 !important;
-}
-
-/* Regras específicas para Bootstrap 5 */
-.modal.fade.show {
-    z-index: 99999 !important;
-}
-
-.modal.fade.show .modal-dialog {
-    z-index: 100000 !important;
-}
-
-/* Forçar z-index alto para todos os modais */
-body .modal {
-    z-index: 99999 !important;
-}
-
-body .modal .modal-dialog {
-    z-index: 100000 !important;
-}
-
-body .modal-backdrop {
-    z-index: 99998 !important;
-}
-
-/* Garantir que a sidebar não sobreponha os modais */
-.sidebar {
-    z-index: 2000 !important;
-}
-
-/* Garantir que os modais padrão não fiquem muito largos */
-.modal-dialog {
-    max-width: 500px !important;
-    width: 90% !important;
-}
-
-/* Responsividade para telas menores */
-@media (max-width: 768px) {
-    #saleModal .modal-dialog,
-    #purchaseModal .modal-dialog {
-        max-width: 95% !important;
-        margin: 0.5rem auto !important;
-    }
-}
-
-/* Controle do layout interno dos modais de venda e compra */
-#saleModal .modal-body,
-#purchaseModal .modal-body {
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-}
-
-/* Ajustar colunas dentro dos modais para evitar overflow */
-#saleModal .row,
-#purchaseModal .row {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-}
-
-#saleModal .col-md-5,
-#saleModal .col-md-2,
-#saleModal .col-md-3,
-#purchaseModal .col-md-5,
-#purchaseModal .col-md-2,
-#purchaseModal .col-md-3 {
-    padding-left: 0.25rem !important;
-    padding-right: 0.25rem !important;
-}
-
-/* Garantir que os selects não forcem largura excessiva */
-#saleModal select,
-#purchaseModal select {
-    max-width: 100% !important;
-    width: 100% !important;
-}
-
-/* Ajustar cards dentro dos modais */
-#saleModal .card,
-#purchaseModal .card {
-    margin-bottom: 1rem !important;
-}
-
-#saleModal .card-body,
-#purchaseModal .card-body {
-    padding: 1rem !important;
-}
-
-/* SOLUÇÃO FORÇADA PARA OS MODAIS DE VENDA E COMPRA */
-#saleModal,
-#purchaseModal {
-    z-index: 99999 !important;
-}
-
-#saleModal .modal-dialog,
-#purchaseModal .modal-dialog {
-    max-width: 600px !important;
-    width: 600px !important;
-    margin: 1.75rem auto !important;
-    position: relative !important;
-    transform: none !important;
-}
-
-/* Forçar largura específica em diferentes breakpoints */
-@media (max-width: 768px) {
-    #saleModal .modal-dialog,
-    #purchaseModal .modal-dialog {
-        max-width: 95% !important;
-        width: 95% !important;
-        margin: 0.5rem auto !important;
-    }
-}
-
-@media (min-width: 769px) and (max-width: 1024px) {
-    #saleModal .modal-dialog,
-    #purchaseModal .modal-dialog {
-        max-width: 650px !important;
-        width: 650px !important;
-    }
-}
-
-/* REGRAS ESPECÍFICAS PARA DESKTOP (telas grandes) */
-@media (min-width: 1025px) {
-    #saleModal .modal-dialog,
-    #purchaseModal .modal-dialog {
-        max-width: 600px !important;
-        width: 600px !important;
-        margin: 1.75rem auto !important;
-        /* Mover para a direita para sair de trás da sidebar */
-        margin-left: 320px !important;
-        margin-right: 20px !important;
-    }
-}
-
-/* REGRAS ESPECÍFICAS PARA TABLET (telas médias) */
-@media (min-width: 769px) and (max-width: 1024px) {
-    #saleModal .modal-dialog,
-    #purchaseModal .modal-dialog {
-        max-width: 650px !important;
-        width: 650px !important;
-        margin: 1.75rem auto !important;
-        /* Mover um pouco para a direita */
-        margin-left: 300px !important;
-        margin-right: 20px !important;
-    }
-}
-
-/* Override completo do Bootstrap */
-.modal.show #saleModal .modal-dialog,
-.modal.show #purchaseModal .modal-dialog {
-    max-width: 600px !important;
-    width: 600px !important;
-    transform: none !important;
-}
-
-/* Garantir que o conteúdo interno não force largura */
-#saleModal .modal-content,
-#purchaseModal .modal-content {
-    max-width: 100% !important;
-    width: 100% !important;
-}
-
-/* Forçar quebra de linha em elementos que possam estar causando overflow */
-#saleModal .row > *,
-#purchaseModal .row > * {
-    flex-shrink: 1 !important;
-    min-width: 0 !important;
-}
-
-/* Correção para telas grandes: sidebar visível e botão oculto */
-@media (min-width: 992px) {
+    
+    /* Melhorias específicas para sidebar em mobile */
     .sidebar {
-        left: 0 !important;
-    }
-
-    .main-content {
-        margin-left: 280px !important;
-    }
-
-    #sidebarToggle {
-        display: none !important;
-    }
-
-    #sidebar-overlay {
-        display: none !important;
-    }
-}
-
-/* SOLUÇÃO ALTERNATIVA: Posicionamento absoluto para desktop */
-@media (min-width: 769px) {
-    #saleModal,
-    #purchaseModal {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
         width: 100% !important;
-        height: 100% !important;
-        z-index: 99999 !important;
-    }
-    
-    #saleModal .modal-dialog,
-    #purchaseModal .modal-dialog {
-        position: absolute !important;
-        top: 50% !important;
-        left: 50% !important;
-        transform: translate(-50%, -50%) !important;
-        margin: 0 !important;
-        /* Ajustar posição para sair de trás da sidebar */
-        left: calc(50% + 140px) !important;
-    }
-}
-
-/* CORREÇÕES ESPECÍFICAS PARA MODAIS DE COMPRA E VENDA */
-
-/* 1. Corrigir botão Adicionar para não quebrar texto */
-#btnAddPurchaseProduct,
-#btnAddProduct {
-    white-space: nowrap !important;
-    word-break: keep-all !important;
-    min-width: 150px !important;
-    height: 40px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 14px !important;
-    padding: 8px 20px !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    margin-top: 10px !important;
-}
-
-/* 2. ELIMINAR COMPLETAMENTE O SCROLL - ABORDAGEM AGRESSIVA */
-.modal-body {
-    max-height: none !important;
-    height: auto !important;
-    overflow: visible !important;
-    overflow-y: visible !important;
-    overflow-x: hidden !important;
-    padding: 15px !important;
-}
-
-/* 3. Ajustar modal para não ter scroll interno */
-.modal {
-    overflow: visible !important;
-    overflow-y: visible !important;
-}
-
-.modal-dialog {
-    margin-top: 1rem !important;
-    margin-bottom: 1rem !important;
-    max-height: none !important;
-    height: auto !important;
-    overflow: visible !important;
-}
-
-/* 4. Garantir que o conteúdo do modal não force scroll */
-.modal-content {
-    max-height: none !important;
-    height: auto !important;
-    overflow: visible !important;
-}
-
-/* 5. Ajustar seção de produtos para não ter scroll */
-.purchase-products-section,
-.sale-products-section {
-    max-height: none !important;
-    height: auto !important;
-    overflow: visible !important;
-}
-
-/* 6. Garantir que os campos de input não quebrem */
-.form-control, .form-select {
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-}
-
-/* 7. ELIMINAR SCROLL ESPECÍFICO DOS MODAIS DE COMPRA E VENDA */
-#purchaseModal .modal-body,
-#saleModal .modal-body {
-    max-height: none !important;
-    height: auto !important;
-    overflow: visible !important;
-    overflow-y: visible !important;
-    overflow-x: hidden !important;
-    padding: 15px !important;
-}
-
-#purchaseModal .modal-dialog,
-#saleModal .modal-dialog {
-    margin-top: 1rem !important;
-    margin-bottom: 1rem !important;
-    max-height: none !important;
-    height: auto !important;
-    overflow: visible !important;
-}
-
-#purchaseModal .modal-content,
-#saleModal .modal-content {
-    max-height: none !important;
-    height: auto !important;
-    overflow: visible !important;
-}
-
-/* 8. REDUZIR ESPAÇAMENTOS INTERNOS */
-#purchaseModal .mb-3,
-#saleModal .mb-3 {
-    margin-bottom: 0.75rem !important;
-}
-
-#purchaseModal .card,
-#saleModal .card {
-    margin-bottom: 0.75rem !important;
-}
-
-#purchaseModal .card-body,
-#saleModal .card-body {
-    padding: 0.75rem !important;
-}
-
-#purchaseModal .card-header,
-#saleModal .card-header {
-    padding: 0.5rem 0.75rem !important;
-    font-size: 0.9rem !important;
-}
-
-/* 9. ELIMINAR SCROLL DAS LISTAS DE PRODUTOS */
-#purchaseProductsList,
-#saleProductsList {
-    max-height: none !important;
-    height: auto !important;
-    overflow: visible !important;
-    margin-bottom: 0.5rem !important;
-}
-
-/* 10. REDUZIR ESPAÇAMENTO DOS CAMPOS */
-#purchaseModal .form-label,
-#saleModal .form-label {
-    margin-bottom: 0.25rem !important;
-    font-size: 0.85rem !important;
-}
-
-#purchaseModal .form-control,
-#purchaseModal .form-select,
-#saleModal .form-control,
-#saleModal .form-select {
-    padding: 0.375rem 0.5rem !important;
-    font-size: 0.85rem !important;
-    height: auto !important;
-}
-
-/* 11. REDUZIR ALTURA DO TEXTAREA */
-#purchaseModal textarea,
-#saleModal textarea {
-    min-height: 60px !important;
-    max-height: none !important;
-    overflow: visible !important;
-}
-
-/* 12. Garantir que botões em modais não quebrem */
-.modal .btn {
-    white-space: nowrap !important;
-    word-break: keep-all !important;
-}
-
-/* 13. Ajustar altura dos modais para evitar scroll */
-@media (min-height: 600px) {
-    .modal-dialog {
-        margin-top: 0.5rem !important;
-        margin-bottom: 0.5rem !important;
-    }
-}
-
-/* 14. Corrigir overflow em telas menores */
-@media (max-height: 700px) {
-    .modal-dialog {
-        margin-top: 0.25rem !important;
-        margin-bottom: 0.25rem !important;
-        max-height: none !important;
-        height: auto !important;
-    }
-    
-    .modal-body {
-        padding: 10px !important;
-        max-height: none !important;
-        height: auto !important;
-    }
-    
-    #purchaseProductsList,
-    #saleProductsList {
-        max-height: none !important;
-        height: auto !important;
-    }
-}
-
-/* 15. Responsividade para telas menores */
-@media (max-width: 768px) {
-    #btnAddPurchaseProduct,
-    #btnAddProduct {
-        width: 100% !important;
-        margin-top: 15px !important;
-    }
-    
-    #purchaseModal .modal-dialog,
-    #saleModal .modal-dialog {
-        max-height: none !important;
-        height: auto !important;
-        margin: 0.25rem auto !important;
-    }
-}
-
-/* 16. FORÇAR ELIMINAÇÃO DE SCROLL EM TODOS OS ELEMENTOS DOS MODAIS */
-#purchaseModal *,
-#saleModal * {
-    max-height: none !important;
-    height: auto !important;
-}
-
-#purchaseModal .card-body,
-#saleModal .card-body {
-    overflow: visible !important;
-    max-height: none !important;
-    height: auto !important;
-}
-
-#purchaseModal .card,
-#saleModal .card {
-    overflow: visible !important;
-    max-height: none !important;
-    height: auto !important;
-}
-
-/* 17. Ajustar altura máxima dos modais */
-@media (max-height: 800px) {
-    .modal-dialog {
-        max-height: none !important;
-        height: auto !important;
-        margin-top: 0.25rem !important;
-        margin-bottom: 0.25rem !important;
-    }
-}
-
-/* 18. OVERRIDE FINAL - FORÇAR SEM SCROLL */
-.modal.show .modal-dialog {
-    max-height: none !important;
-    height: auto !important;
-    overflow: visible !important;
-}
-
-.modal.show .modal-content {
-    max-height: none !important;
-    height: auto !important;
-    overflow: visible !important;
-}
-
-.modal.show .modal-body {
-    max-height: none !important;
-    height: auto !important;
-    overflow: visible !important;
-}
-
-/* ========================================
-   RESPONSIVIDADE COMPLETA DO SISTEMA
-   ======================================== */
-
-/* 1. RESPONSIVIDADE GERAL - LAYOUT PRINCIPAL */
-@media (max-width: 1200px) {
-    .main-content {
-        margin-left: 250px !important;
-    }
-    
-    .sidebar {
-        width: 250px !important;
-    }
-    
-    .content-wrapper {
-        padding: 1.5rem !important;
-    }
-}
-
-@media (max-width: 992px) {
-    .main-content {
-        margin-left: 200px !important;
-    }
-    
-    .sidebar {
-        width: 200px !important;
-    }
-    
-    .content-wrapper {
-        padding: 1rem !important;
-    }
-    
-    .card {
-        margin-bottom: 1rem !important;
-    }
-}
-
-@media (max-width: 768px) {
-    .main-content {
-        margin-left: 0 !important;
-        width: 100% !important;
-    }
-    
-    .sidebar {
-        transform: translateX(-100%) !important;
-        width: 280px !important;
+        max-width: 100% !important;
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
     .sidebar.active {
         transform: translateX(0) !important;
     }
     
-    .content-wrapper {
-        padding: 0.75rem !important;
+    /* Garantir que o overlay funcione corretamente */
+    .overlay.active {
+        opacity: 1;
+        visibility: visible;
+        z-index: 1999;
     }
     
-    .card-header {
-        padding: 0.75rem !important;
-    }
-    
-    .card-body {
-        padding: 0.75rem !important;
-    }
-    
+    /* Melhorias para tabelas em mobile/tablet */
     .table-responsive {
-        font-size: 0.85rem !important;
+        font-size: 0.875rem;
     }
     
-    .btn {
-        font-size: 0.85rem !important;
-        padding: 0.375rem 0.75rem !important;
-    }
-}
-
-@media (max-width: 576px) {
-    .content-wrapper {
-        padding: 0.5rem !important;
+    /* Garantir que a coluna de ações seja sempre visível */
+    .table th:last-child,
+    .table td:last-child {
+        display: table-cell !important;
+        min-width: 90px;
+        width: 90px;
+        text-align: center;
     }
     
-    .card-header {
-        padding: 0.5rem !important;
-    }
-    
-    .card-body {
-        padding: 0.5rem !important;
-    }
-    
-    .table {
-        font-size: 0.8rem !important;
-    }
-    
-    .btn {
-        font-size: 0.8rem !important;
-        padding: 0.25rem 0.5rem !important;
-    }
-    
-    .form-control, .form-select {
-        font-size: 0.85rem !important;
-        padding: 0.375rem 0.5rem !important;
-    }
-}
-
-/* 2. RESPONSIVIDADE DOS MODAIS */
-@media (max-width: 1200px) {
-    .modal-dialog {
-        max-width: 90% !important;
-        margin: 1rem auto !important;
-    }
-    
-    #purchaseModal .modal-dialog,
-    #saleModal .modal-dialog {
-        max-width: 90% !important;
-        width: 90% !important;
-    }
-}
-
-@media (max-width: 992px) {
-    .modal-dialog {
-        max-width: 95% !important;
-        margin: 0.5rem auto !important;
-    }
-    
-    #purchaseModal .modal-dialog,
-    #saleModal .modal-dialog {
-        max-width: 95% !important;
-        width: 95% !important;
-    }
-    
-    .modal-body {
-        padding: 1rem !important;
-    }
-}
-
-@media (max-width: 768px) {
-    .modal-dialog {
-        max-width: 98% !important;
-        margin: 0.25rem auto !important;
-    }
-    
-    #purchaseModal .modal-dialog,
-    #saleModal .modal-dialog {
-        max-width: 98% !important;
-        width: 98% !important;
-        margin: 0.25rem auto !important;
-    }
-    
-    .modal-body {
-        padding: 0.75rem !important;
-    }
-    
-    /* Ajustar layout dos campos nos modais */
-    #purchaseModal .row,
-    #saleModal .row {
-        margin-left: -0.25rem !important;
-        margin-right: -0.25rem !important;
-    }
-    
-    #purchaseModal .col-md-5,
-    #purchaseModal .col-md-2,
-    #saleModal .col-md-5,
-    #saleModal .col-md-2 {
-        padding-left: 0.25rem !important;
-        padding-right: 0.25rem !important;
-        margin-bottom: 0.5rem !important;
-    }
-    
-    /* Botão Adicionar em linha separada */
-    #purchaseModal .row:last-child,
-    #saleModal .row:last-child {
-        margin-top: 0.5rem !important;
-    }
-    
-    #btnAddPurchaseProduct,
-    #btnAddProduct {
-        width: 100% !important;
-        margin-top: 0.5rem !important;
-    }
-}
-
-@media (max-width: 576px) {
-    .modal-dialog {
-        max-width: 100% !important;
-        margin: 0 !important;
-        height: 100vh !important;
-        max-height: 100vh !important;
-    }
-    
-    #purchaseModal .modal-dialog,
-    #saleModal .modal-dialog {
-        max-width: 100% !important;
-        width: 100% !important;
-        margin: 0 !important;
-        height: 100vh !important;
-        max-height: 100vh !important;
-    }
-    
-    .modal-body {
-        padding: 0.5rem !important;
-        height: calc(100vh - 120px) !important;
-        overflow-y: auto !important;
-    }
-    
-    /* Campos em coluna única */
-    #purchaseModal .col-md-5,
-    #purchaseModal .col-md-2,
-    #saleModal .col-md-5,
-    #saleModal .col-md-2 {
-        width: 100% !important;
-        margin-bottom: 0.75rem !important;
-    }
-    
-    .form-label {
-        font-size: 0.8rem !important;
-        margin-bottom: 0.25rem !important;
-    }
-    
-    .form-control, .form-select {
-        font-size: 0.8rem !important;
-        padding: 0.5rem !important;
-        height: 40px !important;
-    }
-    
-    .btn {
-        font-size: 0.8rem !important;
-        padding: 0.5rem 1rem !important;
-        height: 40px !important;
-    }
-}
-
-/* 3. RESPONSIVIDADE DAS TABELAS */
-@media (max-width: 992px) {
-    .table-responsive {
-        border: none !important;
-    }
-    
-    .table {
-        margin-bottom: 0 !important;
-    }
-    
-    .table thead th {
-        font-size: 0.85rem !important;
-        padding: 0.5rem 0.25rem !important;
-    }
-    
-    .table tbody td {
-        font-size: 0.8rem !important;
-        padding: 0.5rem 0.25rem !important;
-    }
-}
-
-@media (max-width: 768px) {
-    .table thead th {
-        font-size: 0.8rem !important;
-        padding: 0.375rem 0.125rem !important;
-    }
-    
-    .table tbody td {
-        font-size: 0.75rem !important;
-        padding: 0.375rem 0.125rem !important;
-    }
-    
-    /* Ocultar colunas menos importantes */
+    /* Ocultar colunas menos importantes, mas manter ações */
     .table th:nth-child(4),
     .table td:nth-child(4) {
-        display: none !important;
-    }
-}
-
-@media (max-width: 576px) {
-    .table thead th {
-        font-size: 0.75rem !important;
-        padding: 0.25rem 0.125rem !important;
+        display: none;
     }
     
-    .table tbody td {
-        font-size: 0.7rem !important;
-        padding: 0.25rem 0.125rem !important;
+    /* Melhorar botões de ação */
+    .table .btn {
+        min-width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
+        margin: 0.125rem;
+        padding: 0.375rem;
     }
     
-    /* Mostrar apenas colunas essenciais */
-    .table th:nth-child(3),
-    .table td:nth-child(3) {
-        display: none !important;
+    .table .btn i {
+        font-size: 0.8rem;
     }
-}
-
-/* 4. RESPONSIVIDADE DOS CARDS E KPIs */
-@media (max-width: 1200px) {
+    
     .kpi-card {
-        margin-bottom: 1rem !important;
+        padding: 1.25rem;
     }
     
     .kpi-card .fs-2 {
-        font-size: 1.5rem !important;
-    }
-}
-
-@media (max-width: 992px) {
-    .kpi-card {
-        margin-bottom: 0.75rem !important;
-    }
-    
-    .kpi-card h6 {
-        font-size: 0.8rem !important;
-    }
-    
-    .kpi-card .fs-2 {
-        font-size: 1.25rem !important;
-    }
-}
-
-@media (max-width: 768px) {
-    .kpi-card {
-        margin-bottom: 0.5rem !important;
-        padding: 0.75rem !important;
-    }
-    
-    .kpi-card h6 {
-        font-size: 0.75rem !important;
-        margin-bottom: 0.25rem !important;
-    }
-    
-    .kpi-card .fs-2 {
-        font-size: 1rem !important;
-    }
-}
-
-/* 5. RESPONSIVIDADE DOS FORMULÁRIOS */
-@media (max-width: 768px) {
-    .form-group {
-        margin-bottom: 0.75rem !important;
-    }
-    
-    .form-label {
-        font-size: 0.85rem !important;
-        margin-bottom: 0.25rem !important;
-    }
-    
-    .form-control, .form-select {
-        font-size: 0.85rem !important;
-        padding: 0.5rem !important;
-    }
-    
-    .input-group {
-        margin-bottom: 0.75rem !important;
-    }
-}
-
-@media (max-width: 576px) {
-    .form-group {
-        margin-bottom: 0.5rem !important;
-    }
-    
-    .form-label {
-        font-size: 0.8rem !important;
-        margin-bottom: 0.25rem !important;
-    }
-    
-    .form-control, .form-select {
-        font-size: 0.8rem !important;
-        padding: 0.5rem !important;
-    }
-}
-
-/* 6. RESPONSIVIDADE DOS BOTÕES */
-@media (max-width: 768px) {
-    .btn {
-        font-size: 0.85rem !important;
-        padding: 0.5rem 0.75rem !important;
-    }
-    
-    .btn-sm {
-        font-size: 0.8rem !important;
-        padding: 0.25rem 0.5rem !important;
-    }
-    
-    .btn-lg {
-        font-size: 0.9rem !important;
-        padding: 0.75rem 1rem !important;
-    }
-}
-
-@media (max-width: 576px) {
-    .btn {
-        font-size: 0.8rem !important;
-        padding: 0.5rem 0.75rem !important;
-    }
-    
-    .btn-sm {
-        font-size: 0.75rem !important;
-        padding: 0.25rem 0.5rem !important;
-    }
-    
-    .btn-lg {
-        font-size: 0.85rem !important;
-        padding: 0.75rem 1rem !important;
-    }
-}
-
-/* 7. RESPONSIVIDADE DA SIDEBAR */
-@media (max-width: 768px) {
-    .sidebar {
-        z-index: 1050 !important;
-    }
-    
-    .sidebar .nav-link {
-        padding: 0.75rem 1rem !important;
-        font-size: 0.9rem !important;
-    }
-    
-    .sidebar .nav-link i {
-        font-size: 1rem !important;
-        margin-right: 0.5rem !important;
-    }
-}
-
-@media (max-width: 576px) {
-    .sidebar {
-        width: 100% !important;
-    }
-    
-    .sidebar .nav-link {
-        padding: 1rem !important;
-        font-size: 1rem !important;
-    }
-    
-    .sidebar .nav-link i {
-        font-size: 1.1rem !important;
-        margin-right: 0.75rem !important;
-    }
-}
-
-/* 8. RESPONSIVIDADE DO HEADER E NAVEGAÇÃO */
-@media (max-width: 768px) {
-    .navbar {
-        padding: 0.5rem 1rem !important;
-    }
-    
-    .navbar-brand {
-        font-size: 1.1rem !important;
-    }
-    
-    .navbar-toggler {
-        padding: 0.25rem 0.5rem !important;
-        font-size: 0.9rem !important;
-    }
-}
-
-@media (max-width: 576px) {
-    .navbar {
-        padding: 0.5rem !important;
-    }
-    
-    .navbar-brand {
-        font-size: 1rem !important;
-    }
-    
-    .navbar-toggler {
-        padding: 0.25rem 0.5rem !important;
-        font-size: 0.8rem !important;
-    }
-}
-
-/* 9. RESPONSIVIDADE ESPECÍFICA PARA TELAS MUITO PEQUENAS */
-@media (max-width: 480px) {
-    .content-wrapper {
-        padding: 0.25rem !important;
-    }
-    
-    .card {
-        margin-bottom: 0.5rem !important;
+        font-size: 1.75rem !important;
     }
     
     .card-header {
-        padding: 0.5rem !important;
+        padding: 1rem;
     }
     
     .card-body {
-        padding: 0.5rem !important;
+        padding: 1rem;
     }
     
-    .modal-body {
-        padding: 0.25rem !important;
+    .table-responsive {
+        font-size: 0.875rem;
     }
     
     .btn {
-        font-size: 0.75rem !important;
-        padding: 0.375rem 0.5rem !important;
+        padding: 0.625rem 1.25rem;
+        font-size: 0.875rem;
     }
     
     .form-control, .form-select {
-        font-size: 0.75rem !important;
-        padding: 0.375rem 0.5rem !important;
-    }
-}
-
-/* 10. RESPONSIVIDADE PARA TELAS ALTAS */
-@media (min-height: 800px) {
-    .modal-dialog {
-        margin-top: 2rem !important;
-        margin-bottom: 2rem !important;
+        padding: 0.625rem 0.875rem;
+        font-size: 0.875rem;
     }
     
-    .content-wrapper {
-        padding: 2rem !important;
+    .sidebar {
+        padding: var(--mobile-padding);
+    }
+    
+    .sidebar .nav-link {
+        padding: 0.75rem 0.875rem;
+        font-size: 0.95rem;
+    }
+    
+    .sidebar .nav-link i {
+        font-size: 1rem;
+        margin-right: 0.625rem;
+    }
+    
+    .navbar-toggler {
+        top: 0.75rem;
+        left: 0.75rem;
+        padding: 0.375rem;
     }
 }
 
-/* 11. RESPONSIVIDADE PARA TELAS LANDSCAPE */
-@media (max-height: 500px) and (orientation: landscape) {
-    .modal-dialog {
-        margin-top: 0.5rem !important;
-        margin-bottom: 0.5rem !important;
-        max-height: 95vh !important;
+/* Mobile (até 575px) */
+@media (max-width: 575.98px) {
+    .card-header, .card-body {
+        padding: 0.875rem;
+    }
+    
+    /* Garantir que títulos dos card-headers não sejam truncados em mobile */
+    .card-header h1, .card-header h2, .card-header h3, .card-header h4, .card-header h5, .card-header h6 {
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        word-wrap: break-word !important;
+        word-break: normal !important;
+        min-width: 0 !important;
+        flex: 1 !important;
+        font-size: 1rem !important;
+        line-height: 1.2 !important;
+    }
+    
+    .kpi-card {
+        padding: 1rem;
+    }
+    
+    .navbar-toggler {
+        top: 0.5rem;
+        left: 0.5rem;
+        padding: 0.25rem;
+    }
+    
+    .list-group-item span:first-child {
+        font-weight: 600;
+    }
+    
+    .list-group-item {
+        padding: 0.75rem;
     }
     
     .modal-body {
-        padding: 0.5rem !important;
-        max-height: 80vh !important;
-        overflow-y: auto !important;
+        padding: 1rem;
     }
     
-    .content-wrapper {
-        padding: 0.5rem !important;
+    .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .btn + .btn {
+        margin-left: 0;
+    }
+    
+    .form-control, .form-select {
+        margin-bottom: 0.75rem;
+    }
+    
+    /* Melhorias específicas para tabelas em mobile */
+    .table thead th,
+    .table tbody td {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.8rem;
+    }
+    
+    /* Garantir que a coluna de ações seja sempre visível */
+    .table th:last-child,
+    .table td:last-child {
+        display: table-cell !important;
+        min-width: 80px;
+        width: 80px;
+        text-align: center;
+    }
+    
+    /* Ocultar colunas menos importantes em mobile, mas manter ações */
+    .table th:nth-child(4),
+    .table td:nth-child(4) {
+        display: none;
+    }
+    
+    /* Melhorar botões de ação em mobile */
+    .table .btn {
+        min-width: 28px;
+        height: 28px;
+        font-size: 0.75rem;
+        margin: 0.0625rem;
+        padding: 0.25rem;
+    }
+    
+    .table .btn i {
+        font-size: 0.75rem;
+    }
+    
+    /* Garantir que os ícones sejam sempre visíveis */
+    .table .btn-outline-primary,
+    .table .btn-outline-danger,
+    .table .btn-outline-info {
+        border-width: 1.5px;
+        font-weight: 600;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        min-width: 28px !important;
+        height: 28px !important;
+        padding: 0.25rem !important;
+        margin: 0.0625rem !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+    
+    /* Garantir que os ícones dentro dos botões sejam sempre visíveis */
+    .table .btn-outline-primary i,
+    .table .btn-outline-danger i,
+    .table .btn-outline-info i {
+        font-size: 0.75rem !important;
+        display: inline-block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+    
+    .sidebar-title {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .sidebar .nav-link {
+        padding: 0.625rem 0.75rem;
+        font-size: 0.875rem;
+    }
+    
+    .sidebar .nav-link i {
+        font-size: 0.9rem;
+        margin-right: 0.5rem;
+    }
+    
+    /* Regras específicas para mobile nas telas de vendas e compras */
+    #salesSection .table .btn,
+    #purchasesSection .table .btn {
+        min-width: 28px !important;
+        height: 28px !important;
+        padding: 0.25rem !important;
+        margin: 0.0625rem !important;
+        font-size: 0.75rem !important;
+    }
+    
+    #salesSection .table .btn i,
+    #purchasesSection .table .btn i {
+        font-size: 0.75rem !important;
+    }
+    
+    #salesSection .table td:last-child,
+    #purchasesSection .table td:last-child {
+        min-width: 90px !important;
+        width: 90px !important;
     }
 }
 
-/* 12. UTILITÁRIOS RESPONSIVOS */
+/* Regras específicas para telas de vendas e compras */
+#salesSection .table .btn,
+#purchasesSection .table .btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px !important;
+    height: 32px !important;
+    padding: 0.375rem !important;
+    margin: 0.125rem !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    border-width: 1.5px !important;
+    font-weight: 500 !important;
+}
+
+#salesSection .table .btn i,
+#purchasesSection .table .btn i {
+    font-size: 0.875rem !important;
+    display: inline-block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+#salesSection .table td:last-child,
+#purchasesSection .table td:last-child {
+    display: table-cell !important;
+    min-width: 120px !important;
+    width: 120px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+}
+
+/* Modais responsivos */
+.modal {
+    z-index: 3000;
+}
+
+.modal-backdrop {
+    z-index: 2999;
+}
+
+.modal-dialog {
+    margin: 1rem auto;
+    max-width: 90%;
+    transition: all 0.3s ease;
+}
+
+#saleModal,
+#purchaseModal,
+#clientModal,
+#productModal,
+#userModal,
+#supplierModal {
+    z-index: 3000;
+}
+
+#saleModal .modal-dialog,
+#purchaseModal .modal-dialog {
+    max-width: 800px;
+    width: 90%;
+}
+
+#saleModal + .modal-backdrop,
+#purchaseModal + .modal-backdrop {
+    z-index: 2999;
+}
+
+.modal.show {
+    display: block;
+}
+
+.modal.show .modal-dialog {
+    transform: none;
+}
+
+.modal.fade.show {
+    opacity: 1;
+}
+
+.modal.fade.show .modal-dialog {
+    transform: none;
+}
+
+body .modal {
+    z-index: 3000;
+}
+
+body .modal .modal-dialog {
+    z-index: 3001;
+}
+
+body .modal-backdrop {
+    z-index: 2999;
+}
+
+/* Ajustes específicos para modais em diferentes tamanhos */
+@media (max-width: 768px) {
+    #saleModal .modal-dialog,
+    #purchaseModal .modal-dialog {
+        max-width: 95%;
+        width: 95%;
+        margin: 0.5rem auto;
+    }
+    
+    .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+    
+    .modal-content {
+        border-radius: 0.5rem;
+    }
+    
+    .modal-header {
+        padding: 1rem;
+    }
+    
+    .modal-footer {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    #saleModal .modal-dialog,
+    #purchaseModal .modal-dialog {
+        max-width: 100%;
+        width: 100%;
+        margin: 0;
+        height: 100vh;
+        max-height: 100vh;
+    }
+    
+    .modal-content {
+        height: 100vh;
+        border-radius: 0;
+    }
+    
+    .modal-body {
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+    }
+    
+    .modal-header {
+        padding: 0.75rem;
+    }
+    
+    .modal-footer {
+        padding: 0.75rem;
+    }
+}
+
+/* Ajustes para orientação landscape em mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+    .modal-dialog {
+        max-height: 90vh;
+        margin: 0.5rem auto;
+    }
+    
+    .modal-body {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+    
+    .content-wrapper {
+        padding: 0.75rem;
+    }
+}
+
+/* Ajustes para telas muito altas */
+@media (min-height: 800px) {
+    .modal-dialog {
+        max-height: 80vh;
+    }
+    
+    .content-wrapper {
+        padding: 2rem;
+    }
+}
+
+/* Classes utilitárias responsivas */
 @media (max-width: 768px) {
     .d-md-none {
-        display: block !important;
+        display: none !important;
     }
     
     .d-md-block {
-        display: none !important;
+        display: block !important;
     }
     
     .text-md-start {
-        text-align: center !important;
+        text-align: left !important;
     }
     
     .text-md-end {
-        text-align: center !important;
+        text-align: right !important;
     }
 }
 
 @media (max-width: 576px) {
     .d-sm-none {
-        display: block !important;
-    }
-    
-    .d-sm-block {
         display: none !important;
     }
     
+    .d-sm-block {
+        display: block !important;
+    }
+    
     .text-sm-start {
-        text-align: center !important;
+        text-align: left !important;
     }
     
     .text-sm-end {
-        text-align: center !important;
+        text-align: right !important;
     }
 }
+
+/* Animações suaves */
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+/* Melhorias de acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Suporte para modo escuro (se implementado no futuro) */
+@media (prefers-color-scheme: dark) {
+    /* Estilos para modo escuro podem ser adicionados aqui */
+}
+
+/* Impressão */
+@media print {
+    .sidebar,
+    .navbar-toggler,
+    .btn,
+    .modal {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+    
+    .content-wrapper {
+        padding: 0 !important;
+    }
+    
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #ccc !important;
+    }
+}
+
+/* Regras específicas para seções de detalhes */
+#saleDetailSection .card-header,
+#purchaseDetailSection .card-header {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    word-wrap: break-word !important;
+    word-break: normal !important;
+    min-width: 0 !important;
+    flex: 1 !important;
+}
+
+#saleDetailSection .card-header h1,
+#saleDetailSection .card-header h2,
+#saleDetailSection .card-header h3,
+#saleDetailSection .card-header h4,
+#saleDetailSection .card-header h5,
+#saleDetailSection .card-header h6,
+#purchaseDetailSection .card-header h1,
+#purchaseDetailSection .card-header h2,
+#purchaseDetailSection .card-header h3,
+#purchaseDetailSection .card-header h4,
+#purchaseDetailSection .card-header h5,
+#purchaseDetailSection .card-header h6 {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    word-wrap: break-word !important;
+    word-break: normal !important;
+    min-width: 0 !important;
+    flex: 1 !important;
+    font-size: 1rem !important;
+    line-height: 1.2 !important;
+    color: var(--white-color) !important;
+}
+
+    
+
+
+
+
+
+

@@ -1412,39 +1412,58 @@
                     paymentFormHtml = `
                         <div class="card">
                             <div class="card-header">
-                                <h5>Registrar Pagamento</h5>
+                                <h5><i class="bi bi-plus-circle me-2"></i>Registrar Pagamento</h5>
                                 ${detailActionButtonsHtml}
                             </div>
                             <div class="card-body">
                                 <form id="paymentForm" data-sale-id="${sale.id}">
                                     <div class="mb-3">
-                                        <label for="paymentValue" class="form-label">Valor</label>
-                                        <input type="number" step="0.01" class="form-control" id="paymentValue" required>
+                                        <label for="paymentValue" class="form-label">
+                                            <i class="bi bi-currency-dollar me-1"></i>Valor
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">R$</span>
+                                            <input type="number" step="0.01" class="form-control" id="paymentValue" 
+                                                   placeholder="0,00" required>
+                                        </div>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="paymentFormaNew" class="form-label">Forma de Pagamento</label>
+                                        <label for="paymentFormaNew" class="form-label">
+                                            <i class="bi bi-credit-card me-1"></i>Forma de Pagamento
+                                        </label>
                                         <select class="form-select" id="paymentFormaNew">
-                                            <option value="Dinheiro">Dinheiro</option>
-                                            <option value="Cartão de Crédito">Cartão de Crédito</option>
-                                            <option value="Crediário">Crediário</option>
-                                            <option value="PIX">PIX</option>
+                                            <option value="Dinheiro">💵 Dinheiro</option>
+                                            <option value="Cartão de Crédito">💳 Cartão de Crédito</option>
+                                            <option value="Crediário">🏦 Crediário</option>
+                                            <option value="PIX">📱 PIX</option>
                                         </select>
                                     </div>
                                     <div class="row" id="newPaymentDetailsFields">
                                         <div class="col-md-6 mb-3" id="newParcelasField" style="display: none;">
-                                            <label for="newPaymentParcelas" class="form-label">Parcelas</label>
-                                            <input type="number" class="form-control" id="newPaymentParcelas" value="1" min="1">
+                                            <label for="newPaymentParcelas" class="form-label">
+                                                <i class="bi bi-calendar-check me-1"></i>Parcelas
+                                            </label>
+                                            <input type="number" class="form-control" id="newPaymentParcelas" 
+                                                   value="1" min="1" placeholder="1">
                                         </div>
                                         <div class="col-md-6 mb-3" id="newBandeiraCartaoField" style="display: none;">
-                                            <label for="newPaymentBandeiraCartao" class="form-label">Bandeira Cartão</label>
-                                            <input type="text" class="form-control" id="newPaymentBandeiraCartao" placeholder="Ex: Visa, Mastercard">
+                                            <label for="newPaymentBandeiraCartao" class="form-label">
+                                                <i class="bi bi-credit-card me-1"></i>Bandeira
+                                            </label>
+                                            <input type="text" class="form-control" id="newPaymentBandeiraCartao" 
+                                                   placeholder="Ex: Visa, Mastercard">
                                         </div>
                                         <div class="col-md-6 mb-3" id="newBancoCrediarioField" style="display: none;">
-                                            <label for="newPaymentBancoCrediario" class="form-label">Banco Crediário</label>
-                                            <input type="text" class="form-control" id="newPaymentBancoCrediario" placeholder="Ex: Banco X, Financeira Y">
+                                            <label for="newPaymentBancoCrediario" class="form-label">
+                                                <i class="bi bi-bank me-1"></i>Banco/Instituição
+                                            </label>
+                                            <input type="text" class="form-control" id="newPaymentBancoCrediario" 
+                                                   placeholder="Ex: Banco X, Financeira Y">
                                         </div>
                                     </div>
-                                    <button type="submit" class="btn btn-success w-100">Registrar</button>
+                                    <button type="submit" class="btn btn-success w-100">
+                                        <i class="bi bi-check-circle me-2"></i>Registrar Pagamento
+                                    </button>
                                 </form>
                             </div>
                         </div>
@@ -1453,49 +1472,99 @@
 
                 newSection.innerHTML = `
                     <div class="container-fluid h-100">
+                        <!-- Breadcrumb Profissional -->
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="#" class="nav-back" data-section="salesSection">Vendas</a></li>
-                                <li class="breadcrumb-item active" aria-current="page">Detalhes da Venda #${sale.id}</li>
+                                <li class="breadcrumb-item">
+                                    <a href="#" class="nav-back" data-section="salesSection">
+                                        <i class="bi bi-house-door"></i> Vendas
+                                    </a>
+                                </li>
+                                <li class="breadcrumb-item active" aria-current="page">
+                                    <i class="bi bi-receipt"></i> Detalhes da Venda #${sale.id}
+                                </li>
                             </ol>
                         </nav>
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h3>Detalhes da Venda #${sale.id}</h3>
+
+                        <!-- Header Principal -->
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h3><i class="bi bi-receipt me-2"></i>Detalhes da Venda #${sale.id}</h3>
+                                <p class="text-muted mb-0">
+                                    <i class="bi bi-calendar3 me-1"></i>
+                                    Criada em ${utils.formatDate(sale.createdAt || new Date())}
+                                </p>
+                            </div>
                             <button class="btn btn-outline-secondary nav-back" data-section="salesSection">
-                                <i class="bi bi-arrow-left"></i> Voltar para Vendas
+                                <i class="bi bi-arrow-left me-2"></i> Voltar para Vendas
                             </button>
                         </div>
-                        <div class="row">
+
+                        <!-- Conteúdo Principal -->
+                        <div class="row g-4">
+                            <!-- Coluna Esquerda - Itens e Pagamentos -->
                             <div class="col-lg-8">
+                                <!-- Card de Itens da Venda -->
                                 <div class="card mb-4">
                                     <div class="card-header">
-                                        <h4>Itens da Venda</h4>
+                                        <h4><i class="bi bi-box me-2"></i>Itens da Venda</h4>
+                                        <span class="badge bg-primary fs-6">${sale.saleProducts?.length || 0} item(s)</span>
                                     </div>
                                     <div class="card-body">
                                         ${productsHtml}
                                     </div>
                                 </div>
+
+                                <!-- Card de Histórico de Pagamentos -->
                                 <div class="card mb-4">
                                     <div class="card-header">
-                                        <h4>Histórico de Pagamentos</h4>
+                                        <h4><i class="bi bi-credit-card me-2"></i>Histórico de Pagamentos</h4>
+                                        <span class="badge bg-success fs-6">${sale.payments?.length || 0} pagamento(s)</span>
                                     </div>
                                     <div class="card-body">
                                         ${paymentsHTML}
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Coluna Direita - Resumo e Ações -->
                             <div class="col-lg-4">
+                                <!-- Card de Resumo da Venda -->
                                 <div class="card mb-4">
                                     <div class="card-header">
-                                        <h5>Resumo da Venda</h5>
+                                        <h5><i class="bi bi-graph-up me-2"></i>Resumo da Venda</h5>
                                     </div>
                                     <div class="card-body">
-                                        <p><strong>Cliente:</strong> ${sale.client?.nome || 'Cliente não informado'}</p>
-                                        <p><strong>Valor Total:</strong> ${utils.formatCurrency(sale.valorTotal)}</p>
-                                        <p><strong>Total Pago:</strong> ${utils.formatCurrency(sale.valorPago)}</p>
-                                        <p class="fs-5"><strong>Valor Devido: <span class="text-danger">${utils.formatCurrency(valorDevido)}</span></strong></p>
+                                        <div class="row g-3">
+                                            <div class="col-12">
+                                                <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                                    <span><i class="bi bi-person me-2"></i><strong>Cliente:</strong></span>
+                                                    <span class="fw-bold">${sale.client?.nome || 'Cliente não informado'}</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                                    <span><i class="bi bi-currency-dollar me-2"></i><strong>Valor Total:</strong></span>
+                                                    <span class="fw-bold text-primary">${utils.formatCurrency(sale.valorTotal)}</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                                    <span><i class="bi bi-check-circle me-2"></i><strong>Total Pago:</strong></span>
+                                                    <span class="fw-bold text-success">${utils.formatCurrency(sale.valorPago)}</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="d-flex justify-content-between align-items-center p-3 ${valorDevido > 0 ? 'bg-warning' : 'bg-success'} rounded">
+                                                    <span><i class="bi bi-exclamation-triangle me-2"></i><strong>Valor Devido:</strong></span>
+                                                    <span class="fw-bold ${valorDevido > 0 ? 'text-warning' : 'text-success'}">${utils.formatCurrency(valorDevido)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
+
+                                <!-- Card de Ações -->
                                 ${paymentFormHtml}
                             </div>
                         </div>
@@ -1557,40 +1626,90 @@
 
                 newSection.innerHTML = `
                     <div class="container-fluid h-100">
+                        <!-- Breadcrumb Profissional -->
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="#" class="nav-back" data-section="purchasesSection">Compras</a></li>
-                                <li class="breadcrumb-item active" aria-current="page">Detalhes da Compra #${purchase.id}</li>
+                                <li class="breadcrumb-item">
+                                    <a href="#" class="nav-back" data-section="purchasesSection">
+                                        <i class="bi bi-house-door"></i> Compras
+                                    </a>
+                                </li>
+                                <li class="breadcrumb-item active" aria-current="page">
+                                    <i class="bi bi-cart-check"></i> Detalhes da Compra #${purchase.id}
+                                </li>
                             </ol>
                         </nav>
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h3>Detalhes da Compra #${purchase.id}</h3>
+
+                        <!-- Header Principal -->
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h3><i class="bi bi-cart-check me-2"></i>Detalhes da Compra #${purchase.id}</h3>
+                                <p class="text-muted mb-0">
+                                    <i class="bi bi-calendar3 me-1"></i>
+                                    Realizada em ${utils.formatDate(purchase.dataCompra)}
+                                </p>
+                            </div>
                             <button class="btn btn-outline-secondary nav-back" data-section="purchasesSection">
-                                <i class="bi bi-arrow-left"></i> Voltar para Compras
+                                <i class="bi bi-arrow-left me-2"></i> Voltar para Compras
                             </button>
                         </div>
-                        <div class="row">
+
+                        <!-- Conteúdo Principal -->
+                        <div class="row g-4">
+                            <!-- Coluna Esquerda - Itens da Compra -->
                             <div class="col-lg-8">
+                                <!-- Card de Itens da Compra -->
                                 <div class="card mb-4">
                                     <div class="card-header">
-                                        <h4>Itens da Compra</h4>
+                                        <h4><i class="bi bi-box me-2"></i>Itens da Compra</h4>
+                                        <span class="badge bg-primary fs-6">${purchase.purchaseProducts?.length || 0} item(s)</span>
                                     </div>
                                     <div class="card-body">
                                         ${productsHtml}
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Coluna Direita - Resumo da Compra -->
                             <div class="col-lg-4">
+                                <!-- Card de Resumo da Compra -->
                                 <div class="card mb-4">
                                     <div class="card-header">
-                                        <h5>Resumo da Compra</h5>
+                                        <h5><i class="bi bi-graph-up me-2"></i>Resumo da Compra</h5>
                                     </div>
                                     <div class="card-body">
-                                        <p><strong>Fornecedor:</strong> ${purchase.supplier?.nome || 'Fornecedor não informado'}</p>
-                                        <p><strong>Data da Compra:</strong> ${utils.formatDate(purchase.dataCompra)}</p>
-                                        <p><strong>Valor Total:</strong> ${utils.formatCurrency(purchase.valorTotal)}</p>
-                                        <p><strong>Status:</strong> <span class="badge bg-secondary">${purchase.status}</span></p>
-                                        <p><strong>Observações:</strong> ${purchase.observacoes || 'N/A'}</p>
+                                        <div class="row g-3">
+                                            <div class="col-12">
+                                                <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                                    <span><i class="bi bi-building me-2"></i><strong>Fornecedor:</strong></span>
+                                                    <span class="fw-bold">${purchase.supplier?.nome || 'Fornecedor não informado'}</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                                    <span><i class="bi bi-calendar3 me-2"></i><strong>Data da Compra:</strong></span>
+                                                    <span class="fw-bold">${utils.formatDate(purchase.dataCompra)}</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                                    <span><i class="bi bi-currency-dollar me-2"></i><strong>Valor Total:</strong></span>
+                                                    <span class="fw-bold text-primary">${utils.formatCurrency(purchase.valorTotal)}</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                                    <span><i class="bi bi-info-circle me-2"></i><strong>Status:</strong></span>
+                                                    <span class="badge bg-secondary fs-6">${purchase.status}</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                                    <span><i class="bi bi-chat-text me-2"></i><strong>Observações:</strong></span>
+                                                    <span class="fw-bold">${purchase.observacoes || 'N/A'}</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -2599,13 +2718,13 @@
                     const sale = await api.getSaleById(saleId);
                     console.log('✅ Dados recebidos da API');
                     
-                    // Primeiro mostrar a seção
-                    ui.showSection('saleDetailSection');
-                    console.log('✅ Seção exibida');
-                    
-                    // Depois renderizar o conteúdo
+                    // Primeiro renderizar o conteúdo (isso cria a seção)
                     ui.renderSaleDetail(sale);
                     console.log('✅ renderSaleDetail executada');
+                    
+                    // Depois mostrar a seção
+                    ui.showSection('saleDetailSection');
+                    console.log('✅ Seção exibida');
                 } catch (error) {
                     console.error("Falha ao carregar detalhes da venda:", error);
                     utils.showToast(error.message, 'error');
@@ -3030,47 +3149,16 @@
                         throw new Error('Nenhum dado recebido da API');
                     }
                     
-                    // Criar uma nova seção sempre para garantir
-                    console.log('🔧 Criando nova seção purchaseDetailSection');
+                    // A seção será criada pela função renderPurchaseDetail
+                    console.log('🔧 Preparando para renderizar detalhes da compra');
                     
-                    // Remover seção anterior se existir
-                    const existingSection = document.getElementById('purchaseDetailSection');
-                    if (existingSection) {
-                        existingSection.remove();
-                        console.log('✅ Seção anterior removida');
-                    }
-                    
-                    // Criar nova seção
-                    const section = document.createElement('div');
-                    section.id = 'purchaseDetailSection';
-                    section.style.cssText = `
-                        position: fixed;
-                        top: 0;
-                        left: 280px;
-                        right: 0;
-                        bottom: 0;
-                        background: white;
-                        z-index: 9999;
-                        padding: 20px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    `;
-                    document.body.appendChild(section);
-                    
-                    console.log('✅ Nova seção criada e adicionada ao body');
-                    
-                    // Renderizar o conteúdo
+                    // Renderizar o conteúdo (isso cria a seção)
                     ui.renderPurchaseDetail(purchase);
                     
-                    // Ocultar outras seções
-                    document.querySelectorAll('.content-section').forEach(s => {
-                        if (s.id !== 'purchaseDetailSection') {
-                            s.style.display = 'none';
-                        }
-                    });
+                    // Mostrar a seção
+                    ui.showSection('purchaseDetailSection');
                     
-                    console.log('✅ Seção de detalhes da compra exibida diretamente');
+                    console.log('✅ Seção de detalhes da compra exibida');
                 } catch (error) {
                     console.error("❌ Falha ao carregar detalhes da compra:", error);
                     console.error("   - Mensagem:", error.message);
@@ -3406,9 +3494,11 @@
 
                     console.log('✅ Permissão concedida, mostrando seção:', sectionId);
                     ui.showSection(sectionId);
-                    if (window.innerWidth < 992) {
-                        dom.sidebar.classList.remove('active');
-                        dom.sidebarOverlay.classList.remove('active');
+                    
+                    // Fechar sidebar automaticamente em mobile/tablet
+                    if (window.responsiveManager && (window.responsiveManager.isMobile() || window.responsiveManager.isTablet())) {
+                        window.responsiveManager.closeSidebarAfterNavigation();
+                        console.log('📱 Sidebar será fechada automaticamente após navegação');
                     }
                     if (sectionId === 'dashboardSection') handlers.loadDashboard();
                     if (sectionId === 'clientsSection') handlers.loadClients();
