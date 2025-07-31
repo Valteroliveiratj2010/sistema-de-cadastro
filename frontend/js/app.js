@@ -621,7 +621,7 @@
                 return;
             }
             
-            clientSelect.innerHTML = '<option value="">Selecione um cliente</option>';
+            clientSelect.innerHTML = `<option value="">${window.i18n ? window.i18n.t('selectClient') : 'Selecione um cliente'}</option>`;
 
             let clients = [];
             if (response && Array.isArray(response.clients)) {
@@ -635,7 +635,7 @@
             if (clients.length === 0) {
                 const option = document.createElement('option');
                 option.value = '';
-                option.textContent = 'Nenhum cliente cadastrado';
+                option.textContent = window.i18n ? window.i18n.t('noClientsRegistered') : 'Nenhum cliente cadastrado';
                 clientSelect.appendChild(option);
                 clientSelect.disabled = true;
                 console.log('📝 Dropdown: Nenhum cliente cadastrado');
@@ -653,7 +653,7 @@
             console.error('❌ Erro ao carregar clientes para dropdown:', error);
             const clientSelect = document.getElementById('saleClient');
             if (clientSelect) {
-                clientSelect.innerHTML = '<option value="">Erro ao carregar clientes</option>';
+                clientSelect.innerHTML = `<option value="">${window.i18n ? window.i18n.t('errorLoadingClients') : 'Erro ao carregar clientes'}</option>`;
                 clientSelect.disabled = true;
             }
         }
@@ -674,7 +674,7 @@
                 return;
             }
             
-            productSelect.innerHTML = '<option value="">Selecione um produto</option>';
+            productSelect.innerHTML = `<option value="">${window.i18n ? window.i18n.t('selectProduct') : 'Selecione um produto'}</option>`;
 
             let products = [];
             if (response && Array.isArray(response.products)) {
@@ -688,7 +688,7 @@
             if (products.length === 0) {
                 const option = document.createElement('option');
                 option.value = '';
-                option.textContent = 'Nenhum produto cadastrado';
+                option.textContent = window.i18n ? window.i18n.t('noProductsRegistered') : 'Nenhum produto cadastrado';
                 productSelect.appendChild(option);
                 productSelect.disabled = true;
                 console.log('📝 Dropdown: Nenhum produto cadastrado');
@@ -708,7 +708,7 @@
             console.error('❌ Erro ao carregar produtos para dropdown:', error);
             const productSelect = document.getElementById('productSelect');
             if (productSelect) {
-                productSelect.innerHTML = '<option value="">Erro ao carregar produtos</option>';
+                productSelect.innerHTML = `<option value="">${window.i18n ? window.i18n.t('errorLoadingProducts') : 'Erro ao carregar produtos'}</option>`;
                 productSelect.disabled = true;
             }
         }
@@ -722,7 +722,7 @@
             const response = await api.get('/suppliers');
             const supplierSelect = document.getElementById('purchaseSupplier');
             if (!supplierSelect) return;
-            supplierSelect.innerHTML = '<option value="">Selecione um fornecedor</option>';
+            supplierSelect.innerHTML = `<option value="">${window.i18n ? window.i18n.t('selectSupplier') : 'Selecione um fornecedor'}</option>`;
 
             let suppliers = [];
             if (response && Array.isArray(response.suppliers)) {
@@ -736,7 +736,7 @@
             if (suppliers.length === 0) {
                 const option = document.createElement('option');
                 option.value = '';
-                option.textContent = 'Nenhum fornecedor cadastrado';
+                option.textContent = window.i18n ? window.i18n.t('noSuppliersRegistered') : 'Nenhum fornecedor cadastrado';
                 supplierSelect.appendChild(option);
                 supplierSelect.disabled = true;
             } else {
@@ -752,7 +752,7 @@
             console.error('❌ Erro ao carregar fornecedores para dropdown:', error);
             const supplierSelect = document.getElementById('purchaseSupplier');
             if (supplierSelect) {
-                supplierSelect.innerHTML = '<option value="">Erro ao carregar fornecedores</option>';
+                supplierSelect.innerHTML = `<option value="">${window.i18n ? window.i18n.t('errorLoadingSuppliers') : 'Erro ao carregar fornecedores'}</option>`;
                 supplierSelect.disabled = true;
             }
         }
@@ -773,7 +773,7 @@
                 return;
             }
             
-            productSelect.innerHTML = '<option value="">Selecione um produto</option>';
+            productSelect.innerHTML = `<option value="">${window.i18n ? window.i18n.t('selectProduct') : 'Selecione um produto'}</option>`;
 
             let products = [];
             if (response && Array.isArray(response.products)) {
@@ -787,7 +787,7 @@
             if (products.length === 0) {
                 const option = document.createElement('option');
                 option.value = '';
-                option.textContent = 'Nenhum produto cadastrado';
+                option.textContent = window.i18n ? window.i18n.t('noProductsRegistered') : 'Nenhum produto cadastrado';
                 productSelect.appendChild(option);
                 productSelect.disabled = true;
                 console.log('📝 Dropdown compra: Nenhum produto cadastrado');
@@ -806,7 +806,7 @@
             console.error('❌ Erro ao carregar produtos para dropdown de compra:', error);
             const productSelect = document.getElementById('purchaseProductSelect');
             if (productSelect) {
-                productSelect.innerHTML = '<option value="">Erro ao carregar produtos</option>';
+                productSelect.innerHTML = `<option value="">${window.i18n ? window.i18n.t('errorLoadingProducts') : 'Erro ao carregar produtos'}</option>`;
                 productSelect.disabled = true;
             }
         }
@@ -890,7 +890,7 @@
         const productsList = document.getElementById('saleProductsList');
 
         if (!productSelect.value) {
-            showToast('Selecione um produto', 'warning');
+            showToast(window.i18n ? window.i18n.t('selectProduct') : 'Selecione um produto', 'warning');
             return;
         }
 
@@ -1034,7 +1034,7 @@
         const productsList = document.getElementById('purchaseProductsList');
 
         if (!productSelect.value) {
-            showToast('Selecione um produto', 'warning');
+            showToast(window.i18n ? window.i18n.t('selectProduct') : 'Selecione um produto', 'warning');
             return;
         }
 
@@ -3485,12 +3485,19 @@
 
     // Listener para mudança de idioma
     window.addEventListener('languageChanged', (event) => {
-        console.log('🌍 Idioma alterado, atualizando gráfico...');
+        console.log('🌍 Idioma alterado, atualizando gráfico e dropdowns...');
         if (window.i18n) {
             // Aguardar um pouco para garantir que as traduções foram carregadas
             setTimeout(() => {
                 window.i18n.updateSalesChart();
             }, 300);
+            
+            // Recarregar dropdowns após um delay adicional
+            setTimeout(() => {
+                if (typeof window.i18n.reloadDropdowns === 'function') {
+                    window.i18n.reloadDropdowns();
+                }
+            }, 500);
         }
     });
     
@@ -3949,4 +3956,10 @@
     window.generateCashFlowReport = handleCashFlowReport;
     window.exportAccountingReport = handleAccountingReport;
     window.generateSalesPrediction = handleSalesPrediction;
+    
+    // Expor funções de dropdown globalmente para internacionalização
+    window.loadClientsForDropdown = loadClientsForDropdown;
+    window.loadProductsForDropdown = loadProductsForDropdown;
+    window.loadSuppliersForDropdown = loadSuppliersForDropdown;
+    window.loadProductsForPurchaseDropdown = loadProductsForPurchaseDropdown;
 })();

@@ -1717,6 +1717,198 @@ body .modal-backdrop {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Tabelas principais (clientes, vendas, produtos, etc.) */
+.table {
+    color: #333;
+}
+
+.table thead th {
+    background-color: #1D4E89 !important;
+    color: white !important;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table tbody td {
+    color: #333 !important;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Hover mais sutil para as tabelas principais */
+#clientsSection .table tbody tr:hover,
+#salesSection .table tbody tr:hover,
+#productsSection .table tbody tr:hover,
+#purchasesSection .table tbody tr:hover,
+#suppliersSection .table tbody tr:hover,
+#usersSection .table tbody tr:hover {
+    background-color: #f8f9fa !important;
+}
+
+/* Garantir que TODAS as tabelas tenham cabeçalho azul com texto branco */
+.table thead th,
+.table thead td,
+th,
+thead th {
+    background-color: #1D4E89 !important;
+    color: white !important;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+/* Sobrescrever qualquer estilo Bootstrap que possa estar interferindo */
+.table-dark thead th,
+.table-dark thead td {
+    background-color: #1D4E89 !important;
+    color: white !important;
+}
+
+/* Forçar cabeçalho azul em TODAS as tabelas, independente da classe */
+.table thead th,
+.table thead td,
+th,
+thead th,
+.table-striped thead th,
+.table-hover thead th,
+.table-bordered thead th,
+.table-sm thead th {
+    background-color: #1D4E89 !important;
+    color: white !important;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+/* Tabelas dentro de cards coloridos (dashboard) */
+.card[style*="background"] .table thead th,
+.card[style*="gradient"] .table thead th {
+    color: white !important;
+    background-color: transparent;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.card[style*="background"] .table tbody td,
+.card[style*="gradient"] .table tbody td {
+    color: white !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Tabelas em cards normais (brancos) */
+.card:not([style*="background"]):not([style*="gradient"]) .table thead th {
+    color: white !important;
+    background-color: #1D4E89 !important;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.card:not([style*="background"]):not([style*="gradient"]) .table tbody td {
+    color: #333 !important;
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Tabelas principais do sistema (clientes, vendas, produtos, etc.) */
+#clientsSection .table,
+#salesSection .table,
+#productsSection .table,
+#purchasesSection .table,
+#suppliersSection .table,
+#usersSection .table {
+    background-color: white;
+}
+
+#clientsSection .table thead th,
+#salesSection .table thead th,
+#productsSection .table thead th,
+#purchasesSection .table thead th,
+#suppliersSection .table thead th,
+#usersSection .table thead th {
+    background-color: #1D4E89 !important;
+    color: white !important;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+#clientsSection .table tbody td,
+#salesSection .table tbody td,
+#productsSection .table tbody td,
+#purchasesSection .table tbody td,
+#suppliersSection .table tbody td,
+#usersSection .table tbody td {
+    color: #333 !important;
+    border-bottom: 1px solid #dee2e6;
+    background-color: white;
+}
+
+#clientsSection .table tbody tr:hover,
+#salesSection .table tbody tr:hover,
+#productsSection .table tbody tr:hover,
+#purchasesSection .table tbody tr:hover,
+#suppliersSection .table tbody tr:hover,
+#usersSection .table tbody tr:hover {
+    background-color: #f8f9fa !important;
+}
+
+/* Botões de ação nas tabelas */
+.table .btn {
+    color: white !important;
+    border: none;
+    margin: 0 2px;
+}
+
+.table .btn-outline-info {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+}
+
+.table .btn-outline-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.table .btn-outline-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.table .btn-outline-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #212529 !important;
+}
+
+.table .btn-outline-success {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+/* Status badges */
+.badge {
+    color: white !important;
+    font-weight: 500;
+}
+
+.badge.bg-success {
+    background-color: #28a745 !important;
+}
+
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+}
+
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+.badge.bg-info {
+    background-color: #17a2b8 !important;
+}
+
+.badge.bg-secondary {
+    background-color: #6c757d !important;
+}
+
 .language-selector .dropdown-toggle {
     font-size: 0.875rem;
     padding: 0.5rem 0.75rem;

@@ -418,7 +418,7 @@
                                 <div class="col-md-8">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" class="form-control" placeholder="Buscar clientes por nome, email, telefone ou CPF/CNPJ..." data-search="clients">
+                                        <input type="text" class="form-control" placeholder="Buscar clientes por nome, email, telefone ou CPF/CNPJ..." data-search="clients" data-i18n-placeholder="searchClients">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -442,11 +442,11 @@
                                 <table class="table table-hover" id="clientsTable">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>Nome</th>
-                                            <th>CPF/CNPJ</th>
-                                            <th>Telefone</th>
-                                            <th>Email</th>
-                                            <th>Ações</th>
+                                            <th data-i18n="name">Nome</th>
+                                            <th data-i18n="cpfCnpj">CPF/CNPJ</th>
+                                            <th data-i18n="phone">Telefone</th>
+                                            <th data-i18n="email">Email</th>
+                                            <th data-i18n="actions">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -473,9 +473,9 @@
                 </section>
                 <section id="salesSection" class="content-section" style="display: none;">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2 class="mb-0"><i class="bi bi-cart-check me-2"></i>Gerenciar Vendas</h2>
+                        <h2 class="mb-0"><i class="bi bi-cart-check me-2"></i><span data-i18n="manageSales">Gerenciar Vendas</span></h2>
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#saleModal">
-                            <i class="bi bi-plus-circle me-2"></i>Nova Venda
+                            <i class="bi bi-plus-circle me-2"></i><span data-i18n="newSale">Nova Venda</span>
                         </button>
                     </div>
 
@@ -486,7 +486,7 @@
                                 <div class="col-md-8">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" class="form-control" placeholder="Buscar vendas por cliente, ID ou status..." data-search="sales">
+                                        <input type="text" class="form-control" placeholder="Buscar vendas por cliente, ID ou status..." data-search="sales" data-i18n-placeholder="searchSales">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -510,21 +510,21 @@
                                 <table class="table table-hover" id="salesTable">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>ID</th>
-                                            <th>Cliente</th>
-                                            <th>Valor Total</th>
-                                            <th>Data</th>
-                                            <th>Status</th>
-                                            <th>Ações</th>
+                                            <th data-i18n="id">ID</th>
+                                            <th data-i18n="client">Cliente</th>
+                                            <th data-i18n="total">Valor Total</th>
+                                            <th data-i18n="date">Data</th>
+                                            <th data-i18n="status">Status</th>
+                                            <th data-i18n="actions">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
                                             <td colspan="6" class="text-center text-muted py-4">
                                                 <i class="bi bi-cart-check fs-1 d-block mb-2"></i>
-                                                Nenhuma venda registrada
+                                                <span data-i18n="noSalesFound">Nenhuma venda registrada</span>
                                                 <br>
-                                                <small>Clique em "Nova Venda" para adicionar a primeira</small>
+                                                <small data-i18n="clickNewSale">Clique em "Nova Venda" para adicionar a primeira</small>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -541,25 +541,25 @@
                     </div>
                 </section>
                 <section id="reportsSection" class="content-section" style="display: none;">
-                    <h3 class="mb-4"><i class="bi bi-graph-up me-2"></i>Relatórios Financeiros e de Vendas</h3>
+                    <h3 class="mb-4"><i class="bi bi-graph-up me-2"></i><span data-i18n="manageReports">Relatórios Financeiros e de Vendas</span></h3>
 
                     <div class="card shadow-sm mb-4">
                         <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="bi bi-bar-chart-line me-2"></i>Relatório de Vendas por Período</h5>
+                            <h5 class="mb-0"><i class="bi bi-bar-chart-line me-2"></i><span data-i18n="salesReport">Relatório de Vendas por Período</span></h5>
                         </div>
                         <div class="card-body">
                             <form id="reportPeriodForm" data-action="generateSalesReport">
                                 <div class="row g-3">
                                     <div class="col-md-5">
-                                        <label for="startDate" class="form-label">Data Inicial</label>
+                                        <label for="startDate" class="form-label" data-i18n="startDate">Data Inicial</label>
                                         <input type="date" class="form-control" id="startDate" required>
                                     </div>
                                     <div class="col-md-5">
-                                        <label for="endDate" class="form-label">Data Final</label>
+                                        <label for="endDate" class="form-label" data-i18n="endDate">Data Final</label>
                                         <input type="date" class="form-control" id="endDate" required>
                                     </div>
                                     <div class="col-md-2 d-flex align-items-end">
-                                        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-play-circle me-2"></i>Gerar Relatório</button>
+                                        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-play-circle me-2"></i><span data-i18n="generateReport">Gerar Relatório</span></button>
                                     </div>
                                 </div>
                             </form>
@@ -572,7 +572,7 @@
 
                     <div class="card shadow-sm mb-4">
                         <div class="card-header bg-success text-white">
-                            <h5 class="mb-0"><i class="bi bi-currency-dollar me-2"></i>Fluxo de Caixa</h5>
+                            <h5 class="mb-0"><i class="bi bi-currency-dollar me-2"></i><span data-i18n="cashFlowReport">Fluxo de Caixa</span></h5>
                         </div>
                         <div class="card-body">
                             <form id="cashFlowReportForm" data-action="generateCashFlowReport">
@@ -599,7 +599,7 @@
 
                     <div class="card shadow-sm mb-4">
                         <div class="card-header bg-info text-white">
-                            <h5 class="mb-0"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Relatório Contábil Consolidado (CSV)</h5>
+                            <h5 class="mb-0"><i class="bi bi-file-earmark-spreadsheet me-2"></i><span data-i18n="accountingReport">Relatório Contábil Consolidado (CSV)</span></h5>
                         </div>
                         <div class="card-body">
                             <form id="accountingReportForm" data-action="exportAccountingReport">
@@ -623,7 +623,7 @@
                     
                     <div class="card shadow-sm mb-4">
                         <div class="card-header bg-warning text-dark">
-                            <h5 class="mb-0"><i class="bi bi-graph-up-arrow me-2"></i>Análise Preditiva de Vendas</h5>
+                            <h5 class="mb-0"><i class="bi bi-graph-up-arrow me-2"></i><span data-i18n="salesPrediction">Análise Preditiva de Vendas</span></h5>
                         </div>
                         <div class="card-body">
                             <form id="salesPredictionForm" data-action="generateSalesPrediction">
@@ -650,9 +650,9 @@
                 </section>
                 <section id="productsSection" class="content-section" style="display: none;">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2 class="mb-0"><i class="bi bi-box-seam me-2"></i>Gerenciar Produtos</h2>
+                        <h2 class="mb-0"><i class="bi bi-box-seam me-2"></i><span data-i18n="manageProducts">Gerenciar Produtos</span></h2>
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productModal">
-                            <i class="bi bi-plus-circle me-2"></i>Novo Produto
+                            <i class="bi bi-plus-circle me-2"></i><span data-i18n="newProduct">Novo Produto</span>
                         </button>
                     </div>
 
@@ -663,7 +663,7 @@
                                 <div class="col-md-8">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" class="form-control" placeholder="Buscar produtos por nome, descrição ou SKU..." data-search="products">
+                                        <input type="text" class="form-control" placeholder="Buscar produtos por nome, descrição ou SKU..." data-search="products" data-i18n-placeholder="searchProducts">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -687,12 +687,12 @@
                                 <table class="table table-hover" id="productsTable">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>Nome</th>
-                                            <th>Descrição</th>
-                                            <th>Preço</th>
-                                            <th>Estoque</th>
-                                            <th>Status</th>
-                                            <th>Ações</th>
+                                            <th data-i18n="name">Nome</th>
+                                            <th data-i18n="description">Descrição</th>
+                                            <th data-i18n="price">Preço</th>
+                                            <th data-i18n="stock">Estoque</th>
+                                            <th data-i18n="status">Status</th>
+                                            <th data-i18n="actions">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -719,13 +719,13 @@
                 </section>
                 <section id="usersSection" class="content-section" style="display: none;">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2 class="mb-0"><i class="bi bi-people-fill me-2"></i>Gerenciar Usuários</h2>
+                        <h2 class="mb-0"><i class="bi bi-people-fill me-2"></i><span data-i18n="manageUsers">Gerenciar Usuários</span></h2>
                         <div class="d-flex gap-2">
                             <button class="btn btn-outline-primary" onclick="loadUsers()">
-                                <i class="bi bi-arrow-clockwise me-2"></i>Atualizar
+                                <i class="bi bi-arrow-clockwise me-2"></i><span data-i18n="update">Atualizar</span>
                             </button>
                             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#userModal">
-                                <i class="bi bi-plus-circle me-2"></i>Novo Usuário
+                                <i class="bi bi-plus-circle me-2"></i><span data-i18n="newUser">Novo Usuário</span>
                             </button>
                         </div>
                     </div>
@@ -737,7 +737,7 @@
                                 <div class="col-md-8">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" class="form-control" placeholder="Buscar usuários por username, email ou role..." data-search="users">
+                                        <input type="text" class="form-control" placeholder="Buscar usuários por username, email ou role..." data-search="users" data-i18n-placeholder="searchUsers">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -761,19 +761,19 @@
                                 <table class="table table-hover" id="usersTable">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>Username</th>
-                                            <th>Email</th>
-                                            <th>Role</th>
-                                            <th>Ações</th>
+                                            <th data-i18n="username">Username</th>
+                                            <th data-i18n="email">Email</th>
+                                            <th data-i18n="role">Role</th>
+                                            <th data-i18n="actions">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
                                             <td colspan="4" class="text-center text-muted py-4">
                                                 <i class="bi bi-people-fill fs-1 d-block mb-2"></i>
-                                                Nenhum usuário cadastrado
+                                                <span data-i18n="noUsersFound">Nenhum usuário cadastrado</span>
                                                 <br>
-                                                <small>Clique em "Novo Usuário" para adicionar o primeiro</small>
+                                                <small data-i18n="clickNewUser">Clique em "Novo Usuário" para adicionar o primeiro</small>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -791,13 +791,13 @@
                 </section>
                 <section id="suppliersSection" class="content-section" style="display: none;">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2 class="mb-0"><i class="bi bi-truck me-2"></i>Gerenciar Fornecedores</h2>
+                        <h2 class="mb-0"><i class="bi bi-truck me-2"></i><span data-i18n="manageSuppliers">Gerenciar Fornecedores</span></h2>
                         <div class="d-flex gap-2">
                             <button class="btn btn-outline-primary" onclick="loadSuppliers()">
-                                <i class="bi bi-arrow-clockwise me-2"></i>Atualizar
+                                <i class="bi bi-arrow-clockwise me-2"></i><span data-i18n="update">Atualizar</span>
                             </button>
                             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#supplierModal">
-                                <i class="bi bi-plus-circle me-2"></i>Novo Fornecedor
+                                <i class="bi bi-plus-circle me-2"></i><span data-i18n="newSupplier">Novo Fornecedor</span>
                             </button>
                         </div>
                     </div>
@@ -809,7 +809,7 @@
                                 <div class="col-md-8">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" class="form-control" placeholder="Buscar fornecedores por nome, CNPJ, email ou telefone..." data-search="suppliers">
+                                        <input type="text" class="form-control" placeholder="Buscar fornecedores por nome, CNPJ, email ou telefone..." data-search="suppliers" data-i18n-placeholder="searchSuppliers">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -833,11 +833,11 @@
                                 <table class="table table-hover" id="suppliersTable">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>Nome</th>
-                                            <th>CNPJ</th>
-                                            <th>Telefone</th>
-                                            <th>Email</th>
-                                            <th>Ações</th>
+                                            <th data-i18n="name">Nome</th>
+                                            <th data-i18n="cpfCnpj">CNPJ</th>
+                                            <th data-i18n="phone">Telefone</th>
+                                            <th data-i18n="email">Email</th>
+                                            <th data-i18n="actions">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -864,9 +864,9 @@
                 </section>
                 <section id="purchasesSection" class="content-section" style="display: none;">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2 class="mb-0"><i class="bi bi-cart-plus me-2"></i>Gerenciar Compras</h2>
+                        <h2 class="mb-0"><i class="bi bi-cart-plus me-2"></i><span data-i18n="managePurchases">Gerenciar Compras</span></h2>
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#purchaseModal">
-                            <i class="bi bi-plus-circle me-2"></i>Nova Compra
+                            <i class="bi bi-plus-circle me-2"></i><span data-i18n="newPurchase">Nova Compra</span>
                         </button>
                     </div>
 
@@ -877,7 +877,7 @@
                                 <div class="col-md-8">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" class="form-control" placeholder="Buscar compras por fornecedor, ID ou status..." data-search="purchases">
+                                        <input type="text" class="form-control" placeholder="Buscar compras por fornecedor, ID ou status..." data-search="purchases" data-i18n-placeholder="searchPurchases">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -901,21 +901,21 @@
                                 <table class="table table-hover" id="purchasesTable">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>ID</th>
-                                            <th>Fornecedor</th>
-                                            <th>Valor Total</th>
-                                            <th>Data</th>
-                                            <th>Status</th>
-                                            <th>Ações</th>
+                                            <th data-i18n="id">ID</th>
+                                            <th data-i18n="supplier">Fornecedor</th>
+                                            <th data-i18n="total">Valor Total</th>
+                                            <th data-i18n="date">Data</th>
+                                            <th data-i18n="status">Status</th>
+                                            <th data-i18n="actions">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
                                             <td colspan="6" class="text-center text-muted py-4">
                                                 <i class="bi bi-cart-plus fs-1 d-block mb-2"></i>
-                                                Nenhuma compra registrada
+                                                <span data-i18n="noPurchasesFound">Nenhuma compra registrada</span>
                                                 <br>
-                                                <small>Clique em "Nova Compra" para adicionar a primeira</small>
+                                                <small data-i18n="clickNewPurchase">Clique em "Nova Compra" para adicionar a primeira</small>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -947,28 +947,28 @@
                     <form id="clientForm" data-action="createClient">
                         <input type="hidden" name="id" id="clientId">
                         <div class="mb-3">
-                            <label for="clientName" class="form-label">Nome</label>
+                            <label for="clientName" class="form-label" data-i18n="name">Nome</label>
                             <input type="text" class="form-control" id="clientName" name="nome" required>
                         </div>
                         <div class="mb-3">
-                            <label for="clientEmail" class="form-label">Email</label>
+                            <label for="clientEmail" class="form-label" data-i18n="email">Email</label>
                             <input type="email" class="form-control" id="clientEmail" name="email">
                         </div>
                         <div class="mb-3">
-                            <label for="clientPhone" class="form-label">Telefone</label>
+                            <label for="clientPhone" class="form-label" data-i18n="phone">Telefone</label>
                             <input type="text" class="form-control" id="clientPhone" name="telefone">
                         </div>
                         <div class="mb-3">
-                            <label for="clientCpfCnpj" class="form-label">CPF/CNPJ</label>
+                            <label for="clientCpfCnpj" class="form-label" data-i18n="cpfCnpj">CPF/CNPJ</label>
                             <input type="text" class="form-control" id="clientCpfCnpj" name="cpfCnpj">
                         </div>
                         <div class="mb-3">
-                            <label for="clientAddress" class="form-label">Endereço</label>
+                            <label for="clientAddress" class="form-label" data-i18n="address">Endereço</label>
                             <textarea class="form-control" id="clientAddress" name="endereco" rows="3"></textarea>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Salvar Cliente</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" data-i18n="saveClient">Salvar Cliente</button>
                         </div>
                     </form>
                 </div>
@@ -980,34 +980,34 @@
         <div class="modal-dialog modal-dialog-centered" style="max-width: 600px !important; width: 600px !important;">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="saleModalLabel">Nova Venda</h5>
+                    <h5 class="modal-title" id="saleModalLabel" data-i18n="newSale">Nova Venda</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="saleForm" data-action="createSale">
                         <input type="hidden" id="saleId">
                         <div class="mb-3">
-                            <label for="saleClient" class="form-label">Cliente</label>
+                            <label for="saleClient" class="form-label" data-i18n="client">Cliente</label>
                             <select class="form-select" id="saleClient" required></select>
                         </div>
                         <div class="card mb-3">
-                            <div class="card-header">Produtos da Venda</div>
+                            <div class="card-header" data-i18n="saleProducts">Produtos da Venda</div>
                             <div class="card-body">
                                 <div id="saleProductsList" class="mb-2" style="max-height: 150px; overflow-y: auto;">
                                     <p class="text-muted text-center m-0" data-i18n="noProductsAdded">Nenhum produto adicionado.</p>
                                 </div>
                                 <div class="row g-2 align-items-end">
                                     <div class="col-md-5">
-                                        <label for="productSelect" class="form-label">Produto</label>
+                                        <label for="productSelect" class="form-label" data-i18n="product">Produto</label>
                                         <select class="form-control" id="productSelect" style="width: 100%;"></select>
                                     </div>
                                     <div class="col-md-2">
-                                        <label for="productQuantity" class="form-label">Qtd</label>
+                                        <label for="productQuantity" class="form-label" data-i18n="quantity">Qtd</label>
                                         <input type="number" class="form-control" id="productQuantity" value="1"
                                             min="1">
                                     </div>
                                     <div class="col-md-5">
-                                        <label for="productUnitPrice" class="form-label">Preço Unit.</label>
+                                        <label for="productUnitPrice" class="form-label" data-i18n="unitPrice">Preço Unit.</label>
                                         <input type="number" step="0.01" class="form-control" id="productUnitPrice"
                                             placeholder="Preço" readonly>
                                     </div>
@@ -1016,7 +1016,7 @@
                                     <div class="col-12">
                                         <button type="button" class="btn btn-primary" id="btnAddProduct"
                                             title="Adicionar Produto">
-                                            <i class="fas fa-plus me-2"></i>Adicionar Produto
+                                            <i class="fas fa-plus me-2"></i><span data-i18n="addProduct">Adicionar Produto</span>
                                         </button>
                                     </div>
                                 </div>
@@ -1025,48 +1025,48 @@
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="saleTotalValueDisplay" class="form-label">Valor Total da Venda</label>
+                                <label for="saleTotalValueDisplay" class="form-label" data-i18n="saleTotalValue">Valor Total da Venda</label>
                                 <input type="text" class="form-control fw-bold" id="saleTotalValueDisplay" readonly
                                     value="R$ 0,00">
                                 <input type="hidden" id="saleTotalValue" value="0">
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="saleDueDate" class="form-label">Data de Vencimento</label>
+                                <label for="saleDueDate" class="form-label" data-i18n="dueDate">Data de Vencimento</label>
                                 <input type="date" class="form-control" id="saleDueDate">
                             </div>
                         </div>
                         <div class="card">
-                            <div class="card-header">Pagamento Inicial</div>
+                            <div class="card-header" data-i18n="initialPayment">Pagamento Inicial</div>
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label for="salePaidValueInitial" class="form-label">Valor Pago</label>
+                                        <label for="salePaidValueInitial" class="form-label" data-i18n="paidValue">Valor Pago</label>
                                         <input type="number" step="0.01" class="form-control" id="salePaidValueInitial"
                                             value="0">
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label for="paymentForma" class="form-label">Forma de Pagamento</label>
+                                        <label for="paymentForma" class="form-label" data-i18n="paymentMethod">Forma de Pagamento</label>
                                         <select class="form-select" id="paymentForma">
-                                            <option value="Dinheiro">Dinheiro</option>
-                                            <option value="Cartão de Crédito">Cartão de Crédito</option>
-                                            <option value="Crediário">Crediário</option>
-                                            <option value="PIX">PIX</option>
+                                            <option value="Dinheiro" data-i18n="cash">Dinheiro</option>
+                                            <option value="Cartão de Crédito" data-i18n="creditCard">Cartão de Crédito</option>
+                                            <option value="Crediário" data-i18n="installment">Crediário</option>
+                                            <option value="PIX" data-i18n="pix">PIX</option>
                                         </select>
                                     </div>
                                 </div>
                                 <div class="row" id="paymentDetailsFields">
                                     <div class="col-md-6 mb-3" id="parcelasField" style="display: none;">
-                                        <label for="paymentParcelas" class="form-label">Parcelas</label>
+                                        <label for="paymentParcelas" class="form-label" data-i18n="installments">Parcelas</label>
                                         <input type="number" class="form-control" id="paymentParcelas" value="1"
                                             min="1">
                                     </div>
                                     <div class="col-md-6 mb-3" id="bandeiraCartaoField" style="display: none;">
-                                        <label for="paymentBandeiraCartao" class="form-label">Bandeira Cartão</label>
+                                        <label for="paymentBandeiraCartao" class="form-label" data-i18n="cardBrand">Bandeira Cartão</label>
                                         <input type="text" class="form-control" id="paymentBandeiraCartao"
                                             placeholder="Ex: Visa, Mastercard">
                                     </div>
                                     <div class="col-md-12 mb-3" id="bancoCrediarioField" style="display: none;">
-                                        <label for="paymentBancoCrediario" class="form-label">Banco/Instituição
+                                        <label for="paymentBancoCrediario" class="form-label" data-i18n="installmentBank">Banco/Instituição
                                             Crediário</label>
                                         <input type="text" class="form-control" id="paymentBancoCrediario"
                                             placeholder="Ex: Banco X, Financeira Y">
@@ -1075,8 +1075,8 @@
                             </div>
                         </div>
                         <div class="modal-footer mt-3">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Salvar Venda</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" data-i18n="saveSale">Salvar Venda</button>
                         </div>
                     </form>
                 </div>
@@ -1088,43 +1088,43 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="productModalLabel">Novo Produto</h5>
+                    <h5 class="modal-title" id="productModalLabel" data-i18n="newProduct">Novo Produto</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="productForm" data-action="createProduct">
                         <input type="hidden" name="id" id="productId">
                         <div class="mb-3">
-                            <label for="productName" class="form-label">Nome</label>
+                            <label for="productName" class="form-label" data-i18n="name">Nome</label>
                             <input type="text" class="form-control" id="productName" name="nome" required>
                         </div>
                         <div class="mb-3">
-                            <label for="productDescription" class="form-label">Descrição</label>
+                            <label for="productDescription" class="form-label" data-i18n="description">Descrição</label>
                             <textarea class="form-control" id="productDescription" name="descricao" rows="3"></textarea>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="productPrice" class="form-label">Preço de Venda</label>
+                                <label for="productPrice" class="form-label" data-i18n="salePrice">Preço de Venda</label>
                                 <input type="number" step="0.01" class="form-control" id="productPrice" name="preco" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="productCost" class="form-label">Preço de Custo</label>
+                                <label for="productCost" class="form-label" data-i18n="costPrice">Preço de Custo</label>
                                 <input type="number" step="0.01" class="form-control" id="productCost" name="custo">
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="productStock" class="form-label">Estoque</label>
+                                <label for="productStock" class="form-label" data-i18n="stock">Estoque</label>
                                 <input type="number" class="form-control" id="productStock" name="estoque" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="productSku" class="form-label">SKU</label>
+                                <label for="productSku" class="form-label" data-i18n="sku">SKU</label>
                                 <input type="text" class="form-control" id="productSku" name="sku">
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Salvar Produto</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" data-i18n="saveProduct">Salvar Produto</button>
                         </div>
                     </form>
                 </div>
@@ -1154,30 +1154,30 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="userModalLabel">Novo Usuário</h5>
+                    <h5 class="modal-title" id="userModalLabel" data-i18n="newUser">Novo Usuário</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="userForm" data-action="createUser">
                         <input type="hidden" name="id" id="userId">
                         <div class="mb-3">
-                            <label for="userName" class="form-label">Nome de Usuário</label>
+                            <label for="userName" class="form-label" data-i18n="username">Nome de Usuário</label>
                             <input type="text" class="form-control" id="userName" name="username" required>
                         </div>
                         <div class="mb-3">
-                            <label for="userEmail" class="form-label">Email</label>
+                            <label for="userEmail" class="form-label" data-i18n="email">Email</label>
                             <input type="email" class="form-control" id="userEmail" name="email" required>
                         </div>
                         <div class="mb-3">
-                            <label for="userPassword" class="form-label">Senha</label>
+                            <label for="userPassword" class="form-label" data-i18n="password">Senha</label>
                             <input type="password" class="form-control" id="userPassword" name="password" placeholder="Senha" autocomplete="current-password">
                         </div>
                         <div class="mb-3">
-                            <label for="userRole" class="form-label">Função</label>
+                            <label for="userRole" class="form-label" data-i18n="role">Função</label>
                             <select class="form-select" id="userRole" name="role">
-                                <option value="vendedor">Vendedor</option>
-                                <option value="gerente">Gerente</option>
-                                <option value="admin">Admin</option>
+                                <option value="vendedor" data-i18n="seller">Vendedor</option>
+                                <option value="gerente" data-i18n="manager">Gerente</option>
+                                <option value="admin" data-i18n="admin">Admin</option>
                             </select>
                         </div>
                         <div class="modal-footer">
@@ -1194,35 +1194,35 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="supplierModalLabel">Novo Fornecedor</h5>
+                    <h5 class="modal-title" id="supplierModalLabel" data-i18n="newSupplier">Novo Fornecedor</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="supplierForm" data-action="createSupplier">
                         <input type="hidden" name="id" id="supplierId">
                         <div class="mb-3">
-                            <label for="supplierName" class="form-label">Nome</label>
+                            <label for="supplierName" class="form-label" data-i18n="name">Nome</label>
                             <input type="text" class="form-control" id="supplierName" name="nome" required>
                         </div>
                         <div class="mb-3">
-                            <label for="supplierContact" class="form-label">Contato</label>
+                            <label for="supplierContact" class="form-label" data-i18n="contact">Contato</label>
                             <input type="text" class="form-control" id="supplierContact" name="contato">
                         </div>
                         <div class="mb-3">
-                            <label for="supplierEmail" class="form-label">Email</label>
+                            <label for="supplierEmail" class="form-label" data-i18n="email">Email</label>
                             <input type="email" class="form-control" id="supplierEmail" name="email">
                         </div>
                         <div class="mb-3">
-                            <label for="supplierCnpj" class="form-label">CNPJ</label>
+                            <label for="supplierCnpj" class="form-label" data-i18n="cpfCnpj">CNPJ</label>
                             <input type="text" class="form-control" id="supplierCnpj" name="cnpj">
                         </div>
                         <div class="mb-3">
-                            <label for="supplierAddress" class="form-label">Endereço</label>
+                            <label for="supplierAddress" class="form-label" data-i18n="address">Endereço</label>
                             <input type="text" class="form-control" id="supplierAddress" name="endereco">
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Salvar Fornecedor</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" data-i18n="saveSupplier">Salvar Fornecedor</button>
                         </div>
                     </form>
                 </div>
@@ -1241,16 +1241,16 @@
                     <form id="purchaseForm" data-action="createPurchase">
                         <input type="hidden" id="purchaseId">
                         <div class="mb-3">
-                            <label for="purchaseSupplier" class="form-label">Fornecedor</label>
+                            <label for="purchaseSupplier" class="form-label" data-i18n="supplier">Fornecedor</label>
                             <select class="form-select" id="purchaseSupplier" required></select>
                         </div>
                         <div class="mb-3">
-                            <label for="purchaseDate" class="form-label">Data da Compra</label>
+                            <label for="purchaseDate" class="form-label" data-i18n="purchaseDate">Data da Compra</label>
                             <input type="date" class="form-control" id="purchaseDate" required>
                         </div>
 
                         <div class="card mb-3">
-                            <div class="card-header">Produtos da Compra</div>
+                            <div class="card-header" data-i18n="purchaseProducts">Produtos da Compra</div>
                             <div class="card-body">
                                 <div id="purchaseProductsList" class="mb-2"
                                     style="max-height: 150px; overflow-y: auto;">
@@ -1258,17 +1258,17 @@
                                 </div>
                                 <div class="row g-2 align-items-end">
                                     <div class="col-md-5">
-                                        <label for="purchaseProductSelect" class="form-label">Produto</label>
+                                        <label for="purchaseProductSelect" class="form-label" data-i18n="product">Produto</label>
                                         <select class="form-control" id="purchaseProductSelect"
                                             style="width: 100%;"></select>
                                     </div>
                                     <div class="col-md-2">
-                                        <label for="purchaseProductQuantity" class="form-label">Qtd</label>
+                                        <label for="purchaseProductQuantity" class="form-label" data-i18n="quantity">Qtd</label>
                                         <input type="number" class="form-control" id="purchaseProductQuantity" value="1"
                                             min="1">
                                     </div>
                                     <div class="col-md-5">
-                                        <label for="purchaseProductCost" class="form-label">Preço Custo Unit.</label>
+                                        <label for="purchaseProductCost" class="form-label" data-i18n="unitCostPrice">Preço Custo Unit.</label>
                                         <input type="number" step="0.01" class="form-control" id="purchaseProductCost"
                                             placeholder="Custo" required>
                                     </div>
@@ -1277,7 +1277,7 @@
                                     <div class="col-12">
                                         <button type="button" class="btn btn-primary" id="btnAddPurchaseProduct"
                                             title="Adicionar Produto">
-                                            <i class="fas fa-plus me-2"></i>Adicionar Produto
+                                            <i class="fas fa-plus me-2"></i><span data-i18n="addProduct">Adicionar Produto</span>
                                         </button>
                                     </div>
                                 </div>
@@ -1286,25 +1286,25 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="purchaseTotalValueDisplay" class="form-label">Valor Total da Compra</label>
+                            <label for="purchaseTotalValueDisplay" class="form-label" data-i18n="purchaseTotalValue">Valor Total da Compra</label>
                             <input type="text" class="form-control fw-bold" id="purchaseTotalValueDisplay" readonly
                                 value="R$ 0,00">
                             <input type="hidden" id="purchaseTotalValue" value="0">
                         </div>
 
                         <div class="mb-3">
-                            <label for="purchaseStatus" class="form-label">Status</label>
+                            <label for="purchaseStatus" class="form-label" data-i18n="status">Status</label>
                             <select class="form-select" id="purchaseStatus">
-                                <option value="Concluída">Concluída</option>
-                                <option value="Pendente">Pendente</option>
-                                <option value="Cancelada">Cancelada</option>
+                                <option value="Concluída" data-i18n="completed">Concluída</option>
+                                <option value="Pendente" data-i18n="pending">Pendente</option>
+                                <option value="Cancelada" data-i18n="cancelled">Cancelada</option>
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label for="purchaseObservations" class="form-label">Observações</label>
+                            <label for="purchaseObservations" class="form-label" data-i18n="observations">Observações</label>
                             <textarea class="form-control" id="purchaseObservations" rows="3"></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">Salvar Compra</button>
+                        <button type="submit" class="btn btn-primary w-100" data-i18n="savePurchase">Salvar Compra</button>
                     </form>
                 </div>
             </div>
@@ -1316,60 +1316,60 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="clientDetailModalLabel">Detalhes do Cliente</h5>
+                    <h5 class="modal-title" id="clientDetailModalLabel" data-i18n="clientDetails">Detalhes do Cliente</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <h6 class="text-primary">Informações Pessoais</h6>
+                            <h6 class="text-primary" data-i18n="personalInformation">Informações Pessoais</h6>
                             <table class="table table-borderless">
                                 <tr>
-                                    <td><strong>ID:</strong></td>
+                                    <td><strong data-i18n="id">ID:</strong></td>
                                     <td id="detailClientId">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Nome:</strong></td>
+                                    <td><strong data-i18n="name">Nome:</strong></td>
                                     <td id="detailClientName">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Email:</strong></td>
+                                    <td><strong data-i18n="email">Email:</strong></td>
                                     <td id="detailClientEmail">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Telefone:</strong></td>
+                                    <td><strong data-i18n="phone">Telefone:</strong></td>
                                     <td id="detailClientPhone">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>CPF/CNPJ:</strong></td>
+                                    <td><strong data-i18n="cpfCnpj">CPF/CNPJ:</strong></td>
                                     <td id="detailClientCpfCnpj">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Endereço:</strong></td>
+                                    <td><strong data-i18n="address">Endereço:</strong></td>
                                     <td id="detailClientAddress">-</td>
                                 </tr>
                             </table>
                         </div>
                         <div class="col-md-6">
-                            <h6 class="text-primary">Informações do Sistema</h6>
+                            <h6 class="text-primary" data-i18n="systemInformation">Informações do Sistema</h6>
                             <table class="table table-borderless">
                                 <tr>
-                                    <td><strong>Data de Criação:</strong></td>
+                                    <td><strong data-i18n="createdAt">Data de Criação:</strong></td>
                                     <td id="detailClientCreated">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Última Atualização:</strong></td>
+                                    <td><strong data-i18n="updatedAt">Última Atualização:</strong></td>
                                     <td id="detailClientUpdated">-</td>
                                 </tr>
                             </table>
                             
-                            <h6 class="text-primary mt-3">Estatísticas</h6>
+                            <h6 class="text-primary mt-3" data-i18n="statistics">Estatísticas</h6>
                             <div class="row">
                                 <div class="col-6">
                                     <div class="card bg-light">
                                         <div class="card-body text-center">
                                             <h5 class="card-title text-primary" id="detailClientSalesCount">0</h5>
-                                            <p class="card-text small">Vendas</p>
+                                            <p class="card-text small" data-i18n="sales">Vendas</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1377,7 +1377,7 @@
                                     <div class="card bg-light">
                                         <div class="card-body text-center">
                                             <h5 class="card-title text-success" id="detailClientTotalSpent">R$ 0,00</h5>
-                                            <p class="card-text small">Total Gasto</p>
+                                            <p class="card-text small" data-i18n="totalSpent">Total Gasto</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1386,9 +1386,9 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="close">Fechar</button>
                     <button type="button" class="btn btn-primary" id="editFromDetailBtn">
-                        <i class="bi bi-pencil"></i> Editar Cliente
+                        <i class="bi bi-pencil"></i> <span data-i18n="editClient">Editar Cliente</span>
                     </button>
                 </div>
             </div>
@@ -1400,69 +1400,69 @@
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="saleDetailModalLabel">Detalhes da Venda</h5>
+                    <h5 class="modal-title" id="saleDetailModalLabel" data-i18n="saleDetails">Detalhes da Venda</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <h6 class="text-primary">Informações da Venda</h6>
+                            <h6 class="text-primary" data-i18n="saleInformation">Informações da Venda</h6>
                             <table class="table table-borderless">
                                 <tr>
-                                    <td><strong>ID da Venda:</strong></td>
+                                    <td><strong data-i18n="saleId">ID da Venda:</strong></td>
                                     <td id="detailSaleId">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Cliente:</strong></td>
+                                    <td><strong data-i18n="client">Cliente:</strong></td>
                                     <td id="detailSaleClient">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Data da Venda:</strong></td>
+                                    <td><strong data-i18n="saleDate">Data da Venda:</strong></td>
                                     <td id="detailSaleDate">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Valor Total:</strong></td>
+                                    <td><strong data-i18n="totalValue">Valor Total:</strong></td>
                                     <td id="detailSaleTotal">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Status:</strong></td>
+                                    <td><strong data-i18n="status">Status:</strong></td>
                                     <td id="detailSaleStatus">-</td>
                                 </tr>
                             </table>
                         </div>
                         <div class="col-md-6">
-                            <h6 class="text-primary">Produtos da Venda</h6>
+                            <h6 class="text-primary" data-i18n="saleProducts">Produtos da Venda</h6>
                             <div id="detailSaleProducts" class="table-responsive">
                                 <table class="table table-sm">
                                     <thead>
                                         <tr>
-                                            <th>Produto</th>
-                                            <th>Qtd</th>
-                                            <th>Preço Unit.</th>
-                                            <th>Total</th>
+                                            <th data-i18n="product">Produto</th>
+                                            <th data-i18n="quantity">Qtd</th>
+                                            <th data-i18n="unitPrice">Preço Unit.</th>
+                                            <th data-i18n="total">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody id="detailSaleProductsList">
                                         <tr>
-                                            <td colspan="4" class="text-center text-muted">Carregando produtos...</td>
+                                            <td colspan="4" class="text-center text-muted" data-i18n="loadingProducts">Carregando produtos...</td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
                             
-                            <h6 class="text-primary mt-3">Pagamentos</h6>
+                            <h6 class="text-primary mt-3" data-i18n="payments">Pagamentos</h6>
                             <div id="detailSalePayments" class="table-responsive">
                                 <table class="table table-sm">
                                     <thead>
                                         <tr>
-                                            <th>Data</th>
-                                            <th>Valor</th>
-                                            <th>Forma</th>
+                                            <th data-i18n="date">Data</th>
+                                            <th data-i18n="value">Valor</th>
+                                            <th data-i18n="paymentMethod">Forma</th>
                                         </tr>
                                     </thead>
                                     <tbody id="detailSalePaymentsList">
                                         <tr>
-                                            <td colspan="3" class="text-center text-muted">Carregando pagamentos...</td>
+                                            <td colspan="3" class="text-center text-muted" data-i18n="loadingPayments">Carregando pagamentos...</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -1471,9 +1471,9 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="close">Fechar</button>
                     <button type="button" class="btn btn-primary" id="editSaleFromDetailBtn">
-                        <i class="bi bi-pencil"></i> Editar Venda
+                        <i class="bi bi-pencil"></i> <span data-i18n="editSale">Editar Venda</span>
                     </button>
                 </div>
             </div>
@@ -1485,55 +1485,55 @@
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="purchaseDetailModalLabel">Detalhes da Compra</h5>
+                    <h5 class="modal-title" id="purchaseDetailModalLabel" data-i18n="purchaseDetails">Detalhes da Compra</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <h6 class="text-primary">Informações da Compra</h6>
+                            <h6 class="text-primary" data-i18n="purchaseInformation">Informações da Compra</h6>
                             <table class="table table-borderless">
                                 <tr>
-                                    <td><strong>ID da Compra:</strong></td>
+                                    <td><strong data-i18n="purchaseId">ID da Compra:</strong></td>
                                     <td id="detailPurchaseId">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Fornecedor:</strong></td>
+                                    <td><strong data-i18n="supplier">Fornecedor:</strong></td>
                                     <td id="detailPurchaseSupplier">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Data da Compra:</strong></td>
+                                    <td><strong data-i18n="purchaseDate">Data da Compra:</strong></td>
                                     <td id="detailPurchaseDate">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Valor Total:</strong></td>
+                                    <td><strong data-i18n="totalValue">Valor Total:</strong></td>
                                     <td id="detailPurchaseTotal">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Status:</strong></td>
+                                    <td><strong data-i18n="status">Status:</strong></td>
                                     <td id="detailPurchaseStatus">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Observações:</strong></td>
+                                    <td><strong data-i18n="observations">Observações:</strong></td>
                                     <td id="detailPurchaseObservations">-</td>
                                 </tr>
                             </table>
                         </div>
                         <div class="col-md-6">
-                            <h6 class="text-primary">Produtos da Compra</h6>
+                            <h6 class="text-primary" data-i18n="purchaseProducts">Produtos da Compra</h6>
                             <div id="detailPurchaseProducts" class="table-responsive">
                                 <table class="table table-sm">
                                     <thead>
                                         <tr>
-                                            <th>Produto</th>
-                                            <th>Qtd</th>
-                                            <th>Preço Custo</th>
-                                            <th>Total</th>
+                                            <th data-i18n="product">Produto</th>
+                                            <th data-i18n="quantity">Qtd</th>
+                                            <th data-i18n="costPrice">Preço Custo</th>
+                                            <th data-i18n="total">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody id="detailPurchaseProductsList">
                                         <tr>
-                                            <td colspan="4" class="text-center text-muted">Carregando produtos...</td>
+                                            <td colspan="4" class="text-center text-muted" data-i18n="loadingProducts">Carregando produtos...</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -1542,9 +1542,9 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="close">Fechar</button>
                     <button type="button" class="btn btn-primary" id="editPurchaseFromDetailBtn">
-                        <i class="bi bi-pencil"></i> Editar Compra
+                        <i class="bi bi-pencil"></i> <span data-i18n="editPurchase">Editar Compra</span>
                     </button>
                 </div>
             </div>
@@ -1556,60 +1556,60 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="supplierDetailModalLabel">Detalhes do Fornecedor</h5>
+                    <h5 class="modal-title" id="supplierDetailModalLabel" data-i18n="supplierDetails">Detalhes do Fornecedor</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <h6 class="text-primary">Informações da Empresa</h6>
+                            <h6 class="text-primary" data-i18n="companyInformation">Informações da Empresa</h6>
                             <table class="table table-borderless">
                                 <tr>
-                                    <td><strong>ID:</strong></td>
+                                    <td><strong data-i18n="id">ID:</strong></td>
                                     <td id="detailSupplierId">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Nome:</strong></td>
+                                    <td><strong data-i18n="name">Nome:</strong></td>
                                     <td id="detailSupplierName">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Email:</strong></td>
+                                    <td><strong data-i18n="email">Email:</strong></td>
                                     <td id="detailSupplierEmail">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Telefone:</strong></td>
+                                    <td><strong data-i18n="phone">Telefone:</strong></td>
                                     <td id="detailSupplierPhone">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>CNPJ:</strong></td>
+                                    <td><strong data-i18n="cpfCnpj">CNPJ:</strong></td>
                                     <td id="detailSupplierCnpj">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Endereço:</strong></td>
+                                    <td><strong data-i18n="address">Endereço:</strong></td>
                                     <td id="detailSupplierAddress">-</td>
                                 </tr>
                             </table>
                         </div>
                         <div class="col-md-6">
-                            <h6 class="text-primary">Informações do Sistema</h6>
+                            <h6 class="text-primary" data-i18n="systemInformation">Informações do Sistema</h6>
                             <table class="table table-borderless">
                                 <tr>
-                                    <td><strong>Data de Criação:</strong></td>
+                                    <td><strong data-i18n="createdAt">Data de Criação:</strong></td>
                                     <td id="detailSupplierCreated">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Última Atualização:</strong></td>
+                                    <td><strong data-i18n="updatedAt">Última Atualização:</strong></td>
                                     <td id="detailSupplierUpdated">-</td>
                                 </tr>
                             </table>
                             
-                            <h6 class="text-primary mt-3">Estatísticas</h6>
+                            <h6 class="text-primary mt-3" data-i18n="statistics">Estatísticas</h6>
                             <div class="row">
                                 <div class="col-6">
                                     <div class="card bg-light">
                                         <div class="card-body text-center">
                                             <h5 class="card-title text-primary" id="detailSupplierPurchasesCount">0</h5>
-                                            <p class="card-text small">Compras</p>
+                                            <p class="card-text small" data-i18n="purchases">Compras</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1617,7 +1617,7 @@
                                     <div class="card bg-light">
                                         <div class="card-body text-center">
                                             <h5 class="card-title text-success" id="detailSupplierTotalSpent">R$ 0,00</h5>
-                                            <p class="card-text small">Total Gasto</p>
+                                            <p class="card-text small" data-i18n="totalSpent">Total Gasto</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1626,9 +1626,9 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="close">Fechar</button>
                     <button type="button" class="btn btn-primary" id="editSupplierFromDetailBtn">
-                        <i class="bi bi-pencil"></i> Editar Fornecedor
+                        <i class="bi bi-pencil"></i> <span data-i18n="editSupplier">Editar Fornecedor</span>
                     </button>
                 </div>
             </div>
@@ -1640,52 +1640,52 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="userDetailModalLabel">Detalhes do Usuário</h5>
+                    <h5 class="modal-title" id="userDetailModalLabel" data-i18n="userDetails">Detalhes do Usuário</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <h6 class="text-primary">Informações da Conta</h6>
+                            <h6 class="text-primary" data-i18n="accountInformation">Informações da Conta</h6>
                             <table class="table table-borderless">
                                 <tr>
-                                    <td><strong>ID:</strong></td>
+                                    <td><strong data-i18n="id">ID:</strong></td>
                                     <td id="detailUserId">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Username:</strong></td>
+                                    <td><strong data-i18n="username">Username:</strong></td>
                                     <td id="detailUserName">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Email:</strong></td>
+                                    <td><strong data-i18n="email">Email:</strong></td>
                                     <td id="detailUserEmail">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Perfil:</strong></td>
+                                    <td><strong data-i18n="role">Perfil:</strong></td>
                                     <td id="detailUserRole">-</td>
                                 </tr>
                             </table>
                         </div>
                         <div class="col-md-6">
-                            <h6 class="text-primary">Informações do Sistema</h6>
+                            <h6 class="text-primary" data-i18n="systemInformation">Informações do Sistema</h6>
                             <table class="table table-borderless">
                                 <tr>
-                                    <td><strong>Data de Criação:</strong></td>
+                                    <td><strong data-i18n="createdAt">Data de Criação:</strong></td>
                                     <td id="detailUserCreated">-</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Última Atualização:</strong></td>
+                                    <td><strong data-i18n="updatedAt">Última Atualização:</strong></td>
                                     <td id="detailUserUpdated">-</td>
                                 </tr>
                             </table>
                             
-                            <h6 class="text-primary mt-3">Status da Conta</h6>
+                            <h6 class="text-primary mt-3" data-i18n="accountStatus">Status da Conta</h6>
                             <div class="row">
                                 <div class="col-12">
                                     <div class="card bg-light">
                                         <div class="card-body text-center">
-                                            <h5 class="card-title text-success">Ativo</h5>
-                                            <p class="card-text small">Conta Ativa</p>
+                                            <h5 class="card-title text-success" data-i18n="active">Ativo</h5>
+                                            <p class="card-text small" data-i18n="activeAccount">Conta Ativa</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1694,9 +1694,9 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="close">Fechar</button>
                     <button type="button" class="btn btn-primary" id="editUserFromDetailBtn">
-                        <i class="bi bi-pencil"></i> Editar Usuário
+                        <i class="bi bi-pencil"></i> <span data-i18n="editUser">Editar Usuário</span>
                     </button>
                 </div>
             </div>

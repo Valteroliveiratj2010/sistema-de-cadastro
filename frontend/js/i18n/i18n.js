@@ -40,6 +40,11 @@ class I18nManager {
             this.updateSalesChart();
         }, 100);
         
+        // Recarregar dropdowns após mudança de idioma
+        setTimeout(() => {
+            this.reloadDropdowns();
+        }, 200);
+        
         // Forçar atualização adicional após um delay maior para garantir
         setTimeout(() => {
             this.updateSalesChart();
@@ -165,6 +170,30 @@ class I18nManager {
         this.updateCurrencyValues();
 
         console.log(`✅ ${elements.length} elementos traduzidos para ${this.currentLanguage}`);
+    }
+
+    // Recarregar dropdowns com traduções atualizadas
+    reloadDropdowns() {
+        console.log('🔄 Recarregando dropdowns com traduções atualizadas...');
+        
+        // Verificar se as funções de carregamento existem
+        if (typeof window.loadClientsForDropdown === 'function') {
+            window.loadClientsForDropdown();
+        }
+        
+        if (typeof window.loadProductsForDropdown === 'function') {
+            window.loadProductsForDropdown();
+        }
+        
+        if (typeof window.loadSuppliersForDropdown === 'function') {
+            window.loadSuppliersForDropdown();
+        }
+        
+        if (typeof window.loadProductsForPurchaseDropdown === 'function') {
+            window.loadProductsForPurchaseDropdown();
+        }
+        
+        console.log('✅ Dropdowns recarregados');
     }
 
     // Atualizar valores monetários
