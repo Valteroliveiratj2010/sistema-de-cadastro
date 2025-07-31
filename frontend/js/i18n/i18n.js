@@ -34,6 +34,16 @@ class I18nManager {
         window.dispatchEvent(new CustomEvent('languageChanged', { 
             detail: { language: language } 
         }));
+
+        // Forçar atualização do gráfico após um pequeno delay
+        setTimeout(() => {
+            this.updateSalesChart();
+        }, 100);
+        
+        // Forçar atualização adicional após um delay maior para garantir
+        setTimeout(() => {
+            this.updateSalesChart();
+        }, 500);
     }
 
     // Obter tradução
@@ -117,11 +127,11 @@ class I18nManager {
     // Obter locale para formatação de números
     getNumberFormatLocale() {
         const localeMap = {
-            'pt': 'pt-PT',
+            'pt': 'pt-BR',
             'en': 'en-US',
             'es': 'es-ES'
         };
-        return localeMap[this.currentLanguage] || 'pt-PT';
+        return localeMap[this.currentLanguage] || 'pt-BR';
     }
 
     // Atualizar todos os elementos com data-i18n
@@ -145,7 +155,164 @@ class I18nManager {
             element.title = this.t(key);
         });
 
-        console.log(`✅ ${elements.length} elementos traduzidos`);
+        // Atualizar seletor de idioma se existir
+        const languageSelector = document.querySelector('.language-selector');
+        if (languageSelector) {
+            this.updateLanguageSelector(languageSelector, this.currentLanguage);
+        }
+
+        // Atualizar valores monetários nos KPIs
+        this.updateCurrencyValues();
+
+        console.log(`✅ ${elements.length} elementos traduzidos para ${this.currentLanguage}`);
+    }
+
+    // Atualizar valores monetários
+    updateCurrencyValues() {
+        const kpiCards = document.querySelectorAll('.kpi-card .fs-2');
+        kpiCards.forEach(element => {
+            const text = element.textContent;
+            if (text && (text.includes('R$') || text.includes('$') || text.includes('€'))) {
+                const numericValue = parseFloat(text.replace(/[^\d,.-]/g, '').replace(',', '.'));
+                if (!isNaN(numericValue)) {
+                    element.textContent = this.formatCurrency(numericValue);
+                }
+            }
+        });
+
+        // Atualizar gráfico de vendas se existir
+        this.updateSalesChart();
+    }
+
+    // Atualizar gráfico de vendas
+    updateSalesChart() {
+        try {
+            console.log('🔄 Iniciando atualização do gráfico de vendas...');
+            
+            // Verificar se o gráfico existe
+            if (!window.state || !window.state.charts || !window.state.charts.has('salesChart')) {
+                console.log('⚠️ Gráfico de vendas não encontrado no estado');
+                return;
+            }
+
+            const chart = window.state.charts.get('salesChart');
+            if (!chart) {
+                console.log('⚠️ Instância do gráfico não encontrada');
+                return;
+            }
+
+            // Destruir gráfico atual
+            chart.destroy();
+            console.log('🗑️ Gráfico anterior destruído');
+            
+            // Remover do estado
+            window.state.charts.delete('salesChart');
+            
+            // Limpar o canvas
+            const ctx = document.getElementById('salesChart');
+            if (ctx) {
+                const context = ctx.getContext('2d');
+                context.clearRect(0, 0, ctx.width, ctx.height);
+                console.log('🧹 Canvas limpo');
+            }
+
+            // Recriar o gráfico com dados mock e traduções atualizadas
+            const currentYear = new Date().getFullYear();
+            const previousYear = currentYear - 1;
+            const currencySymbol = this.formatCurrency(0).replace('0,00', '');
+            
+            // Dados mock
+            const salesPreviousYear = [5, 8, 12, 15, 18, 22, 25, 28, 30, 35, 40, 45];
+            const salesCurrentYear = [8, 12, 15, 18, 22, 25, 28, 32, 35, 38, 42, 48];
+            
+            // Meses traduzidos
+            const months = [
+                this.t('jan'), this.t('feb'), this.t('mar'), 
+                this.t('apr'), this.t('may'), this.t('jun'),
+                this.t('jul'), this.t('aug'), this.t('sep'),
+                this.t('oct'), this.t('nov'), this.t('dec')
+            ];
+
+            if (ctx) {
+                const newChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: `${this.t('sales')} ${previousYear} (${currencySymbol})`,
+                            data: salesPreviousYear,
+                            backgroundColor: '#1D4E89',
+                            borderColor: '#1D4E89',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            borderSkipped: false,
+                        }, {
+                            label: `${this.t('sales')} ${currentYear} (${currencySymbol})`,
+                            data: salesCurrentYear,
+                            backgroundColor: '#2A6FA8',
+                            borderColor: '#2A6FA8',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            borderSkipped: false,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20,
+                                    font: {
+                                        family: 'Inter, sans-serif',
+                                        size: 12
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 50,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)',
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    callback: (value) => {
+                                        return this.formatCurrency(value);
+                                    },
+                                    font: {
+                                        family: 'Inter, sans-serif',
+                                        size: 11
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    font: {
+                                        family: 'Inter, sans-serif',
+                                        size: 11
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Atualizar o estado
+                window.state.charts.set('salesChart', newChart);
+                console.log('✅ Gráfico de vendas recriado com traduções atualizadas');
+            }
+
+        } catch (error) {
+            console.warn('⚠️ Erro ao atualizar gráfico de vendas:', error);
+        }
     }
 
     // Atualizar elemento específico
@@ -158,6 +325,10 @@ class I18nManager {
         // Atualizar conteúdo baseado no tipo de elemento
         if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
             element.value = translation;
+        } else if (element.tagName === 'A' && element.querySelector('i')) {
+            // Para links com ícones, preservar o ícone e atualizar apenas o texto
+            const icon = element.querySelector('i');
+            element.innerHTML = icon.outerHTML + ' ' + translation;
         } else {
             element.textContent = translation;
         }
@@ -196,13 +367,24 @@ class I18nManager {
         selector.querySelectorAll('[data-lang]').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 const lang = e.target.getAttribute('data-lang');
+                console.log('🌍 Mudando idioma para:', lang);
                 this.setLanguage(lang);
                 this.updateAllElements();
+                this.updateLanguageSelector(selector, lang);
             });
         });
 
         return selector;
+    }
+
+    // Atualizar o seletor de idioma
+    updateLanguageSelector(selector, language) {
+        const button = selector.querySelector('.dropdown-toggle');
+        if (button) {
+            button.innerHTML = `<i class="bi bi-globe"></i> ${this.getLanguageName(language)}`;
+        }
     }
 
     // Obter nome do idioma
@@ -236,6 +418,13 @@ class I18nManager {
             const languageSelector = window.i18n.createLanguageSelector();
             languageSelectorContainer.appendChild(languageSelector);
         }
+
+        // Atualizar elementos após um pequeno delay para garantir que todos estejam carregados
+        setTimeout(() => {
+            if (window.i18n) {
+                window.i18n.updateAllElements();
+            }
+        }, 100);
     });
 
 // Exportar para uso global

@@ -1174,6 +1174,13 @@
         if (data && Object.keys(data).length > 0) {
             renderFinancialMaturities(data);
         }
+
+        // Forçar atualização do gráfico após renderização completa
+        setTimeout(() => {
+            if (window.i18n) {
+                window.i18n.updateSalesChart();
+            }
+        }, 500);
     }
 
     /**
@@ -1184,7 +1191,19 @@
         if (card) {
             const valueElement = card.querySelector('.fs-2');
             if (valueElement) {
-                valueElement.textContent = value;
+                // Se o valor já está formatado como moeda, extrair o número e reformatar
+                if (typeof value === 'string' && value.includes('R$')) {
+                    const numericValue = parseFloat(value.replace(/[^\d,.-]/g, '').replace(',', '.'));
+                    if (!isNaN(numericValue) && window.i18n) {
+                        valueElement.textContent = window.i18n.formatCurrency(numericValue);
+                    } else {
+                        valueElement.textContent = value;
+                    }
+                } else if (typeof value === 'number' && window.i18n) {
+                    valueElement.textContent = window.i18n.formatCurrency(value);
+                } else {
+                    valueElement.textContent = value;
+                }
             }
         }
     }
@@ -1204,14 +1223,23 @@
             state.charts.get('salesChart').destroy();
         }
 
+        // Obter ano atual e anterior dinamicamente
+        const currentYear = new Date().getFullYear();
+        const previousYear = currentYear - 1;
+
         // Dados mock para simular o gráfico da imagem
-        const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        const months = window.i18n ? [
+            window.i18n.t('jan'), window.i18n.t('feb'), window.i18n.t('mar'), 
+            window.i18n.t('apr'), window.i18n.t('may'), window.i18n.t('jun'),
+            window.i18n.t('jul'), window.i18n.t('aug'), window.i18n.t('sep'),
+            window.i18n.t('oct'), window.i18n.t('nov'), window.i18n.t('dec')
+        ] : ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
         
-        // Dados de vendas 2023 (azul primário)
-        const sales2023 = [5, 8, 12, 15, 18, 22, 25, 28, 30, 35, 40, 45];
+        // Dados de vendas do ano anterior (azul primário)
+        const salesPreviousYear = [5, 8, 12, 15, 18, 22, 25, 28, 30, 35, 40, 45];
         
-        // Dados de vendas 2024 (azul claro)
-        const sales2024 = [8, 12, 15, 18, 22, 25, 28, 32, 35, 38, 42, 48];
+        // Dados de vendas do ano atual (azul claro)
+        const salesCurrentYear = [8, 12, 15, 18, 22, 25, 28, 32, 35, 38, 42, 48];
 
         console.log('📊 Renderizando gráfico de vendas comparativo');
 
@@ -1220,16 +1248,16 @@
             data: {
                 labels: months,
                 datasets: [{
-                    label: 'Vendas 2023 (R$)',
-                    data: sales2023,
+                    label: `${window.i18n ? window.i18n.t('sales') : 'Vendas'} ${previousYear} (${window.i18n ? window.i18n.formatCurrency(0).replace('0,00', '') : 'R$'})`,
+                    data: salesPreviousYear,
                     backgroundColor: '#1D4E89',
                     borderColor: '#1D4E89',
                     borderWidth: 1,
                     borderRadius: 4,
                     borderSkipped: false,
                 }, {
-                    label: 'Vendas 2024 (R$)',
-                    data: sales2024,
+                    label: `${window.i18n ? window.i18n.t('sales') : 'Vendas'} ${currentYear} (${window.i18n ? window.i18n.formatCurrency(0).replace('0,00', '') : 'R$'})`,
+                    data: salesCurrentYear,
                     backgroundColor: '#2A6FA8',
                     borderColor: '#2A6FA8',
                     borderWidth: 1,
@@ -1263,6 +1291,9 @@
                         },
                         ticks: {
                             callback: function(value) {
+                                if (window.i18n) {
+                                    return window.i18n.formatCurrency(value);
+                                }
                                 return 'R$ ' + value.toFixed(2);
                             },
                             font: {
@@ -1301,18 +1332,27 @@
             state.charts.get('salesChart').destroy();
         }
 
+        // Obter ano atual e anterior dinamicamente
+        const currentYear = new Date().getFullYear();
+        const previousYear = currentYear - 1;
+
         const chart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                labels: window.i18n ? [
+                    window.i18n.t('jan'), window.i18n.t('feb'), window.i18n.t('mar'), 
+                    window.i18n.t('apr'), window.i18n.t('may'), window.i18n.t('jun'),
+                    window.i18n.t('jul'), window.i18n.t('aug'), window.i18n.t('sep'),
+                    window.i18n.t('oct'), window.i18n.t('nov'), window.i18n.t('dec')
+                ] : ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
                 datasets: [{
-                    label: 'Vendas 2023 (R$)',
+                    label: `${window.i18n ? window.i18n.t('sales') : 'Vendas'} ${previousYear} (${window.i18n ? window.i18n.formatCurrency(0).replace('0,00', '') : 'R$'})`,
                     data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                     backgroundColor: '#1D4E89',
                     borderColor: '#1D4E89',
                     borderWidth: 1
                 }, {
-                    label: 'Vendas 2024 (R$)',
+                    label: `${window.i18n ? window.i18n.t('sales') : 'Vendas'} ${currentYear} (${window.i18n ? window.i18n.formatCurrency(0).replace('0,00', '') : 'R$'})`,
                     data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                     backgroundColor: '#6C757D',
                     borderColor: '#6C757D',
@@ -1416,7 +1456,8 @@
         if (!content) return;
 
         if (receivables.length === 0) {
-            content.innerHTML = '<p class="text-center text-muted">Nenhuma venda pendente encontrada.</p>';
+            content.innerHTML = '<p class="text-center text-muted" data-i18n="noPendingSales">Nenhuma venda pendente encontrada.</p>';
+            if (window.i18n) window.i18n.updateAllElements();
             return;
         }
 
@@ -1425,9 +1466,9 @@
                 <table class="table table-sm">
                     <thead>
                         <tr>
-                            <th>Cliente</th>
-                            <th>Valor</th>
-                            <th>Vencimento</th>
+                            <th data-i18n="client">Cliente</th>
+                            <th data-i18n="value">Valor</th>
+                            <th data-i18n="dueDate">Vencimento</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1442,6 +1483,7 @@
                 </table>
             </div>
         `;
+        if (window.i18n) window.i18n.updateAllElements();
     }
 
     /**
@@ -1452,7 +1494,8 @@
         if (!tbody) return;
 
         if (payables.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhuma compra vencida encontrada</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted" data-i18n="noOverduePurchases">Nenhuma compra vencida encontrada</td></tr>';
+            if (window.i18n) window.i18n.updateAllElements();
             return;
         }
 
@@ -1464,6 +1507,7 @@
                 <td>${Utils.formatCurrency(item.valor)}</td>
             </tr>
         `).join('');
+        if (window.i18n) window.i18n.updateAllElements();
     }
 
     /**
@@ -1474,7 +1518,8 @@
         if (!content) return;
 
         if (receivables.length === 0) {
-            content.innerHTML = '<p class="text-center text-muted">Nenhuma venda pendente encontrada.</p>';
+            content.innerHTML = '<p class="text-center text-muted" data-i18n="noPendingSales">Nenhuma venda pendente encontrada.</p>';
+            if (window.i18n) window.i18n.updateAllElements();
             return;
         }
 
@@ -1483,9 +1528,9 @@
                 <table class="table table-sm">
                     <thead>
                         <tr>
-                            <th>Cliente</th>
-                            <th>Valor</th>
-                            <th>Vencimento</th>
+                            <th data-i18n="client">Cliente</th>
+                            <th data-i18n="value">Valor</th>
+                            <th data-i18n="dueDate">Vencimento</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1500,6 +1545,7 @@
                 </table>
             </div>
         `;
+        if (window.i18n) window.i18n.updateAllElements();
     }
 
     /**
@@ -1510,7 +1556,8 @@
         if (!content) return;
 
         if (payables.length === 0) {
-            content.innerHTML = '<p class="text-center text-muted">Nenhuma compra pendente encontrada.</p>';
+            content.innerHTML = '<p class="text-center text-muted" data-i18n="noPendingPurchases">Nenhuma compra pendente encontrada.</p>';
+            if (window.i18n) window.i18n.updateAllElements();
             return;
         }
 
@@ -1519,9 +1566,9 @@
                 <table class="table table-sm">
                     <thead>
                         <tr>
-                            <th>Fornecedor</th>
-                            <th>Valor</th>
-                            <th>Vencimento</th>
+                            <th data-i18n="supplier">Fornecedor</th>
+                            <th data-i18n="value">Valor</th>
+                            <th data-i18n="dueDate">Vencimento</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1536,6 +1583,7 @@
                 </table>
             </div>
         `;
+        if (window.i18n) window.i18n.updateAllElements();
     }
 
     /**
@@ -3321,9 +3369,9 @@
                         <table class="table table-sm">
                             <thead>
                                 <tr>
-                                    <th>Cliente</th>
-                                    <th>Valor</th>
-                                    <th>Vencimento</th>
+                                    <th data-i18n="client">Cliente</th>
+                                    <th data-i18n="value">Valor</th>
+                                    <th data-i18n="dueDate">Vencimento</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -3339,7 +3387,7 @@
                     </div>
                 `;
             } else {
-                overdueReceivableContent.innerHTML = '<p class="text-center text-muted">Nenhuma venda pendente encontrada.</p>';
+                overdueReceivableContent.innerHTML = '<p class="text-center text-muted" data-i18n="noPendingSales">Nenhuma venda pendente encontrada.</p>';
             }
         }
 
@@ -3356,7 +3404,7 @@
                     </tr>
                 `).join('');
             } else {
-                overduePayableTable.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhuma compra vencida encontrada</td></tr>';
+                overduePayableTable.innerHTML = '<tr><td colspan="4" class="text-center text-muted" data-i18n="noOverduePurchases">Nenhuma compra vencida encontrada</td></tr>';
             }
         }
 
@@ -3369,9 +3417,9 @@
                         <table class="table table-sm">
                             <thead>
                                 <tr>
-                                    <th>Cliente</th>
-                                    <th>Valor</th>
-                                    <th>Vencimento</th>
+                                    <th data-i18n="client">Cliente</th>
+                                    <th data-i18n="value">Valor</th>
+                                    <th data-i18n="dueDate">Vencimento</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -3387,7 +3435,7 @@
                     </div>
                 `;
             } else {
-                upcomingReceivableContent.innerHTML = '<p class="text-center text-muted">Nenhuma venda pendente encontrada.</p>';
+                upcomingReceivableContent.innerHTML = '<p class="text-center text-muted" data-i18n="noPendingSales">Nenhuma venda pendente encontrada.</p>';
             }
         }
 
@@ -3400,9 +3448,9 @@
                         <table class="table table-sm">
                             <thead>
                                 <tr>
-                                    <th>Fornecedor</th>
-                                    <th>Valor</th>
-                                    <th>Vencimento</th>
+                                    <th data-i18n="supplier">Fornecedor</th>
+                                    <th data-i18n="value">Valor</th>
+                                    <th data-i18n="dueDate">Vencimento</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -3418,8 +3466,13 @@
                     </div>
                 `;
             } else {
-                upcomingPayableContent.innerHTML = '<p class="text-center text-muted">Nenhuma compra pendente encontrada.</p>';
+                upcomingPayableContent.innerHTML = '<p class="text-center text-muted" data-i18n="noPendingPurchases">Nenhuma compra pendente encontrada.</p>';
             }
+        }
+
+        // Atualizar traduções após renderizar todo o conteúdo
+        if (window.i18n) {
+            window.i18n.updateAllElements();
         }
     }
 
@@ -3428,6 +3481,18 @@
     window.loadSuppliers = loadSuppliers;
     window.loadUsers = loadUsers;
     window.initialize = initialize;
+    window.renderSalesChart = renderSalesChart;
+
+    // Listener para mudança de idioma
+    window.addEventListener('languageChanged', (event) => {
+        console.log('🌍 Idioma alterado, atualizando gráfico...');
+        if (window.i18n) {
+            // Aguardar um pouco para garantir que as traduções foram carregadas
+            setTimeout(() => {
+                window.i18n.updateSalesChart();
+            }, 300);
+        }
+    });
     
     // Expor funções de criação e atualização
     window.createClient = createClient;
