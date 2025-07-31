@@ -1,6 +1,6 @@
-# 🚀 Gestor PRO - Sistema de Gestão Empresarial
+# 🚀 Gestor PRO - Sistema de Gestão Empresarial v2.1
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/seu-usuario/gestor-pro)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://github.com/seu-usuario/gestor-pro)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 [![PostgreSQL](https://img.shields.io/badge/postgresql-%3E%3D12.0.0-blue.svg)](https://www.postgresql.org/)
