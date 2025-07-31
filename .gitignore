@@ -1,9 +1,283 @@
-# Ignora a pasta de dependências do Node.js
+# ========================================
+# GESTOR PRO - GIT IGNORE
+# ========================================
+
+# ===== DEPENDÊNCIAS =====
 node_modules/
-
-# Ignora arquivos de ambiente
-.env
-
-# Ignora arquivos de log do npm
 npm-debug.log*
-.vercel
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ===== ARQUIVOS DE CONFIGURAÇÃO =====
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+config/local.js
+config/production.js
+
+# ===== LOGS =====
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# ===== RUNTIME DATA =====
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# ===== COVERAGE DIRECTORY =====
+coverage/
+*.lcov
+.nyc_output/
+
+# ===== GRUNT INTERMEDIATE STORAGE =====
+.grunt/
+
+# ===== BOWER DEPENDENCY DIRECTORY =====
+bower_components/
+
+# ===== NODE-WAF CONFIGURATION =====
+.lock-wscript
+
+# ===== COMPILED BINARY ADDONS =====
+build/Release/
+
+# ===== DEPENDENCY DIRECTORIES =====
+node_modules/
+jspm_packages/
+
+# ===== TYPESCRIPT V1 DECLARATION FILES =====
+typings/
+
+# ===== TYPESCRIPT CACHE =====
+*.tsbuildinfo
+
+# ===== OPTIONAL NPM CACHE DIRECTORY =====
+.npm
+
+# ===== OPTIONAL ESLINT CACHE =====
+.eslintcache
+
+# ===== MICROBUNDLE CACHE =====
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# ===== OPTIONAL REPL HISTORY =====
+.node_repl_history
+
+# ===== OUTPUT OF 'NPM PACK' =====
+*.tgz
+
+# ===== YARN INTEGRITY FILE =====
+.yarn-integrity
+
+# ===== DOTENV ENVIRONMENT VARIABLES FILE =====
+.env
+.env.test
+
+# ===== PARCEL-BUNDLER CACHE =====
+.cache
+.parcel-cache
+
+# ===== NEXT.JS BUILD OUTPUT =====
+.next
+
+# ===== NUXT.JS BUILD / GENERATE OUTPUT =====
+.nuxt
+dist
+
+# ===== GATSBY FILES =====
+.cache/
+public
+
+# ===== VUEPRESS BUILD OUTPUT =====
+.vuepress/dist
+
+# ===== SERVERLESS DIRECTORIES =====
+.serverless/
+
+# ===== FUSEBOX CACHE =====
+.fusebox/
+
+# ===== DYNAMO DB LOCAL FILES =====
+.dynamodb/
+
+# ===== TERNJS PORT FILE =====
+.tern-port
+
+# ===== STORES VSCode PLUGINS =====
+.vscode-test
+
+# ===== YARN V2 =====
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# ===== BANCO DE DADOS =====
+*.sqlite
+*.sqlite3
+*.db
+database.sqlite
+database.sqlite3
+*.sql
+*.dump
+
+# ===== BACKUP FILES =====
+*.bak
+*.backup
+*.old
+*.tmp
+temp/
+temp-backup/
+
+# ===== UPLOAD FILES =====
+uploads/
+public/uploads/
+static/uploads/
+
+# ===== CERTIFICATES =====
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+
+# ===== IDE FILES =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+.atom/
+.brackets.json
+
+# ===== OS FILES =====
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# ===== DOCKER =====
+.dockerignore
+docker-compose.override.yml
+
+# ===== DEPLOYMENT =====
+dist/
+build/
+.vercel/
+.netlify/
+.railway/
+.render/
+
+# ===== TEST FILES =====
+test-results/
+playwright-report/
+test-results.xml
+
+# ===== MONITORING =====
+sentry.properties
+newrelic.js
+
+# ===== CUSTOM =====
+# Arquivos específicos do projeto
+debug-*.js
+test-*.js
+check-*.js
+*-fix.js
+*-fixes.js
+*-improvements.js
+*-responsive.js
+*-critical.css
+*-auto-close.js
+*-close.js
+*-navigation.js
+*-timing.js
+*-issue.js
+*-working.js
+*-everything.js
+*-overlay.js
+*-styles-only.js
+*-now.js
+*-logic.js
+*-test.js
+*-diagnose.js
+*-investigate.js
+*-direct.js
+*-simple.js
+*-force.js
+*-ultimate.js
+*-table.js
+*-sidebar.js
+*-modal.js
+*-detail.js
+*-kpi.js
+*-low-stock.js
+*-stock.js
+*-alert.js
+*-headers.js
+*-final.js
+*-quick.js
+*-width.js
+*-50-percent.js
+*-zindex.js
+*-size.js
+*-dropdowns.js
+*-modals.js
+*-token.js
+*-app.js
+*-logout.js
+*-sair.js
+*-Continue.js
+
+# ===== ARQUIVOS DE DESENVOLVIMENTO =====
+# Arquivos temporários de desenvolvimento
+*.dev.js
+*.local.js
+*.test.js
+*.spec.js
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+
+# ===== ARQUIVOS DE CONFIGURAÇÃO LOCAL =====
+# Configurações específicas do ambiente local
+config/local.js
+config/development.js
+config/test.js
+
+# ===== ARQUIVOS DE LOG =====
+# Logs específicos do projeto
+logs/
+*.log
+error.log
+access.log
+combined.log
+
+# ===== ARQUIVOS DE CACHE =====
+# Cache de diferentes ferramentas
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache

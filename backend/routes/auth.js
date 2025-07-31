@@ -50,11 +50,17 @@ router.post('/login', async (req, res) => {
 
     console.log(`[AUTH] Login bem-sucedido para '${user.username}'.`);
     return res.json({
+      success: true,
       message: 'Login bem-sucedido!',
       token,
-      role: user.role,
-      username: user.username,
-      id: user.id
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
     });
 
   } catch (error) {

@@ -1,0 +1,173 @@
+/**
+ * Sidebar Override CSS - Sobrescreve regras conflitantes
+ * Este arquivo deve ser carregado por último para garantir que suas regras tenham prioridade
+ */
+
+/* ===== SOBRESCREVER REGRAS CONFLITANTES ===== */
+
+/* CORREÇÃO CRÍTICA: SOBRESCREVER QUALQUER REGRA QUE DEFINA 100% */
+/* Usando especificidade máxima para garantir que funcione */
+
+/* Para todas as telas menores que 992px */
+@media (max-width: 991.98px) {
+    .sidebar {
+        width: 50% !important;
+        max-width: 50% !important;
+        min-width: 280px !important;
+    }
+}
+
+/* Para telas menores que 768px */
+@media (max-width: 767.98px) {
+    .sidebar {
+        width: 50% !important;
+        max-width: 50% !important;
+        min-width: 280px !important;
+    }
+}
+
+/* Para telas menores que 576px */
+@media (max-width: 575.98px) {
+    .sidebar {
+        width: 50% !important;
+        max-width: 50% !important;
+        min-width: 280px !important;
+    }
+}
+
+/* Para telas menores que 480px */
+@media (max-width: 479.98px) {
+    .sidebar {
+        width: 50% !important;
+        max-width: 50% !important;
+        min-width: 280px !important;
+    }
+}
+
+/* Para telas menores que 400px */
+@media (max-width: 399.98px) {
+    .sidebar {
+        width: 50% !important;
+        max-width: 50% !important;
+        min-width: 280px !important;
+    }
+}
+
+/* ===== SOBRESCREVER REGRAS ESPECÍFICAS ===== */
+
+/* Sobrescrever qualquer regra que use width: 100% */
+.sidebar[style*="width: 100%"] {
+    width: 50% !important;
+}
+
+.sidebar[style*="max-width: 100%"] {
+    max-width: 50% !important;
+}
+
+/* Sobrescrever regras inline */
+.sidebar {
+    width: 50% !important;
+    max-width: 50% !important;
+    min-width: 280px !important;
+}
+
+/* ===== REGRAS DE ESPECIFICIDADE MÁXIMA ===== */
+
+/* Usando múltiplos seletores para aumentar especificidade */
+body .sidebar,
+html body .sidebar,
+#app-container .sidebar,
+body #app-container .sidebar {
+    width: 50% !important;
+    max-width: 50% !important;
+    min-width: 280px !important;
+}
+
+/* ===== CORREÇÕES ESPECÍFICAS PARA ARQUIVOS CONFLITANTES ===== */
+
+/* Sobrescrever regras do sidebar-fixes.css */
+@media (max-width: 991.98px) {
+    .sidebar {
+        width: 50% !important;
+        max-width: 50% !important;
+        min-width: 280px !important;
+    }
+}
+
+/* Sobrescrever regras do force-sidebar-critical.css */
+@media (max-width: 991.98px) {
+    .sidebar {
+        width: 50% !important;
+        max-width: 50% !important;
+        min-width: 280px !important;
+    }
+}
+
+/* Sobrescrever regras do final-sidebar.css */
+@media (max-width: 991.98px) {
+    .sidebar {
+        width: 50% !important;
+        max-width: 50% !important;
+        min-width: 280px !important;
+    }
+}
+
+/* ===== CORREÇÕES PARA TODOS OS BREAKPOINTS ===== */
+
+/* Desktop */
+@media (min-width: 992px) {
+    .sidebar {
+        width: 280px !important;
+        max-width: 280px !important;
+    }
+}
+
+/* Tablet */
+@media (max-width: 991.98px) and (min-width: 768px) {
+    .sidebar {
+        width: 50% !important;
+        max-width: 50% !important;
+        min-width: 280px !important;
+    }
+}
+
+/* Mobile Large */
+@media (max-width: 767.98px) and (min-width: 576px) {
+    .sidebar {
+        width: 50% !important;
+        max-width: 50% !important;
+        min-width: 280px !important;
+    }
+}
+
+/* Mobile */
+@media (max-width: 575.98px) {
+    .sidebar {
+        width: 50% !important;
+        max-width: 50% !important;
+        min-width: 280px !important;
+    }
+}
+
+/* ===== CORREÇÃO FINAL COM ESPECIFICIDADE MÁXIMA ===== */
+
+/* Esta regra deve sobrescrever qualquer outra regra */
+html body #app-container .sidebar,
+body #app-container .sidebar,
+#app-container .sidebar,
+.sidebar {
+    width: 50% !important;
+    max-width: 50% !important;
+    min-width: 280px !important;
+}
+
+/* Para desktop, manter 280px */
+@media (min-width: 992px) {
+    html body #app-container .sidebar,
+    body #app-container .sidebar,
+    #app-container .sidebar,
+    .sidebar {
+        width: 280px !important;
+        max-width: 280px !important;
+    }
+} 

@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitBtn = document.getElementById('submitBtn');
 
     // Verificar se já existe um token (mas não redirecionar automaticamente)
-    const existingToken = localStorage.getItem('token');
+            const existingToken = localStorage.getItem('authToken');
     if (existingToken) {
         messageDiv.innerHTML = '<div class="alert alert-info">Você já está logado. Clique em "Limpar Sessão" para fazer login novamente.</div>';
     }
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (response.ok) {
                 // Login bem-sucedido
-                localStorage.setItem('token', data.token);
+                localStorage.setItem('authToken', data.token);
                 if (data.user) {
                     localStorage.setItem('user', JSON.stringify(data.user));
                 } else {

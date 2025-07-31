@@ -2,54 +2,27 @@
   "version": 2,
   "builds": [
     {
-      "src": "**/*",
-      "use": "@vercel/static"
+      "src": "../server.js",
+      "use": "@vercel/node"
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/",
-      "destination": "/index.html"
+      "src": "/api/(.*)",
+      "dest": "/server.js"
     },
     {
-      "source": "/login",
-      "destination": "/login.html"
-    },
-    {
-      "source": "/logout",
-      "destination": "/logout.html"
-    },
-    {
-      "source": "/logout-simple",
-      "destination": "/logout-simple.html"
-    },
-    {
-      "source": "/sair",
-      "destination": "/sair.html"
-    },
-    {
-      "source": "/test-logout-simple",
-      "destination": "/test-logout-simple.html"
-    },
-    {
-      "source": "/test-app-js",
-      "destination": "/test-app-js.html"
-    },
-    {
-      "source": "/debug-token",
-      "destination": "/debug-token.html"
+      "src": "/(.*)",
+      "dest": "/server.js"
     }
   ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        }
-      ]
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "functions": {
+    "server.js": {
+      "maxDuration": 30
     }
-  ]
+  }
 }
   

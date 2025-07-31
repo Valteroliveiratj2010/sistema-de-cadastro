@@ -40,8 +40,24 @@ module.exports = (sequelize) => {
         bancoCrediario: {
             type: DataTypes.STRING,
             allowNull: true
+        },
+        // Chave estrangeira para a venda
+        saleId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            references: {
+                model: 'Sales',
+                key: 'id'
+            },
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE'
         }
     });
+
+    // Definindo associações (serão chamadas no database/index.js)
+    Payment.associate = (models) => {
+        Payment.belongsTo(models.Sale, { foreignKey: 'saleId', as: 'sale' });
+    };
 
     return Payment; // Retorna o modelo definido
 };

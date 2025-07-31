@@ -5,7 +5,7 @@ const isLocalhost = window.location.hostname === 'localhost' ||
 
 if (isLocalhost) {
     // Desenvolvimento local
-    window.API_BASE_URL = 'http://localhost:8080/api';
+    window.API_BASE_URL = 'http://localhost:3000/api';
     console.log('🌐 Ambiente: DESENVOLVIMENTO LOCAL');
 } else {
     // Produção (Vercel)

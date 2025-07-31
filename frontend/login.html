@@ -47,13 +47,14 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/apiConfig.js"></script>
-    <script src="js/login.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
     
     <script>
         // Script adicional para limpar localStorage
         document.getElementById('clearStorageBtn').addEventListener('click', function() {
-            localStorage.removeItem('token');
+            localStorage.removeItem('authToken');
             localStorage.removeItem('user');
             alert('Sessão limpa! Agora você pode fazer login novamente.');
             location.reload();
@@ -61,10 +62,50 @@
         
         // Verificar se já está logado ao carregar a página
         window.addEventListener('load', function() {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('authToken');
             if (token) {
                 document.getElementById('message').innerHTML = 
                     '<div class="alert alert-info">Você já está logado. Clique em "Limpar Sessão" para fazer login novamente.</div>';
+            }
+        });
+        
+        // Configurar formulário de login
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const submitBtn = document.getElementById('submitBtn');
+            const messageDiv = document.getElementById('message');
+            
+            // Desabilitar botão e mostrar loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Entrando...';
+            messageDiv.innerHTML = '';
+            
+            try {
+                console.log('🔄 Tentando login com:', { username, password });
+                const result = await window.auth.login({ username, password });
+                
+                console.log('📡 Resultado do login:', result);
+                
+                if (result.success) {
+                    messageDiv.innerHTML = '<div class="alert alert-success">Login realizado com sucesso! Redirecionando...</div>';
+                    console.log('✅ Login bem-sucedido, redirecionando...');
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                } else {
+                    messageDiv.innerHTML = `<div class="alert alert-danger">${result.message}</div>`;
+                    console.log('❌ Login falhou:', result.message);
+                }
+            } catch (error) {
+                console.error('❌ Erro no login:', error);
+                messageDiv.innerHTML = '<div class="alert alert-danger">Erro interno. Tente novamente.</div>';
+            } finally {
+                // Reabilitar botão
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Entrar';
             }
         });
     </script>

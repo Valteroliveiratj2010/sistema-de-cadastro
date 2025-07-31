@@ -312,16 +312,21 @@ router.get('/clients/:id', authorizeRole(['admin', 'gerente', 'vendedor']), asyn
     try {
         const id = req.params.id;
         let whereClause = { id };
+        
+        // Para vendedores, verificar se o cliente pertence a eles
         if (req.user.role === 'vendedor') {
             whereClause.userId = req.user.id;
         }
 
-        const client = await Client.findByPk(id, { where: whereClause });
-        if (client) res.json(client);
-        else res.status(404).json({ message: 'Cliente não encontrado ou você não tem permissão para vê-lo.' });
+        const client = await Client.findOne({ where: whereClause });
+        if (client) {
+            res.json({ success: true, data: client });
+        } else {
+            res.status(404).json({ success: false, message: 'Cliente não encontrado ou você não tem permissão para vê-lo.' });
+        }
     } catch (error) { 
         console.error('❌ ERRO AO BUSCAR CLIENTE POR ID:', error);
-        res.status(500).json({ message: error.message }); 
+        res.status(500).json({ success: false, message: error.message }); 
     }
 });
 
@@ -330,10 +335,10 @@ router.post('/clients', authorizeRole(['admin', 'gerente', 'vendedor']), async (
         const clientData = { ...req.body, userId: req.user.id };
         
         const client = await Client.create(clientData);
-        res.status(201).json(client);
+        res.status(201).json({ success: true, data: client, message: 'Cliente criado com sucesso!' });
     } catch (error) { 
         console.error('❌ ERRO AO CRIAR CLIENTE:', error);
-        res.status(400).json({ message: error.message }); 
+        res.status(400).json({ success: false, message: error.message }); 
     }
 });
 
@@ -341,6 +346,8 @@ router.put('/clients/:id', authorizeRole(['admin', 'gerente', 'vendedor']), asyn
     try {
         const id = req.params.id;
         let whereClause = { id };
+        
+        // Para vendedores, verificar se o cliente pertence a eles
         if (req.user.role === 'vendedor') {
             whereClause.userId = req.user.id;
         }
@@ -348,22 +355,27 @@ router.put('/clients/:id', authorizeRole(['admin', 'gerente', 'vendedor']), asyn
         const [updated] = await Client.update(req.body, { where: whereClause });
         if (updated) {
             const updatedClient = await Client.findByPk(id);
-            res.json(updatedClient);
-        } else { res.status(404).json({ message: 'Cliente não encontrado ou você não tem permissão para editá-lo.' }); }
+            res.json({ success: true, data: updatedClient, message: 'Cliente atualizado com sucesso!' });
+        } else {
+            res.status(404).json({ success: false, message: 'Cliente não encontrado ou você não tem permissão para editá-lo.' });
+        }
     } catch (error) { 
         console.error('❌ ERRO AO ATUALIZAR CLIENTE:', error);
-        res.status(400).json({ message: error.message }); 
+        res.status(400).json({ success: false, message: error.message }); 
     }
 });
 
 router.delete('/clients/:id', authorizeRole(['admin', 'gerente']), async (req, res) => {
     try {
         const deleted = await Client.destroy({ where: { id: req.params.id } });
-        if (deleted) res.status(204).send();
-        else res.status(404).json({ message: 'Cliente não encontrado' });
+        if (deleted) {
+            res.json({ success: true, message: 'Cliente excluído com sucesso!' });
+        } else {
+            res.status(404).json({ success: false, message: 'Cliente não encontrado' });
+        }
     } catch (error) { 
         console.error('❌ ERRO AO DELETAR CLIENTE:', error);
-        res.status(500).json({ message: error.message }); 
+        res.status(500).json({ success: false, message: error.message }); 
     }
 });
 
@@ -702,7 +714,7 @@ router.post('/sales/:saleId/payments', authorizeRole(['admin', 'gerente', 'vende
 
 // --- ROTAS DE PRODUTOS ---
 router.get('/products/low-stock', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
-    const LOW_STOCK_THRESHOLD = 10; 
+    const LOW_STOCK_THRESHOLD = 20; // Aumentado para 20 conforme solicitado
     try {
         const products = await Product.findAll({
             where: {
@@ -830,24 +842,75 @@ router.get('/products', authorizeRole(['admin', 'gerente', 'vendedor']), async (
     const offset = (page - 1) * limit;
     const whereClause = q ? { nome: { [Op.like]: `%${q}%` } } : {};
     try {
-        const { count, rows } = await Product.findAndCountAll({ where: whereClause, limit: parseInt(limit), offset: parseInt(offset), order: [['nome', 'ASC']] });
-        res.json({ total: count, data: rows });
-    } catch (error) { res.status(500).json({ message: error.message }); }
+        const { count, rows } = await Product.findAndCountAll({ 
+            where: whereClause, 
+            limit: parseInt(limit), 
+            offset: parseInt(offset), 
+            order: [['nome', 'ASC']] 
+        });
+        res.json({ 
+            success: true, 
+            total: count, 
+            products: rows 
+        });
+    } catch (error) { 
+        console.error('❌ ERRO AO BUSCAR PRODUTOS:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: error.message 
+        }); 
+    }
 });
 
 router.get('/products/:id', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     try {
         const product = await Product.findByPk(req.params.id);
-        if (product) res.json(product);
-        else res.status(404).json({ message: 'Produto não encontrado' });
-    } catch (error) { res.status(500).json({ message: error.message }); }
+        if (product) {
+            res.json({ 
+                success: true, 
+                data: product 
+            });
+        } else {
+            res.status(404).json({ 
+                success: false, 
+                message: 'Produto não encontrado' 
+            });
+        }
+    } catch (error) { 
+        console.error('❌ ERRO AO BUSCAR PRODUTO:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: error.message 
+        }); 
+    }
 });
 
 router.post('/products', authorizeRole(['admin', 'gerente']), async (req, res) => { 
     try {
         const product = await Product.create(req.body);
-        res.status(201).json(product);
-    } catch (error) { res.status(400).json({ message: error.message }); }
+        res.status(201).json({ 
+            success: true, 
+            message: 'Produto criado com sucesso!',
+            data: product 
+        });
+    } catch (error) { 
+        console.error('❌ ERRO AO CRIAR PRODUTO:', error);
+        
+        // Tratamento específico para SKU duplicado
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            if (error.fields && error.fields.sku) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'SKU já existe. Por favor, use um SKU único.' 
+                });
+            }
+        }
+        
+        res.status(400).json({ 
+            success: false, 
+            message: error.message || 'Erro ao criar produto' 
+        }); 
+    }
 });
 
 router.put('/products/:id', authorizeRole(['admin', 'gerente']), async (req, res) => { 
@@ -855,19 +918,46 @@ router.put('/products/:id', authorizeRole(['admin', 'gerente']), async (req, res
         const [updated] = await Product.update(req.body, { where: { id: req.params.id } });
         if (updated) {
             const updatedProduct = await Product.findByPk(req.params.id);
-            res.json(updatedProduct);
-        } else { res.status(404).json({ message: 'Produto não encontrado' }); }
-    } catch (error) { res.status(400).json({ message: error.message }); }
+            res.json({ 
+                success: true, 
+                message: 'Produto atualizado com sucesso!',
+                data: updatedProduct 
+            });
+        } else { 
+            res.status(404).json({ 
+                success: false, 
+                message: 'Produto não encontrado' 
+            }); 
+        }
+    } catch (error) { 
+        console.error('❌ ERRO AO ATUALIZAR PRODUTO:', error);
+        res.status(400).json({ 
+            success: false, 
+            message: error.message 
+        }); 
+    }
 });
 
 router.delete('/products/:id', authorizeRole(['admin', 'gerente']), async (req, res) => {
     try {
         const deleted = await Product.destroy({ where: { id: req.params.id } });
-        if (deleted) res.status(204).send();
-        else res.status(404).json({ message: 'Produto não encontrado' });
+        if (deleted) {
+            res.json({ 
+                success: true, 
+                message: 'Produto excluído com sucesso!' 
+            });
+        } else {
+            res.status(404).json({ 
+                success: false, 
+                message: 'Produto não encontrado' 
+            });
+        }
     } catch (error) { 
         console.error('❌ ERRO AO DELETAR PRODUTO:', error);
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ 
+            success: false, 
+            message: error.message 
+        });
     }
 });
 
@@ -1315,12 +1405,28 @@ router.get('/finance/accounting-csv', authorizeRole(['admin', 'gerente']), async
             return res.status(400).json({ message: 'Formato de data inválido. Use AAAA-MM-DD.' });
         }
 
-        const payments = await Payment.findAll({
-            where: {
-                dataPagamento: { [Op.between]: [start, end] }
-            },
-            include: [{ model: Sale, as: 'sale', include: [{ model: Client, as: 'client', attributes: ['nome'] }] }]
-        });
+        let payments = [];
+        try {
+            payments = await Payment.findAll({
+                where: {
+                    dataPagamento: { [Op.between]: [start, end] }
+                },
+                include: [{ model: Sale, as: 'sale', include: [{ model: Client, as: 'client', attributes: ['nome'] }] }]
+            });
+        } catch (paymentError) {
+            console.error('❌ Erro ao buscar pagamentos para CSV:', paymentError);
+            // Fallback sem associações
+            try {
+                payments = await Payment.findAll({
+                    where: {
+                        dataPagamento: { [Op.between]: [start, end] }
+                    }
+                });
+            } catch (fallbackError) {
+                console.error('❌ Erro no fallback de pagamentos para CSV:', fallbackError);
+                payments = [];
+            }
+        }
 
         const purchases = await Purchase.findAll({
             where: {
@@ -1333,13 +1439,22 @@ router.get('/finance/accounting-csv', authorizeRole(['admin', 'gerente']), async
         let transactions = [];
 
         payments.forEach(p => {
+            let entityName = 'N/A';
+            try {
+                if (p.sale && p.sale.client) {
+                    entityName = p.sale.client.nome;
+                }
+            } catch (error) {
+                console.log('⚠️ Erro ao acessar dados da venda/cliente no CSV:', error.message);
+            }
+            
             transactions.push({
                 date: p.dataPagamento,
                 type: 'ENTRADA',
                 description: `Pagamento de Venda #${p.saleId}`,
                 amount: parseFloat(p.valor),
-                entity: p.sale && p.sale.client ? p.sale.client.nome : 'N/A',
-                payment_method: p.formaPagamento,
+                entity: entityName,
+                payment_method: p.formaPagamento || 'N/A',
                 ref_id: p.saleId
             });
         });
@@ -1401,6 +1516,319 @@ router.get('/finance/accounting-csv', authorizeRole(['admin', 'gerente']), async
     }
 });
 
+// ROTA PARA RELATÓRIO DE VENDAS POR PERÍODO
+router.get('/reports/sales', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
+    console.log(`[API Route Log] ${new Date().toISOString()} - Sales report route accessed by ${req.user.username}.`);
+    try {
+        const { startDate, endDate } = req.query;
+
+        if (!startDate || !endDate) {
+            return res.status(400).json({ message: 'Data inicial e final são obrigatórias.' });
+        }
+
+        const start = new Date(startDate + 'T00:00:00.000Z');
+        const end = new Date(endDate + 'T23:59:59.999Z');
+
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            return res.status(400).json({ message: 'Formato de data inválido. Use AAAA-MM-DD.' });
+        }
+
+        let whereClause = {
+            dataVenda: { [Op.between]: [start, end] }
+        };
+
+        // Filtrar por vendedor se não for admin/gerente
+        if (req.user.role === 'vendedor') {
+            whereClause.userId = req.user.id;
+        }
+
+        const sales = await Sale.findAll({
+            where: whereClause,
+            include: [
+                { model: Client, as: 'client', attributes: ['nome'] },
+                { model: User, as: 'user', attributes: ['username'] },
+                { model: Payment, as: 'payments', attributes: ['valor'] }
+            ],
+            order: [['dataVenda', 'DESC']]
+        });
+
+        // Calcular totais
+        const totalSales = sales.reduce((sum, sale) => sum + parseFloat(sale.valorTotal), 0);
+        const totalPaid = sales.reduce((sum, sale) => {
+            const paidAmount = sale.pagamentos ? sale.pagamentos.reduce((pSum, p) => pSum + parseFloat(p.valor), 0) : 0;
+            return sum + paidAmount;
+        }, 0);
+        const totalDue = totalSales - totalPaid;
+
+        // Formatar dados para resposta
+        const formattedSales = sales.map(sale => {
+            const paidAmount = sale.pagamentos ? sale.pagamentos.reduce((sum, p) => sum + parseFloat(p.valor), 0) : 0;
+            const dueAmount = parseFloat(sale.valorTotal) - paidAmount;
+
+            return {
+                id: sale.id,
+                clientName: sale.client ? sale.client.nome : 'N/A',
+                saleDate: sale.dataVenda,
+                totalValue: parseFloat(sale.valorTotal),
+                paidValue: paidAmount,
+                dueValue: dueAmount,
+                status: sale.status,
+                seller: sale.user ? sale.user.username : 'N/A'
+            };
+        });
+
+        res.json({
+            sales: formattedSales,
+            summary: {
+                totalSales: totalSales,
+                totalPaid: totalPaid,
+                totalDue: totalDue,
+                salesCount: sales.length
+            },
+            period: {
+                startDate: startDate,
+                endDate: endDate
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ ERRO AO GERAR RELATÓRIO DE VENDAS:', error);
+        res.status(500).json({ message: 'Erro ao gerar relatório de vendas.' });
+    }
+});
+
+// ROTA PARA RELATÓRIO DE FLUXO DE CAIXA
+router.get('/reports/cash-flow', authorizeRole(['admin', 'gerente']), async (req, res) => {
+    console.log(`[API Route Log] ${new Date().toISOString()} - Cash flow report route accessed by ${req.user.username}.`);
+    try {
+        const { startDate, endDate } = req.query;
+
+        if (!startDate || !endDate) {
+            return res.status(400).json({ message: 'Data inicial e final são obrigatórias.' });
+        }
+
+        const start = new Date(startDate + 'T00:00:00.000Z');
+        const end = new Date(endDate + 'T23:59:59.999Z');
+
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            return res.status(400).json({ message: 'Formato de data inválido. Use AAAA-MM-DD.' });
+        }
+
+        // Buscar pagamentos de vendas (entradas)
+        console.log('🔍 Buscando pagamentos entre:', start, 'e', end);
+        let payments = [];
+        
+        // Primeiro, verificar se há pagamentos no período
+        try {
+            const paymentCount = await Payment.count({
+                where: {
+                    dataPagamento: { [Op.between]: [start, end] }
+                }
+            });
+            console.log('📊 Total de pagamentos no período:', paymentCount);
+            
+            if (paymentCount > 0) {
+                try {
+                    payments = await Payment.findAll({
+                        where: {
+                            dataPagamento: { [Op.between]: [start, end] }
+                        },
+                        include: [
+                            { model: Sale, as: 'sale', include: [{ model: Client, as: 'client', attributes: ['nome'] }] }
+                        ],
+                        order: [['dataPagamento', 'ASC']]
+                    });
+                    console.log('✅ Pagamentos encontrados com associações:', payments.length);
+                } catch (paymentError) {
+                    console.error('❌ Erro ao buscar pagamentos com associações:', paymentError);
+                    // Se houver erro com associações, tentar sem include
+                    try {
+                        payments = await Payment.findAll({
+                            where: {
+                                dataPagamento: { [Op.between]: [start, end] }
+                            },
+                            order: [['dataPagamento', 'ASC']]
+                        });
+                        console.log('✅ Pagamentos encontrados (sem associações):', payments.length);
+                    } catch (fallbackError) {
+                        console.error('❌ Erro no fallback de pagamentos:', fallbackError);
+                        payments = [];
+                    }
+                }
+            } else {
+                console.log('ℹ️ Nenhum pagamento encontrado no período');
+            }
+        } catch (countError) {
+            console.error('❌ Erro ao contar pagamentos:', countError);
+            payments = [];
+        }
+
+        // Buscar compras (saídas)
+        const purchases = await Purchase.findAll({
+            where: {
+                dataCompra: { [Op.between]: [start, end] },
+                status: 'Concluída'
+            },
+            include: [
+                { model: Supplier, as: 'supplier', attributes: ['nome'] }
+            ],
+            order: [['dataCompra', 'ASC']]
+        });
+
+        // Formatar transações
+        const transactions = [];
+
+        // Adicionar entradas (pagamentos)
+        payments.forEach(payment => {
+            let entityName = 'N/A';
+            try {
+                if (payment.sale && payment.sale.client) {
+                    entityName = payment.sale.client.nome;
+                }
+            } catch (error) {
+                console.log('⚠️ Erro ao acessar dados da venda/cliente:', error.message);
+            }
+            
+            transactions.push({
+                date: payment.dataPagamento,
+                type: 'ENTRADA',
+                description: `Pagamento de Venda #${payment.saleId}`,
+                amount: parseFloat(payment.valor),
+                entity: entityName,
+                paymentMethod: payment.formaPagamento || 'N/A',
+                referenceId: payment.saleId
+            });
+        });
+
+        // Adicionar saídas (compras)
+        purchases.forEach(purchase => {
+            transactions.push({
+                date: purchase.dataCompra,
+                type: 'SAÍDA',
+                description: `Compra #${purchase.id}`,
+                amount: parseFloat(purchase.valorTotal),
+                entity: purchase.supplier ? purchase.supplier.nome : 'N/A',
+                paymentMethod: 'N/A',
+                referenceId: purchase.id
+            });
+        });
+
+        // Ordenar por data
+        transactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        // Calcular totais
+        const totalInflows = transactions
+            .filter(t => t.type === 'ENTRADA')
+            .reduce((sum, t) => sum + t.amount, 0);
+
+        const totalOutflows = transactions
+            .filter(t => t.type === 'SAÍDA')
+            .reduce((sum, t) => sum + t.amount, 0);
+
+        const netFlow = totalInflows - totalOutflows;
+
+        res.json({
+            transactions: transactions,
+            summary: {
+                totalInflows: totalInflows,
+                totalOutflows: totalOutflows,
+                netFlow: netFlow,
+                transactionCount: transactions.length
+            },
+            period: {
+                startDate: startDate,
+                endDate: endDate
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ ERRO AO GERAR RELATÓRIO DE FLUXO DE CAIXA:', error);
+        res.status(500).json({ message: 'Erro ao gerar relatório de fluxo de caixa.' });
+    }
+});
+
+// ROTA PARA EXPORTAR RELATÓRIO DE VENDAS EM CSV
+router.get('/reports/sales/export', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
+    console.log(`[API Route Log] ${new Date().toISOString()} - Sales CSV export route accessed by ${req.user.username}.`);
+    try {
+        const { startDate, endDate } = req.query;
+
+        if (!startDate || !endDate) {
+            return res.status(400).json({ message: 'Data inicial e final são obrigatórias.' });
+        }
+
+        const start = new Date(startDate + 'T00:00:00.000Z');
+        const end = new Date(endDate + 'T23:59:59.999Z');
+
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            return res.status(400).json({ message: 'Formato de data inválido. Use AAAA-MM-DD.' });
+        }
+
+        let whereClause = {
+            dataVenda: { [Op.between]: [start, end] }
+        };
+
+        if (req.user.role === 'vendedor') {
+            whereClause.userId = req.user.id;
+        }
+
+        const sales = await Sale.findAll({
+            where: whereClause,
+            include: [
+                { model: Client, as: 'client', attributes: ['nome'] },
+                { model: User, as: 'user', attributes: ['username'] },
+                { model: Payment, as: 'payments', attributes: ['valor'] }
+            ],
+            order: [['dataVenda', 'DESC']]
+        });
+
+        const headers = [
+            'ID',
+            'Cliente',
+            'Data da Venda',
+            'Valor Total',
+            'Valor Pago',
+            'Valor Devido',
+            'Status',
+            'Vendedor'
+        ];
+
+        const csvRows = sales.map(sale => {
+            const paidAmount = sale.pagamentos ? sale.pagamentos.reduce((sum, p) => sum + parseFloat(p.valor), 0) : 0;
+            const dueAmount = parseFloat(sale.valorTotal) - paidAmount;
+
+            const escapeCsv = (value) => {
+                if (value === null || value === undefined) return '';
+                const stringValue = String(value).replace(/"/g, '""');
+                if (stringValue.includes(',') || stringValue.includes('\n') || stringValue.includes('"') || stringValue.includes(';')) {
+                    return `"${stringValue}"`;
+                }
+                return stringValue;
+            };
+
+            return [
+                escapeCsv(sale.id),
+                escapeCsv(sale.client ? sale.client.nome : 'N/A'),
+                escapeCsv(new Date(sale.dataVenda).toLocaleDateString('pt-BR')),
+                escapeCsv(parseFloat(sale.valorTotal).toFixed(2).replace('.', ',')),
+                escapeCsv(paidAmount.toFixed(2).replace('.', ',')),
+                escapeCsv(dueAmount.toFixed(2).replace('.', ',')),
+                escapeCsv(sale.status),
+                escapeCsv(sale.user ? sale.user.username : 'N/A')
+            ].join(';');
+        });
+
+        const csvContent = [headers.join(';'), ...csvRows].join('\n');
+
+        res.setHeader('Content-Type', 'text/csv; charset=UTF-8');
+        res.setHeader('Content-Disposition', `attachment; filename="relatorio_vendas_${startDate}_${endDate}.csv"`);
+        res.status(200).send(csvContent);
+
+    } catch (error) {
+        console.error('❌ ERRO AO EXPORTAR RELATÓRIO DE VENDAS:', error);
+        res.status(500).json({ message: 'Erro ao exportar relatório de vendas.' });
+    }
+});
 
 // ROTAS PARA ANÁLISE PREDITIVA SIMPLES
 router.get('/finance/sales-prediction', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
