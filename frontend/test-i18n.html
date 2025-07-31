@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Internacionalização - Gestor PRO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-center mb-4">🌍 Teste de Internacionalização</h1>
+                
+                <!-- Seletor de Idioma -->
+                <div class="row justify-content-center mb-4">
+                    <div class="col-md-6">
+                        <div id="languageSelector"></div>
+                    </div>
+                </div>
+
+                <!-- Teste de Traduções -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Teste de Traduções</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Dashboard:</strong> <span data-i18n="dashboard">Dashboard</span></p>
+                                <p><strong>Clientes:</strong> <span data-i18n="clients">Clientes</span></p>
+                                <p><strong>Vendas:</strong> <span data-i18n="sales">Vendas</span></p>
+                                <p><strong>Produtos:</strong> <span data-i18n="products">Produtos</span></p>
+                                <p><strong>Compras:</strong> <span data-i18n="purchases">Compras</span></p>
+                                <p><strong>Fornecedores:</strong> <span data-i18n="suppliers">Fornecedores</span></p>
+                                <p><strong>Utilizadores:</strong> <span data-i18n="users">Utilizadores</span></p>
+                                <p><strong>Relatórios:</strong> <span data-i18n="reports">Relatórios</span></p>
+                                <p><strong>Sair:</strong> <span data-i18n="logout">Sair</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Teste de KPIs</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Total de Clientes:</strong> <span data-i18n="totalClients">TOTAL DE CLIENTES</span></p>
+                                <p><strong>Vendas do Mês:</strong> <span data-i18n="salesThisMonth">VENDAS DO MÊS</span></p>
+                                <p><strong>A Receber:</strong> <span data-i18n="totalReceivable">A RECEBER</span></p>
+                                <p><strong>A Pagar:</strong> <span data-i18n="totalAccountsPayable">A PAGAR</span></p>
+                                <p><strong>Lucro:</strong> <span data-i18n="profit">LUCRO</span></p>
+                                <p><strong>Vendas Vencidas:</strong> <span data-i18n="overdueSales">VENDAS VENCIDAS</span></p>
+                                <p><strong>Valor do Pedido:</strong> <span data-i18n="orderValue">VALOR DO PEDIDO</span></p>
+                                <p><strong>Ticket Médio:</strong> <span data-i18n="averageTicket">TICKET MÉDIO</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teste de Formatação -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Teste de Formatação</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <h6>Moeda:</h6>
+                                        <p id="currencyTest">Carregando...</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <h6>Número:</h6>
+                                        <p id="numberTest">Carregando...</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <h6>Data:</h6>
+                                        <p id="dateTest">Carregando...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões de Teste -->
+                <div class="row mt-4">
+                    <div class="col-12 text-center">
+                        <button class="btn btn-primary me-2" onclick="testLanguage('pt')">🇵🇹 Português</button>
+                        <button class="btn btn-primary me-2" onclick="testLanguage('en')">🇺🇸 English</button>
+                        <button class="btn btn-primary" onclick="testLanguage('es')">🇪🇸 Español</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/i18n/translations.js"></script>
+    <script src="js/i18n/i18n.js"></script>
+    
+    <script>
+        // Função para testar mudança de idioma
+        function testLanguage(lang) {
+            if (window.i18n) {
+                window.i18n.setLanguage(lang);
+                window.i18n.updateAllElements();
+                updateFormattingTests();
+            }
+        }
+
+        // Função para atualizar testes de formatação
+        function updateFormattingTests() {
+            if (window.i18n) {
+                document.getElementById('currencyTest').textContent = 
+                    window.i18n.formatCurrency(1234.56);
+                document.getElementById('numberTest').textContent = 
+                    window.i18n.formatNumber(1234.56);
+                document.getElementById('dateTest').textContent = 
+                    window.i18n.formatDate(new Date());
+            }
+        }
+
+        // Inicializar testes quando a página carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                updateFormattingTests();
+            }, 1000);
+        });
+    </script>
+</body>
+</html> 

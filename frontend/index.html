@@ -127,22 +127,22 @@
                 <div id="languageSelector" class="mt-3 mb-3"></div>
             <nav class="nav flex-column">
                 <a class="nav-link active" href="#" data-section="dashboardSection"><i
-                        class="bi bi-grid-1x2-fill me-2"></i>Dashboard</a>
+                        class="bi bi-grid-1x2-fill me-2"></i><span data-i18n="dashboard">Dashboard</span></a>
                 <a class="nav-link" href="#" data-section="clientsSection"><i
-                        class="bi bi-people-fill me-2"></i>Clientes</a>
+                        class="bi bi-people-fill me-2"></i><span data-i18n="clients">Clientes</span></a>
                 <a class="nav-link" href="#" data-section="salesSection"><i
-                        class="bi bi-cart-check-fill me-2"></i>Vendas</a>
+                        class="bi bi-cart-check-fill me-2"></i><span data-i18n="sales">Vendas</span></a>
                 <a class="nav-link" href="#" data-section="reportsSection"><i
-                        class="bi bi-graph-up me-2"></i>Relatórios</a>
+                        class="bi bi-graph-up me-2"></i><span data-i18n="reports">Relatórios</span></a>
                 <a class="nav-link" href="#" data-section="productsSection"><i
-                        class="bi bi-box-seam me-2"></i>Produtos</a>
+                        class="bi bi-box-seam me-2"></i><span data-i18n="products">Produtos</span></a>
                 <a class="nav-link" href="#" data-section="usersSection"><i
-                        class="bi bi-person-gear me-2"></i>Utilizadores</a>
+                        class="bi bi-person-gear me-2"></i><span data-i18n="users">Utilizadores</span></a>
                 <a class="nav-link" href="#" data-section="suppliersSection"><i
-                        class="bi bi-truck me-2"></i>Fornecedores</a>
-                <a class="nav-link" href="#" data-section="purchasesSection"><i class="bi bi-bag me-2"></i>Compras</a>
+                        class="bi bi-truck me-2"></i><span data-i18n="suppliers">Fornecedores</span></a>
+                <a class="nav-link" href="#" data-section="purchasesSection"><i class="bi bi-bag me-2"></i><span data-i18n="purchases">Compras</span></a>
                 <a class="nav-link mt-auto" href="#" id="logoutButton" data-section="logoutSection"><i
-                        class="bi bi-box-arrow-right me-2"></i>Sair</a>
+                        class="bi bi-box-arrow-right me-2"></i><span data-i18n="logout">Sair</span></a>
             </nav>
         </aside>
         <main class="main-content" id="mainContent">
@@ -152,7 +152,7 @@
                         <h2 class="mb-0"><i class="bi bi-grid-1x2 me-2"></i><span data-i18n="dashboard">Dashboard</span></h2>
                         <div class="d-flex gap-2">
                             <button class="btn btn-outline-primary" onclick="loadDashboardData()">
-                                <i class="bi bi-arrow-clockwise me-2"></i>Atualizar
+                                <i class="bi bi-arrow-clockwise me-2"></i><span data-i18n="refresh">Atualizar</span>
                             </button>
                         </div>
                     </div>
@@ -212,7 +212,7 @@
                             <div class="card kpi-card text-center" id="orderValue">
                                 <div class="card-body">
                                     <i class="bi bi-currency-dollar fs-1 text-primary mb-2"></i>
-                                    <h6 class="card-title text-muted">VALOR DO PEDIDO</h6>
+                                    <h6 class="card-title text-muted" data-i18n="orderValue">VALOR DO PEDIDO</h6>
                                     <div class="fs-2 fw-bold text-primary">R$ 3,83</div>
                                 </div>
                             </div>
@@ -221,7 +221,7 @@
                             <div class="card kpi-card kpi-info text-center" id="averageTicket">
                                 <div class="card-body">
                                     <i class="bi bi-receipt fs-1 text-info mb-2"></i>
-                                    <h6 class="card-title text-muted">TICKET MÉDIO</h6>
+                                    <h6 class="card-title text-muted" data-i18n="averageTicket">TICKET MÉDIO</h6>
                                     <div class="fs-2 fw-bold text-info">R$ 3,83</div>
                                 </div>
                             </div>
@@ -230,7 +230,7 @@
                             <div class="card kpi-card kpi-danger text-center" id="overdueSales">
                                 <div class="card-body">
                                     <i class="bi bi-exclamation-triangle-fill fs-1 text-danger mb-2"></i>
-                                    <h6 class="card-title text-muted">VENDAS VENCIDAS</h6>
+                                    <h6 class="card-title text-muted" data-i18n="overdueSales">VENDAS VENCIDAS</h6>
                                     <div class="fs-2 fw-bold text-danger">R$ 0,00</div>
                                 </div>
                             </div>
@@ -279,7 +279,7 @@
                             <!-- Top Clients -->
                             <div class="card shadow-sm mb-3">
                                 <div class="card-header" style="background: linear-gradient(135deg, var(--success-color) 0%, var(--secondary-light) 100%); color: white;">
-                                    <h6 class="mb-0"><i class="bi bi-people me-2"></i>Top 5 Clientes com Mais Compras</h6>
+                                    <h6 class="mb-0"><i class="bi bi-people me-2"></i><span data-i18n="topClients">Top 5 Clientes com Mais Compras</span></h6>
                                 </div>
                                 <div class="card-body">
                                     <div class="table-responsive">
@@ -405,7 +405,7 @@
                 </section>
                 <section id="clientsSection" class="content-section" style="display: none;">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2 class="mb-0"><i class="bi bi-people me-2"></i>Gerenciar Clientes</h2>
+                        <h2 class="mb-0"><i class="bi bi-people me-2"></i><span data-i18n="manageClients">Gerenciar Clientes</span></h2>
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#clientModal">
                             <i class="bi bi-plus-circle me-2"></i>Novo Cliente
                         </button>
