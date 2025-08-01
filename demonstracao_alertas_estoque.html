@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demonstração - Sistema de Alertas de Estoque - Gestor PRO</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <!-- Estilos elegantes -->
+    <link rel="stylesheet" href="elegant_charts_styles.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #1D4E89 0%, #2A6FA8 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .feature-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            margin-bottom: 20px;
+        }
+        
+        .demo-alert {
+            margin-bottom: 20px;
+        }
+        
+        .demo-table {
+            font-size: 0.9rem;
+        }
+        
+        .demo-table th {
+            font-weight: 600;
+            color: #495057;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .demo-table td {
+            vertical-align: middle;
+            padding: 0.75rem 0.5rem;
+        }
+        
+        .demo-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .demo-button {
+            transition: all 0.2s ease;
+        }
+        
+        .demo-button:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="text-center mb-4">
+            <h1 class="text-white mb-3">🚨 Sistema de Alertas de Estoque</h1>
+            <p class="text-white-50">Sistema configurável e responsivo para gestão de estoque</p>
+        </div>
+        
+        <!-- Características do Sistema -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #FFC107, #FF9800);">
+                        <i class="bi bi-gear"></i>
+                    </div>
+                    <h5>⚙️ Configurável</h5>
+                    <p class="text-muted">Cada estabelecimento define seus próprios limites para alertas amarelos e vermelhos.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #28A745, #20C997);">
+                        <i class="bi bi-translate"></i>
+                    </div>
+                    <h5>🌍 Internacionalizado</h5>
+                    <p class="text-muted">Suporte completo para português, inglês e espanhol com tradução automática.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #17A2B8, #6F42C1);">
+                        <i class="bi bi-phone"></i>
+                    </div>
+                    <h5>📱 Responsivo</h5>
+                    <p class="text-muted">Interface adaptável para desktop, tablet e smartphone com design otimizado.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Demonstração dos Alertas -->
+        <div class="card mb-4">
+            <div class="card-header" style="background: linear-gradient(135deg, var(--warning-color) 0%, #F59E0B 100%); color: white;">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Alertas de Estoque - Demonstração
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- Alerta Crítico -->
+                <div class="alert alert-danger border-danger mb-3 stock-alert-container">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-exclamation-circle me-2 fs-5"></i>
+                        <h6 class="mb-0">Estoque Crítico</h6>
+                        <span class="badge bg-danger ms-auto stock-alert-badge">2</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-borderless mb-0 stock-alert-table">
+                            <thead>
+                                <tr>
+                                    <th>Nome do Produto</th>
+                                    <th>Estoque Atual</th>
+                                    <th>Limite</th>
+                                    <th class="text-end">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <strong>Notebook Dell Inspiron</strong>
+                                        <br><small class="text-muted">SKU: NB-DELL-001</small>
+                                    </td>
+                                    <td>
+                                        <span class="text-danger fw-bold">0</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">5</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-danger stock-alert-button">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <strong>Mouse Wireless Logitech</strong>
+                                        <br><small class="text-muted">SKU: MS-LOG-002</small>
+                                    </td>
+                                    <td>
+                                        <span class="text-danger fw-bold">2</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">5</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-danger stock-alert-button">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Alerta de Aviso -->
+                <div class="alert alert-warning border-warning mb-3 stock-alert-container">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-exclamation-triangle me-2 fs-5"></i>
+                        <h6 class="mb-0">Estoque Baixo</h6>
+                        <span class="badge bg-warning ms-auto stock-alert-badge">3</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-borderless mb-0 stock-alert-table">
+                            <thead>
+                                <tr>
+                                    <th>Nome do Produto</th>
+                                    <th>Estoque Atual</th>
+                                    <th>Limite</th>
+                                    <th class="text-end">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <strong>Teclado Mecânico RGB</strong>
+                                        <br><small class="text-muted">SKU: KB-MECH-003</small>
+                                    </td>
+                                    <td>
+                                        <span>8</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">10</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-warning stock-alert-button">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <strong>Monitor 24" Samsung</strong>
+                                        <br><small class="text-muted">SKU: MON-SAM-004</small>
+                                    </td>
+                                    <td>
+                                        <span>6</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">10</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-warning stock-alert-button">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <strong>Webcam HD 1080p</strong>
+                                        <br><small class="text-muted">SKU: WC-HD-005</small>
+                                    </td>
+                                    <td>
+                                        <span>7</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">10</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-warning stock-alert-button">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Configurações -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Alerta Amarelo
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small">
+                            Produtos com estoque abaixo deste limite gerarão alertas amarelos.
+                        </p>
+                        <div class="mb-3">
+                            <label class="form-label">Limite para Alerta Amarelo:</label>
+                            <input type="number" class="form-control" value="10" readonly>
+                            <div class="form-text">Quantidade mínima para gerar alerta amarelo</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-danger text-white">
+                        <h6 class="mb-0">
+                            <i class="bi bi-exclamation-circle me-2"></i>
+                            Alerta Vermelho
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small">
+                            Produtos com estoque abaixo deste limite gerarão alertas vermelhos.
+                        </p>
+                        <div class="mb-3">
+                            <label class="form-label">Limite para Alerta Vermelho:</label>
+                            <input type="number" class="form-control" value="5" readonly>
+                            <div class="form-text">Quantidade mínima para gerar alerta vermelho</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Benefícios -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">✨ Benefícios do Sistema:</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                <strong>Configuração Flexível:</strong> Cada estabelecimento define seus próprios limites
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                <strong>Alertas em Tempo Real:</strong> Atualização automática quando produtos são modificados
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                <strong>Interface Intuitiva:</strong> Cores e ícones para fácil identificação
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                <strong>Responsivo:</strong> Funciona perfeitamente em todos os dispositivos
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                <strong>Internacionalizado:</strong> Suporte para múltiplos idiomas
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                <strong>Persistência Local:</strong> Configurações salvas no navegador
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Como Usar -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">📖 Como Usar:</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="feature-icon mx-auto" style="background: linear-gradient(135deg, #007BFF, #0056B3);">
+                                <i class="bi bi-1-circle"></i>
+                            </div>
+                            <h6>1. Acesse o Dashboard</h6>
+                            <p class="text-muted small">Vá para a seção de alertas de estoque no dashboard principal</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="feature-icon mx-auto" style="background: linear-gradient(135deg, #28A745, #1E7E34);">
+                                <i class="bi bi-2-circle"></i>
+                            </div>
+                            <h6>2. Configure os Limites</h6>
+                            <p class="text-muted small">Clique em "Configurações" e defina os limites para alertas amarelos e vermelhos</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="feature-icon mx-auto" style="background: linear-gradient(135deg, #FFC107, #E0A800);">
+                                <i class="bi bi-3-circle"></i>
+                            </div>
+                            <h6>3. Monitore os Alertas</h6>
+                            <p class="text-muted small">Os alertas aparecerão automaticamente quando o estoque estiver baixo</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simular interatividade
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Demonstração de Alertas de Estoque carregada');
+            
+            // Adicionar efeitos hover aos botões
+            const buttons = document.querySelectorAll('.stock-alert-button');
+            buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    alert('Funcionalidade de visualização do produto seria implementada aqui!');
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

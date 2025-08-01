@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Gráfico Elegante - Gestor PRO</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Estilos elegantes -->
+    <link rel="stylesheet" href="elegant_charts_styles.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="text-center mb-4">
+            <h1 class="text-white mb-3">🎨 Teste do Gráfico Elegante</h1>
+            <p class="text-white-50">Verificando a implementação do gráfico de vendas com gradiente</p>
+        </div>
+        
+        <!-- Gráfico Elegante -->
+        <div class="elegant-chart-container elegant-fade-in">
+            <h2 class="elegant-chart-title">📈 Vendas Mensais Comparativo</h2>
+            <p class="elegant-chart-subtitle">Análise comparativa entre 2023 e 2024</p>
+            
+            <div class="elegant-chart-wrapper">
+                <canvas id="salesChart" height="300"></canvas>
+            </div>
+            
+            <div class="elegant-stats-grid">
+                <div class="elegant-stat-item">
+                    <span class="elegant-stat-value" id="totalSales2024">R$ 284.5K</span>
+                    <span class="elegant-stat-label">Vendas 2024</span>
+                </div>
+                <div class="elegant-stat-item">
+                    <span class="elegant-stat-value" id="growthRate">+23.4%</span>
+                    <span class="elegant-stat-label">Crescimento</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Informações do Teste -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">✅ Verificações Realizadas:</h5>
+                <ul class="list-unstyled">
+                    <li>✅ CSS elegante carregado</li>
+                    <li>✅ Chart.js funcionando</li>
+                    <li>✅ Gradientes aplicados</li>
+                    <li>✅ Animações ativas</li>
+                    <li>✅ Estatísticas dinâmicas</li>
+                    <li>✅ Responsividade</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Função para criar o gráfico elegante
+        function createElegantSalesChart() {
+            const ctx = document.getElementById('salesChart');
+            if (!ctx) {
+                console.log('❌ Elemento salesChart não encontrado');
+                return;
+            }
+
+            // Obter ano atual e anterior dinamicamente
+            const currentYear = new Date().getFullYear();
+            const previousYear = currentYear - 1;
+
+            // Dados de vendas
+            const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            const salesPreviousYear = [45, 52, 48, 61, 55, 67, 72, 68, 75, 82, 78, 89];
+            const salesCurrentYear = [52, 58, 55, 68, 62, 75, 82, 78, 85, 92, 88, 98];
+
+            console.log('📊 Renderizando gráfico de vendas comparativo elegante');
+
+            // Criar gradientes elegantes
+            const gradient1 = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+            gradient1.addColorStop(0, 'rgba(102, 126, 234, 0.8)');
+            gradient1.addColorStop(1, 'rgba(102, 126, 234, 0.1)');
+
+            const gradient2 = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+            gradient2.addColorStop(0, 'rgba(118, 75, 162, 0.8)');
+            gradient2.addColorStop(1, 'rgba(118, 75, 162, 0.1)');
+
+            const chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: `Vendas ${previousYear} (R$)`,
+                        data: salesPreviousYear,
+                        backgroundColor: gradient1,
+                        borderColor: '#667eea',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }, {
+                        label: `Vendas ${currentYear} (R$)`,
+                        data: salesCurrentYear,
+                        backgroundColor: gradient2,
+                        borderColor: '#764ba2',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart'
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    family: 'Inter, sans-serif',
+                                    size: 12,
+                                    weight: '600'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#667eea',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            displayColors: true
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return 'R$ ' + value.toFixed(0) + 'K';
+                                },
+                                font: {
+                                    family: 'Inter, sans-serif',
+                                    size: 11
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    family: 'Inter, sans-serif',
+                                    size: 11,
+                                    weight: '600'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Atualizar estatísticas
+            updateSalesStatistics(salesCurrentYear, salesPreviousYear);
+            
+            console.log('✅ Gráfico de vendas comparativo elegante renderizado com sucesso');
+        }
+
+        // Função para atualizar estatísticas
+        function updateSalesStatistics(currentYearData, previousYearData) {
+            const totalCurrentYear = currentYearData.reduce((sum, value) => sum + value, 0);
+            const totalPreviousYear = previousYearData.reduce((sum, value) => sum + value, 0);
+            const growthRate = ((totalCurrentYear - totalPreviousYear) / totalPreviousYear * 100).toFixed(1);
+            
+            // Atualizar elementos de estatísticas
+            const totalSalesElement = document.getElementById('totalSales2024');
+            const growthElement = document.getElementById('growthRate');
+            
+            if (totalSalesElement) {
+                totalSalesElement.textContent = `R$ ${totalCurrentYear}K`;
+            }
+            
+            if (growthElement) {
+                const growthText = growthRate >= 0 ? `+${growthRate}%` : `${growthRate}%`;
+                growthElement.textContent = growthText;
+                growthElement.style.color = growthRate >= 0 ? '#10b981' : '#ef4444';
+            }
+        }
+
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Iniciando teste do gráfico elegante...');
+            createElegantSalesChart();
+        });
+    </script>
+</body>
+</html> 

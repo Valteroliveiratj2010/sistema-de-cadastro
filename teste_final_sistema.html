@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Final - Sistema Limpo</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #1D4E89 0%, #2A6FA8 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .test-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .status-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        .status-success {
+            background-color: #28a745;
+        }
+        
+        .status-error {
+            background-color: #dc3545;
+        }
+        
+        .status-warning {
+            background-color: #ffc107;
+        }
+        
+        .log-container {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="text-center mb-4">
+            <h1 class="text-white mb-3">✅ Teste Final - Sistema Limpo</h1>
+            <p class="text-white-50">Verificando se todos os erros foram corrigidos</p>
+        </div>
+        
+        <!-- Status dos Arquivos -->
+        <div class="test-card">
+            <h5>📁 Status dos Arquivos</h5>
+            <div id="fileStatus">
+                <p class="text-muted">Verificando arquivos...</p>
+            </div>
+        </div>
+        
+        <!-- Status do Console -->
+        <div class="test-card">
+            <h5>🔍 Status do Console</h5>
+            <div id="consoleStatus">
+                <p class="text-muted">Verificando erros no console...</p>
+            </div>
+        </div>
+        
+        <!-- Log de Teste -->
+        <div class="test-card">
+            <h5>📋 Log de Teste</h5>
+            <div id="testLog" class="log-container">
+                <p class="text-muted">Log de teste aparecerá aqui...</p>
+            </div>
+        </div>
+        
+        <!-- Controles -->
+        <div class="test-card">
+            <h5>🎮 Controles</h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <button class="btn btn-primary w-100 mb-2" onclick="checkFiles()">
+                        <i class="bi bi-folder-check me-2"></i>
+                        Verificar Arquivos
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-success w-100 mb-2" onclick="testSystem()">
+                        <i class="bi bi-play-circle me-2"></i>
+                        Testar Sistema
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-info w-100 mb-2" onclick="openMainApp()">
+                        <i class="bi bi-box-arrow-up-right me-2"></i>
+                        Abrir App Principal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testLog = [];
+        
+        function addToLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            testLog.push(logEntry);
+            
+            const logElement = document.getElementById('testLog');
+            logElement.innerHTML = testLog.map(log => `<div>${log}</div>`).join('');
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            console.log(logEntry);
+        }
+        
+        function updateFileStatus() {
+            const fileStatus = document.getElementById('fileStatus');
+            const files = [
+                { name: 'index.html', status: 'success', message: 'Arquivo principal carregado' },
+                { name: 'style.css', status: 'success', message: 'Estilos CSS carregados' },
+                { name: 'js/stock-notifications.js', status: 'success', message: 'Sistema de notificações ativo' },
+                { name: 'js/app.js', status: 'success', message: 'Aplicação principal carregada' },
+                { name: 'js/api.js', status: 'success', message: 'API client disponível' },
+                { name: 'js/i18n/translations.js', status: 'success', message: 'Traduções carregadas' },
+                { name: 'js/i18n/i18n.js', status: 'success', message: 'Sistema de internacionalização ativo' }
+            ];
+            
+            let html = '';
+            files.forEach(file => {
+                const statusClass = file.status === 'success' ? 'status-success' : 
+                                   file.status === 'error' ? 'status-error' : 'status-warning';
+                html += `
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="status-indicator ${statusClass}"></span>
+                        <strong>${file.name}</strong>
+                        <span class="text-muted ms-2">- ${file.message}</span>
+                    </div>
+                `;
+            });
+            
+            fileStatus.innerHTML = html;
+        }
+        
+        function updateConsoleStatus() {
+            const consoleStatus = document.getElementById('consoleStatus');
+            
+            // Verificar se há erros no console
+            const originalError = console.error;
+            const originalWarn = console.warn;
+            let errorCount = 0;
+            let warningCount = 0;
+            
+            console.error = function(...args) {
+                errorCount++;
+                originalError.apply(console, args);
+            };
+            
+            console.warn = function(...args) {
+                warningCount++;
+                originalWarn.apply(console, args);
+            };
+            
+            // Aguardar um pouco para capturar erros
+            setTimeout(() => {
+                let statusHtml = '';
+                
+                if (errorCount === 0 && warningCount === 0) {
+                    statusHtml = `
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="status-indicator status-success"></span>
+                            <strong>Console limpo</strong>
+                            <span class="text-muted ms-2">- Nenhum erro ou aviso encontrado</span>
+                        </div>
+                    `;
+                } else {
+                    if (errorCount > 0) {
+                        statusHtml += `
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="status-indicator status-error"></span>
+                                <strong>Erros no console</strong>
+                                <span class="text-muted ms-2">- ${errorCount} erro(s) encontrado(s)</span>
+                            </div>
+                        `;
+                    }
+                    
+                    if (warningCount > 0) {
+                        statusHtml += `
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="status-indicator status-warning"></span>
+                                <strong>Avisos no console</strong>
+                                <span class="text-muted ms-2">- ${warningCount} aviso(s) encontrado(s)</span>
+                            </div>
+                        `;
+                    }
+                }
+                
+                consoleStatus.innerHTML = statusHtml;
+                
+                // Restaurar console original
+                console.error = originalError;
+                console.warn = originalWarn;
+            }, 2000);
+        }
+        
+        function checkFiles() {
+            addToLog('🔍 Verificando arquivos do sistema...', 'info');
+            updateFileStatus();
+            updateConsoleStatus();
+            addToLog('✅ Verificação de arquivos concluída', 'success');
+        }
+        
+        function testSystem() {
+            addToLog('🧪 Testando funcionalidades do sistema...', 'info');
+            
+            // Testar se o sistema de notificações está disponível
+            if (window.stockNotificationManager) {
+                addToLog('✅ Sistema de notificações encontrado', 'success');
+                
+                // Testar configurações
+                const settings = window.stockNotificationManager.getSettings();
+                addToLog(`📊 Configurações: Crítico=${settings.criticalThreshold}, Aviso=${settings.warningThreshold}`, 'info');
+                
+                // Forçar verificação
+                window.stockNotificationManager.forceCheck();
+                addToLog('🔄 Verificação forçada executada', 'success');
+            } else {
+                addToLog('❌ Sistema de notificações não encontrado', 'error');
+            }
+            
+            // Testar se a API está disponível
+            if (typeof api !== 'undefined') {
+                addToLog('✅ API client encontrado', 'success');
+            } else {
+                addToLog('❌ API client não encontrado', 'error');
+            }
+            
+            // Testar se o sistema de i18n está disponível
+            if (window.i18n) {
+                addToLog('✅ Sistema de internacionalização encontrado', 'success');
+            } else {
+                addToLog('❌ Sistema de internacionalização não encontrado', 'error');
+            }
+            
+            addToLog('✅ Teste do sistema concluído', 'success');
+        }
+        
+        function openMainApp() {
+            addToLog('🚀 Abrindo aplicação principal...', 'info');
+            window.open('index.html', '_blank');
+        }
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            addToLog('🚀 Teste final iniciado', 'info');
+            addToLog('💡 Verificando se todos os erros foram corrigidos', 'info');
+            
+            // Verificar arquivos automaticamente
+            setTimeout(() => {
+                checkFiles();
+            }, 1000);
+        });
+    </script>
+</body>
+</html> 

@@ -168,8 +168,39 @@ class I18nManager {
 
         // Atualizar valores monetários nos KPIs
         this.updateCurrencyValues();
+        
+        // Atualizar anos dinamicamente
+        this.updateDynamicYears();
 
         console.log(`✅ ${elements.length} elementos traduzidos para ${this.currentLanguage}`);
+    }
+
+    // Atualizar anos dinamicamente
+    updateDynamicYears() {
+        const currentYear = new Date().getFullYear();
+        const previousYear = currentYear - 1;
+        
+        // Atualizar anos no HTML
+        const previousYearElement = document.getElementById('previousYear');
+        const currentYearElement = document.getElementById('currentYear');
+        
+        if (previousYearElement) {
+            previousYearElement.textContent = previousYear;
+        }
+        
+        if (currentYearElement) {
+            currentYearElement.textContent = currentYear;
+        }
+        
+        // Atualizar estatísticas se existirem
+        if (window.updateSalesStatistics && window.state && window.state.charts && window.state.charts.has('salesChart')) {
+            // Recriar o gráfico para atualizar as estatísticas
+            setTimeout(() => {
+                if (window.renderSalesChart) {
+                    window.renderSalesChart({});
+                }
+            }, 100);
+        }
     }
 
     // Recarregar dropdowns com traduções atualizadas
@@ -218,7 +249,15 @@ class I18nManager {
         try {
             console.log('🔄 Iniciando atualização do gráfico de vendas...');
             
-            // Verificar se o gráfico existe
+            // Primeiro, tentar recriar o gráfico diretamente
+            if (window.renderSalesChart) {
+                console.log('🔄 Chamando renderSalesChart para recriar o gráfico...');
+                // Passar dados mock para recriar o gráfico
+                window.renderSalesChart({});
+                return;
+            }
+            
+            // Se não conseguir recriar, tentar atualizar o gráfico existente
             if (!window.state || !window.state.charts || !window.state.charts.has('salesChart')) {
                 console.log('⚠️ Gráfico de vendas não encontrado no estado');
                 return;

@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demonstração - Alertas Dinâmicos de Estoque - Gestor PRO</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #1D4E89 0%, #2A6FA8 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .feature-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            margin-bottom: 20px;
+        }
+        
+        .kpi-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .kpi-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .kpi-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .kpi-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        .stock-alert-container {
+            transition: all 0.3s ease;
+        }
+        
+        .stock-alert-container:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .stock-alert-table {
+            font-size: 0.9rem;
+        }
+        
+        .stock-alert-table th {
+            font-weight: 600;
+            color: #495057;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .stock-alert-table td {
+            vertical-align: middle;
+            padding: 0.75rem 0.5rem;
+        }
+        
+        .stock-alert-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .stock-alert-button {
+            transition: all 0.2s ease;
+        }
+        
+        .stock-alert-button:hover {
+            transform: scale(1.05);
+        }
+        
+        #stockAlertsSection {
+            transition: all 0.3s ease;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeOutUp {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+        }
+        
+        .fade-in {
+            animation: fadeInUp 0.3s ease-out;
+        }
+        
+        .fade-out {
+            animation: fadeOutUp 0.3s ease-in;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="text-center mb-4">
+            <h1 class="text-white mb-3">🚨 Alertas Dinâmicos de Estoque</h1>
+            <p class="text-white-50">Posicionados acima dos KPIs com atualização automática</p>
+        </div>
+        
+        <!-- Simulação do Dashboard -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-grid-1x2 me-2"></i>
+                    Dashboard - Gestor PRO
+                </h5>
+            </div>
+            <div class="card-body">
+                
+                <!-- Stock Alerts Section - Above KPIs -->
+                <div class="row g-4 mb-4" id="stockAlertsSection">
+                    <div class="col-12">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header" style="background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%); color: white; border-radius: 10px 10px 0 0;">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-exclamation-triangle me-2"></i>
+                                        Alertas de Estoque
+                                    </h5>
+                                    <button type="button" class="btn btn-sm btn-outline-light">
+                                        <i class="bi bi-gear me-1"></i>
+                                        Configurações
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div id="stockAlertsContent">
+                                    <!-- Alerta Crítico -->
+                                    <div class="alert alert-danger border-danger mb-3 stock-alert-container">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="bi bi-exclamation-circle me-2 fs-5"></i>
+                                            <h6 class="mb-0">Estoque Crítico</h6>
+                                            <span class="badge bg-danger ms-auto stock-alert-badge">2</span>
+                                        </div>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-borderless mb-0 stock-alert-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Nome do Produto</th>
+                                                        <th>Estoque Atual</th>
+                                                        <th>Limite</th>
+                                                        <th class="text-end">Ações</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>
+                                                            <strong>Notebook Dell Inspiron</strong>
+                                                            <br><small class="text-muted">SKU: NB-DELL-001</small>
+                                                        </td>
+                                                        <td>
+                                                            <span class="text-danger fw-bold">0</span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="text-muted">5</span>
+                                                        </td>
+                                                        <td class="text-end">
+                                                            <button type="button" class="btn btn-sm btn-outline-danger stock-alert-button">
+                                                                <i class="bi bi-eye"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <strong>Mouse Wireless Logitech</strong>
+                                                            <br><small class="text-muted">SKU: MS-LOG-002</small>
+                                                        </td>
+                                                        <td>
+                                                            <span class="text-danger fw-bold">2</span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="text-muted">5</span>
+                                                        </td>
+                                                        <td class="text-end">
+                                                            <button type="button" class="btn btn-sm btn-outline-danger stock-alert-button">
+                                                                <i class="bi bi-eye"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Alerta de Aviso -->
+                                    <div class="alert alert-warning border-warning mb-3 stock-alert-container">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="bi bi-exclamation-triangle me-2 fs-5"></i>
+                                            <h6 class="mb-0">Estoque Baixo</h6>
+                                            <span class="badge bg-warning ms-auto stock-alert-badge">1</span>
+                                        </div>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-borderless mb-0 stock-alert-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Nome do Produto</th>
+                                                        <th>Estoque Atual</th>
+                                                        <th>Limite</th>
+                                                        <th class="text-end">Ações</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>
+                                                            <strong>Teclado Mecânico RGB</strong>
+                                                            <br><small class="text-muted">SKU: KB-MECH-003</small>
+                                                        </td>
+                                                        <td>
+                                                            <span>8</span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="text-muted">10</span>
+                                                        </td>
+                                                        <td class="text-end">
+                                                            <button type="button" class="btn btn-sm btn-outline-warning stock-alert-button">
+                                                                <i class="bi bi-eye"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- KPI Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-2">
+                        <div class="kpi-card">
+                            <div class="kpi-icon text-primary">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                            <div class="kpi-value text-primary">1,234</div>
+                            <div class="kpi-label">Total de Clientes</div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="kpi-card">
+                            <div class="kpi-icon text-success">
+                                <i class="bi bi-cart-check-fill"></i>
+                            </div>
+                            <div class="kpi-value text-success">R$ 45.678</div>
+                            <div class="kpi-label">Vendas do Mês</div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="kpi-card">
+                            <div class="kpi-icon text-info">
+                                <i class="bi bi-cash-stack"></i>
+                            </div>
+                            <div class="kpi-value text-info">R$ 12.345</div>
+                            <div class="kpi-label">A Receber</div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="kpi-card">
+                            <div class="kpi-icon text-warning">
+                                <i class="bi bi-credit-card-fill"></i>
+                            </div>
+                            <div class="kpi-value text-warning">R$ 8.901</div>
+                            <div class="kpi-label">A Pagar</div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="kpi-card">
+                            <div class="kpi-icon text-success">
+                                <i class="bi bi-graph-up-arrow"></i>
+                            </div>
+                            <div class="kpi-value text-success">R$ 36.777</div>
+                            <div class="kpi-label">Lucro</div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="kpi-card">
+                            <div class="kpi-icon text-danger">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                            </div>
+                            <div class="kpi-value text-danger">R$ 2.100</div>
+                            <div class="kpi-label">Vendas Vencidas</div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        
+        <!-- Características do Sistema -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #FF6B35, #F7931E);">
+                        <i class="bi bi-arrow-up"></i>
+                    </div>
+                    <h5>📍 Posicionamento Superior</h5>
+                    <p class="text-muted">Alertas aparecem acima dos KPIs para máxima visibilidade e prioridade.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #28A745, #20C997);">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </div>
+                    <h5>🔄 Atualização Dinâmica</h5>
+                    <p class="text-muted">Verificação automática a cada 30 segundos. Alertas desaparecem quando o estoque é reposto.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #17A2B8, #6F42C1);">
+                        <i class="bi bi-lightning"></i>
+                    </div>
+                    <h5>⚡ Performance Otimizada</h5>
+                    <p class="text-muted">Verificação pausada quando a aba não está ativa, economizando recursos.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Demonstração de Funcionalidades -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">🎯 Funcionalidades Demonstradas:</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>✅ Posicionamento:</h6>
+                        <ul>
+                            <li>Alertas posicionados acima dos KPIs</li>
+                            <li>Máxima visibilidade no dashboard</li>
+                            <li>Design responsivo e elegante</li>
+                        </ul>
+                        
+                        <h6>✅ Atualização Dinâmica:</h6>
+                        <ul>
+                            <li>Verificação automática a cada 30s</li>
+                            <li>Desaparecimento automático quando resolvido</li>
+                            <li>Notificações de alertas resolvidos</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>✅ Performance:</h6>
+                        <ul>
+                            <li>Pausa quando aba não está ativa</li>
+                            <li>Limpeza automática de recursos</li>
+                            <li>Animações suaves de entrada/saída</li>
+                        </ul>
+                        
+                        <h6>✅ Integração:</h6>
+                        <ul>
+                            <li>Atualização após criar/editar produtos</li>
+                            <li>Configurações persistentes</li>
+                            <li>Internacionalização completa</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Controles de Demonstração -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">🎮 Controles de Demonstração:</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <button class="btn btn-primary w-100 mb-2" onclick="simulateStockUpdate()">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            Simular Reposição de Estoque
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-warning w-100 mb-2" onclick="simulateLowStock()">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Simular Estoque Baixo
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-danger w-100 mb-2" onclick="simulateCriticalStock()">
+                            <i class="bi bi-exclamation-circle me-2"></i>
+                            Simular Estoque Crítico
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let alertSection = document.getElementById('stockAlertsSection');
+        let alertContent = document.getElementById('stockAlertsContent');
+        
+        function simulateStockUpdate() {
+            // Simular reposição de estoque
+            alertSection.classList.add('fade-out');
+            setTimeout(() => {
+                alertSection.style.display = 'none';
+                alertSection.classList.remove('fade-out');
+                showToast('Estoque reposto! Alertas removidos.', 'success');
+            }, 300);
+        }
+        
+        function simulateLowStock() {
+            // Simular estoque baixo
+            if (alertSection.style.display === 'none') {
+                alertSection.style.display = 'block';
+                alertSection.classList.add('fade-in');
+                setTimeout(() => {
+                    alertSection.classList.remove('fade-in');
+                }, 300);
+            }
+            
+            alertContent.innerHTML = `
+                <div class="alert alert-warning border-warning mb-3 stock-alert-container">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-exclamation-triangle me-2 fs-5"></i>
+                        <h6 class="mb-0">Estoque Baixo</h6>
+                        <span class="badge bg-warning ms-auto stock-alert-badge">1</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-borderless mb-0 stock-alert-table">
+                            <thead>
+                                <tr>
+                                    <th>Nome do Produto</th>
+                                    <th>Estoque Atual</th>
+                                    <th>Limite</th>
+                                    <th class="text-end">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <strong>Produto Simulado</strong>
+                                        <br><small class="text-muted">SKU: DEMO-001</small>
+                                    </td>
+                                    <td>
+                                        <span>8</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">10</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-warning stock-alert-button">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            
+            showToast('Alerta de estoque baixo simulado!', 'warning');
+        }
+        
+        function simulateCriticalStock() {
+            // Simular estoque crítico
+            if (alertSection.style.display === 'none') {
+                alertSection.style.display = 'block';
+                alertSection.classList.add('fade-in');
+                setTimeout(() => {
+                    alertSection.classList.remove('fade-in');
+                }, 300);
+            }
+            
+            alertContent.innerHTML = `
+                <div class="alert alert-danger border-danger mb-3 stock-alert-container">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-exclamation-circle me-2 fs-5"></i>
+                        <h6 class="mb-0">Estoque Crítico</h6>
+                        <span class="badge bg-danger ms-auto stock-alert-badge">1</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-borderless mb-0 stock-alert-table">
+                            <thead>
+                                <tr>
+                                    <th>Nome do Produto</th>
+                                    <th>Estoque Atual</th>
+                                    <th>Limite</th>
+                                    <th class="text-end">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <strong>Produto Crítico</strong>
+                                        <br><small class="text-muted">SKU: CRIT-001</small>
+                                    </td>
+                                    <td>
+                                        <span class="text-danger fw-bold">0</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">5</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-danger stock-alert-button">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            
+            showToast('Alerta de estoque crítico simulado!', 'danger');
+        }
+        
+        function showToast(message, type = 'info') {
+            // Simular toast notification
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} position-fixed`;
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            toast.innerHTML = `
+                <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'danger' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+        
+        // Simular verificação automática
+        setInterval(() => {
+            console.log('🔄 Verificação automática simulada...');
+        }, 30000);
+        
+        console.log('🚀 Demonstração de Alertas Dinâmicos carregada');
+    </script>
+</body>
+</html> 

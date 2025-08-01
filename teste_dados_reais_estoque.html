@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Dados Reais de Estoque - Gestor PRO</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #1D4E89 0%, #2A6FA8 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .test-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .product-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .product-item.critical {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+        
+        .product-item.warning {
+            border-left-color: #ffc107;
+            background: #fffbf0;
+        }
+        
+        .stock-value {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .stock-value.critical {
+            color: #dc3545;
+        }
+        
+        .stock-value.warning {
+            color: #ffc107;
+        }
+        
+        .stock-value.normal {
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="text-center mb-4">
+            <h1 class="text-white mb-3">🔍 Teste - Dados Reais de Estoque</h1>
+            <p class="text-white-50">Verificando se o sistema está carregando os dados corretos</p>
+        </div>
+        
+        <!-- Controles de Teste -->
+        <div class="test-card">
+            <h5>🎮 Controles de Teste</h5>
+            <div class="row">
+                <div class="col-md-3">
+                    <button class="btn btn-primary w-100 mb-2" onclick="loadAllProducts()">
+                        <i class="bi bi-download me-2"></i>
+                        Carregar Produtos
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-warning w-100 mb-2" onclick="testStockAlerts()">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Testar Alertas
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-info w-100 mb-2" onclick="showDebugInfo()">
+                        <i class="bi bi-bug me-2"></i>
+                        Debug Info
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-success w-100 mb-2" onclick="clearResults()">
+                        <i class="bi bi-trash me-2"></i>
+                        Limpar
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Configurações de Teste -->
+        <div class="test-card">
+            <h5>⚙️ Configurações de Teste</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="warningThreshold" class="form-label">Limite para Alerta Amarelo:</label>
+                    <input type="number" class="form-control" id="warningThreshold" value="10" min="0">
+                </div>
+                <div class="col-md-6">
+                    <label for="criticalThreshold" class="form-label">Limite para Alerta Vermelho:</label>
+                    <input type="number" class="form-control" id="criticalThreshold" value="5" min="0">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Resultados -->
+        <div class="test-card">
+            <h5>📊 Resultados da Análise</h5>
+            <div id="results">
+                <p class="text-muted">Clique em "Carregar Produtos" para começar o teste.</p>
+            </div>
+        </div>
+        
+        <!-- Log de Debug -->
+        <div class="test-card">
+            <h5>🔍 Log de Debug</h5>
+            <div id="debugLog" style="background: #f8f9fa; padding: 15px; border-radius: 8px; max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 0.9rem;">
+                <p class="text-muted">Log de debug aparecerá aqui...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allProducts = [];
+        let debugLog = [];
+        
+        function addToLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            debugLog.push(logEntry);
+            
+            const debugElement = document.getElementById('debugLog');
+            debugElement.innerHTML = debugLog.map(log => `<div>${log}</div>`).join('');
+            debugElement.scrollTop = debugElement.scrollHeight;
+            
+            console.log(logEntry);
+        }
+        
+        async function loadAllProducts() {
+            addToLog('🔄 Iniciando carregamento de produtos...', 'info');
+            
+            try {
+                // Simular chamada da API
+                const response = await fetch('/api/products?limit=10000');
+                const data = await response.json();
+                
+                addToLog(`📦 Resposta da API recebida: ${JSON.stringify(data).substring(0, 200)}...`, 'info');
+                
+                if (data && data.products) {
+                    allProducts = data.products;
+                    addToLog(`✅ ${allProducts.length} produtos carregados com sucesso!`, 'success');
+                    displayProducts();
+                } else if (data && data.data) {
+                    allProducts = data.data;
+                    addToLog(`✅ ${allProducts.length} produtos carregados com sucesso!`, 'success');
+                    displayProducts();
+                } else {
+                    addToLog('❌ Formato de resposta inválido', 'error');
+                }
+            } catch (error) {
+                addToLog(`❌ Erro ao carregar produtos: ${error.message}`, 'error');
+                
+                // Dados de exemplo para teste
+                allProducts = [
+                    { id: 1, nome: 'Produto Teste 1', stock: 3, sku: 'TEST-001' },
+                    { id: 2, nome: 'Produto Teste 2', stock: 8, sku: 'TEST-002' },
+                    { id: 3, nome: 'Produto Teste 3', stock: 15, sku: 'TEST-003' },
+                    { id: 4, nome: 'Produto Teste 4', stock: 0, sku: 'TEST-004' },
+                    { id: 5, nome: 'Produto Teste 5', stock: 12, sku: 'TEST-005' }
+                ];
+                
+                addToLog(`📋 Usando dados de exemplo: ${allProducts.length} produtos`, 'warning');
+                displayProducts();
+            }
+        }
+        
+        function displayProducts() {
+            const resultsDiv = document.getElementById('results');
+            const warningThreshold = parseInt(document.getElementById('warningThreshold').value) || 10;
+            const criticalThreshold = parseInt(document.getElementById('criticalThreshold').value) || 5;
+            
+            addToLog(`🔍 Analisando produtos com limites: Crítico=${criticalThreshold}, Aviso=${warningThreshold}`, 'info');
+            
+            let criticalCount = 0;
+            let warningCount = 0;
+            let normalCount = 0;
+            
+            let html = `
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body text-center">
+                                <h4>${criticalCount}</h4>
+                                <p class="mb-0">Críticos</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-warning text-dark">
+                            <div class="card-body text-center">
+                                <h4>${warningCount}</h4>
+                                <p class="mb-0">Avisos</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h4>${normalCount}</h4>
+                                <p class="mb-0">Normais</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <h6>📦 Lista de Produtos:</h6>
+            `;
+            
+            allProducts.forEach(product => {
+                const stock = parseInt(product.stock) || 0;
+                const productName = product.nome || product.name || 'Produto sem nome';
+                const sku = product.sku || 'N/A';
+                
+                let alertClass = 'normal';
+                let stockClass = 'normal';
+                
+                if (stock <= criticalThreshold) {
+                    alertClass = 'critical';
+                    stockClass = 'critical';
+                    criticalCount++;
+                    addToLog(`🚨 CRÍTICO: ${productName} (Estoque: ${stock})`, 'error');
+                } else if (stock <= warningThreshold) {
+                    alertClass = 'warning';
+                    stockClass = 'warning';
+                    warningCount++;
+                    addToLog(`⚠️ AVISO: ${productName} (Estoque: ${stock})`, 'warning');
+                } else {
+                    normalCount++;
+                    addToLog(`✅ NORMAL: ${productName} (Estoque: ${stock})`, 'success');
+                }
+                
+                html += `
+                    <div class="product-item ${alertClass}">
+                        <div class="row align-items-center">
+                            <div class="col-md-4">
+                                <strong>${productName}</strong>
+                                <br><small class="text-muted">SKU: ${sku}</small>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="stock-value ${stockClass}">${stock}</span>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="text-muted">Limite: ${criticalThreshold}</span>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="text-muted">Aviso: ${warningThreshold}</span>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="badge bg-${alertClass === 'critical' ? 'danger' : alertClass === 'warning' ? 'warning' : 'success'}">
+                                    ${alertClass === 'critical' ? 'Crítico' : alertClass === 'warning' ? 'Aviso' : 'Normal'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Atualizar contadores
+            html = html.replace('${criticalCount}', criticalCount);
+            html = html.replace('${warningCount}', warningCount);
+            html = html.replace('${normalCount}', normalCount);
+            
+            resultsDiv.innerHTML = html;
+            
+            addToLog(`📊 Resumo: ${criticalCount} críticos, ${warningCount} avisos, ${normalCount} normais`, 'info');
+        }
+        
+        function testStockAlerts() {
+            addToLog('🧪 Testando sistema de alertas...', 'info');
+            
+            if (window.stockAlertManager) {
+                // Atualizar configurações
+                const warningThreshold = parseInt(document.getElementById('warningThreshold').value) || 10;
+                const criticalThreshold = parseInt(document.getElementById('criticalThreshold').value) || 5;
+                
+                window.stockAlertManager.setSettings({
+                    warningThreshold: warningThreshold,
+                    criticalThreshold: criticalThreshold
+                });
+                
+                addToLog(`⚙️ Configurações atualizadas: Crítico=${criticalThreshold}, Aviso=${warningThreshold}`, 'info');
+                
+                // Forçar atualização
+                window.stockAlertManager.forceUpdate();
+                addToLog('🔄 Forçando atualização dos alertas...', 'info');
+            } else {
+                addToLog('❌ Sistema de alertas não encontrado', 'error');
+            }
+        }
+        
+        function showDebugInfo() {
+            addToLog('🔍 Mostrando informações de debug...', 'info');
+            
+            if (window.stockAlertManager) {
+                window.stockAlertManager.debugAlerts();
+                addToLog('✅ Debug executado - verifique o console do navegador', 'success');
+            } else {
+                addToLog('❌ Sistema de alertas não encontrado', 'error');
+            }
+        }
+        
+        function clearResults() {
+            addToLog('🧹 Limpando resultados...', 'info');
+            document.getElementById('results').innerHTML = '<p class="text-muted">Clique em "Carregar Produtos" para começar o teste.</p>';
+            debugLog = [];
+            document.getElementById('debugLog').innerHTML = '<p class="text-muted">Log de debug aparecerá aqui...</p>';
+        }
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            addToLog('🚀 Teste de dados reais de estoque iniciado', 'info');
+            addToLog('💡 Dica: Abra o console do navegador (F12) para ver logs detalhados', 'info');
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Gráfico Melhorado - Gestor PRO</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Estilos elegantes -->
+    <link rel="stylesheet" href="elegant_charts_styles.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #1D4E89 0%, #2A6FA8 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .language-selector {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <!-- Seletor de Idioma -->
+    <div class="language-selector">
+        <div class="dropdown">
+            <button class="btn btn-light dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown">
+                🇧🇷 Português
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#" data-language="pt">🇧🇷 Português</a></li>
+                <li><a class="dropdown-item" href="#" data-language="en">🇺🇸 English</a></li>
+                <li><a class="dropdown-item" href="#" data-language="es">🇪🇸 Español</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <div class="text-center mb-4">
+            <h1 class="text-white mb-3">🎨 Teste do Gráfico Melhorado</h1>
+            <p class="text-white-50">Verificando internacionalização, anos dinâmicos e paleta de cores</p>
+        </div>
+        
+        <!-- Gráfico Elegante -->
+        <div class="elegant-chart-container elegant-fade-in">
+            <h2 class="elegant-chart-title" data-i18n="monthlySalesComparison">📈 Vendas Mensais Comparativo</h2>
+            <p class="elegant-chart-subtitle" data-i18n="comparativeAnalysis">Análise comparativa entre <span id="previousYear">2023</span> e <span id="currentYear">2024</span></p>
+            
+            <div class="elegant-chart-wrapper">
+                <canvas id="salesChart" height="300"></canvas>
+            </div>
+            
+            <div class="elegant-stats-grid">
+                <div class="elegant-stat-item">
+                    <span class="elegant-stat-value" id="totalSales2024">R$ 893K</span>
+                    <span class="elegant-stat-label" data-i18n="sales2024">Vendas 2024</span>
+                </div>
+                <div class="elegant-stat-item">
+                    <span class="elegant-stat-value" id="growthRate">+12.8%</span>
+                    <span class="elegant-stat-label" data-i18n="growth">Crescimento</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Informações do Teste -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">✅ Melhorias Implementadas:</h5>
+                <ul class="list-unstyled">
+                    <li>✅ Internacionalização automática</li>
+                    <li>✅ Anos atualizados dinamicamente</li>
+                    <li>✅ Paleta de cores do projeto</li>
+                    <li>✅ Gradientes elegantes</li>
+                    <li>✅ Animações suaves</li>
+                    <li>✅ Estatísticas dinâmicas</li>
+                    <li>✅ Responsividade total</li>
+                </ul>
+                
+                <div class="mt-3">
+                    <h6>🎯 Teste de Funcionalidades:</h6>
+                    <p class="mb-2">1. <strong>Troque o idioma</strong> usando o seletor no canto superior direito</p>
+                    <p class="mb-2">2. <strong>Verifique os anos</strong> - devem ser atualizados automaticamente</p>
+                    <p class="mb-2">3. <strong>Observe as cores</strong> - agora usam a paleta do projeto</p>
+                    <p class="mb-0">4. <strong>Teste a responsividade</strong> - redimensione a janela</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Sistema de internacionalização simplificado para teste
+        const translations = {
+            'pt': {
+                'monthlySalesComparison': '📈 Vendas Mensais Comparativo',
+                'comparativeAnalysis': 'Análise comparativa entre',
+                'sales2024': 'Vendas',
+                'growth': 'Crescimento'
+            },
+            'en': {
+                'monthlySalesComparison': '📈 Monthly Sales Comparison',
+                'comparativeAnalysis': 'Comparative analysis between',
+                'sales2024': 'Sales',
+                'growth': 'Growth'
+            },
+            'es': {
+                'monthlySalesComparison': '📈 Comparación de Ventas Mensuales',
+                'comparativeAnalysis': 'Análisis comparativo entre',
+                'sales2024': 'Ventas',
+                'growth': 'Crecimiento'
+            }
+        };
+
+        let currentLanguage = 'pt';
+
+        // Função para traduzir
+        function t(key) {
+            return translations[currentLanguage][key] || key;
+        }
+
+        // Função para atualizar todos os elementos
+        function updateAllElements() {
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                const translation = t(key);
+                if (translation) {
+                    element.textContent = translation;
+                }
+            });
+            
+            // Atualizar anos dinamicamente
+            updateDynamicYears();
+        }
+
+        // Função para atualizar anos dinamicamente
+        function updateDynamicYears() {
+            const currentYear = new Date().getFullYear();
+            const previousYear = currentYear - 1;
+            
+            const previousYearElement = document.getElementById('previousYear');
+            const currentYearElement = document.getElementById('currentYear');
+            
+            if (previousYearElement) {
+                previousYearElement.textContent = previousYear;
+            }
+            
+            if (currentYearElement) {
+                currentYearElement.textContent = currentYear;
+            }
+        }
+
+        // Função para criar o gráfico elegante
+        function createElegantSalesChart() {
+            const ctx = document.getElementById('salesChart');
+            if (!ctx) {
+                console.log('❌ Elemento salesChart não encontrado');
+                return;
+            }
+
+            // Obter ano atual e anterior dinamicamente
+            const currentYear = new Date().getFullYear();
+            const previousYear = currentYear - 1;
+
+            // Dados de vendas
+            const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            const salesPreviousYear = [45, 52, 48, 61, 55, 67, 72, 68, 75, 82, 78, 89];
+            const salesCurrentYear = [52, 58, 55, 68, 62, 75, 82, 78, 85, 92, 88, 98];
+
+            console.log('📊 Renderizando gráfico de vendas comparativo elegante');
+
+            // Criar gradientes elegantes com cores mais vibrantes
+            const gradient1 = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+            gradient1.addColorStop(0, 'rgba(29, 78, 137, 0.95)'); // var(--primary-color) - mais forte
+            gradient1.addColorStop(0.5, 'rgba(29, 78, 137, 0.7)'); // Meio do gradiente
+            gradient1.addColorStop(1, 'rgba(29, 78, 137, 0.2)'); // Base mais suave
+
+            const gradient2 = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+            gradient2.addColorStop(0, 'rgba(42, 111, 168, 0.95)'); // var(--primary-light) - mais forte
+            gradient2.addColorStop(0.5, 'rgba(42, 111, 168, 0.7)'); // Meio do gradiente
+            gradient2.addColorStop(1, 'rgba(42, 111, 168, 0.2)'); // Base mais suave
+
+            const chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: `Vendas ${previousYear} (R$)`,
+                        data: salesPreviousYear,
+                        backgroundColor: gradient1,
+                        borderColor: '#1D4E89', // var(--primary-color)
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }, {
+                        label: `Vendas ${currentYear} (R$)`,
+                        data: salesCurrentYear,
+                        backgroundColor: gradient2,
+                        borderColor: '#2A6FA8', // var(--primary-light)
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart'
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    family: 'Inter, sans-serif',
+                                    size: 12,
+                                    weight: '600'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#1D4E89',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            displayColors: true
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return 'R$ ' + value.toFixed(0) + 'K';
+                                },
+                                font: {
+                                    family: 'Inter, sans-serif',
+                                    size: 11
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    family: 'Inter, sans-serif',
+                                    size: 11,
+                                    weight: '600'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Atualizar estatísticas
+            updateSalesStatistics(salesCurrentYear, salesPreviousYear);
+            
+            console.log('✅ Gráfico de vendas comparativo elegante renderizado com sucesso');
+        }
+
+        // Função para atualizar estatísticas
+        function updateSalesStatistics(currentYearData, previousYearData) {
+            const totalCurrentYear = currentYearData.reduce((sum, value) => sum + value, 0);
+            const totalPreviousYear = previousYearData.reduce((sum, value) => sum + value, 0);
+            const growthRate = ((totalCurrentYear - totalPreviousYear) / totalPreviousYear * 100).toFixed(1);
+            
+            // Obter anos dinamicamente
+            const currentYear = new Date().getFullYear();
+            const previousYear = currentYear - 1;
+            
+            // Atualizar anos no HTML
+            const previousYearElement = document.getElementById('previousYear');
+            const currentYearElement = document.getElementById('currentYear');
+            
+            if (previousYearElement) {
+                previousYearElement.textContent = previousYear;
+            }
+            
+            if (currentYearElement) {
+                currentYearElement.textContent = currentYear;
+            }
+            
+            // Atualizar elementos de estatísticas
+            const totalSalesElement = document.getElementById('totalSales2024');
+            const growthElement = document.getElementById('growthRate');
+            
+            if (totalSalesElement) {
+                totalSalesElement.textContent = `R$ ${totalCurrentYear}K`;
+            }
+            
+            if (growthElement) {
+                const growthText = growthRate >= 0 ? `+${growthRate}%` : `${growthRate}%`;
+                growthElement.textContent = growthText;
+                growthElement.style.color = growthRate >= 0 ? '#10b981' : '#ef4444';
+            }
+        }
+
+        // Configurar seletor de idioma
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Iniciando teste do gráfico melhorado...');
+            
+            // Configurar eventos do seletor de idioma
+            document.querySelectorAll('[data-language]').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const language = this.getAttribute('data-language');
+                    currentLanguage = language;
+                    
+                    // Atualizar botão do seletor
+                    const button = document.getElementById('languageDropdown');
+                    button.textContent = this.textContent;
+                    
+                    // Atualizar elementos
+                    updateAllElements();
+                    
+                    // Recriar gráfico
+                    createElegantSalesChart();
+                    
+                    console.log(`🌍 Idioma alterado para: ${language}`);
+                });
+            });
+            
+            // Inicializar gráfico
+            createElegantSalesChart();
+        });
+    </script>
+</body>
+</html> 

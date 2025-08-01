@@ -10,6 +10,7 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="style.css">
+
     <style>
         /* CSS CRÍTICO PARA SIDEBAR - FORÇADO */
         @media (max-width: 991.98px) {
@@ -154,8 +155,13 @@
                             <button class="btn btn-outline-primary" onclick="loadDashboardData()">
                                 <i class="bi bi-arrow-clockwise me-2"></i><span data-i18n="refresh">Atualizar</span>
                             </button>
+                            <button class="btn btn-outline-success" onclick="openFreshAlertsModal()" title="Ver alertas de estoque">
+                                <i class="bi bi-exclamation-triangle me-2"></i>Alertas de Estoque
+                            </button>
                         </div>
                     </div>
+
+
 
                     <!-- KPI Cards - Top Section (Primeira Linha) -->
                     <div class="row g-2 mb-3">
@@ -241,12 +247,23 @@
                     <div class="row g-4 mb-4">
                         <!-- Sales Chart -->
                         <div class="col-lg-8">
-                            <div class="card shadow-sm">
-                                <div class="card-header" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%); color: white;">
-                                    <h5 class="mb-0"><i class="bi bi-bar-chart-line me-2"></i><span data-i18n="monthlySalesComparison">Vendas Mensais (Comparativo Anual)</span></h5>
-                                </div>
-                                <div class="card-body">
+                            <div class="elegant-chart-container elegant-fade-in">
+                                <h2 class="elegant-chart-title" data-i18n="monthlySalesComparison">📈 Vendas Mensais Comparativo</h2>
+                                <p class="elegant-chart-subtitle" data-i18n="comparativeAnalysis">Análise comparativa entre <span id="previousYear">2023</span> e <span id="currentYear">2024</span></p>
+                                
+                                <div class="elegant-chart-wrapper">
                                     <canvas id="salesChart" height="300"></canvas>
+                                </div>
+                                
+                                <div class="elegant-stats-grid">
+                                    <div class="elegant-stat-item">
+                                        <span class="elegant-stat-value" id="totalSales2024">R$ 893K</span>
+                                        <span class="elegant-stat-label" data-i18n="sales2024">Vendas 2024</span>
+                                    </div>
+                                    <div class="elegant-stat-item">
+                                        <span class="elegant-stat-value" id="growthRate">+12.8%</span>
+                                        <span class="elegant-stat-label" data-i18n="growth">Crescimento</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -424,10 +441,10 @@
                                 <div class="col-md-4">
                                     <div class="d-flex gap-2">
                                         <button class="btn btn-outline-secondary" data-action="export" data-type="clients">
-                                            <i class="bi bi-download me-2"></i>Exportar
+                                            <i class="bi bi-download me-2"></i><span data-i18n="export">Exportar</span>
                                         </button>
                                         <button class="btn btn-outline-secondary" data-action="print" data-type="clients">
-                                            <i class="bi bi-printer me-2"></i>Imprimir
+                                            <i class="bi bi-printer me-2"></i><span data-i18n="print">Imprimir</span>
                                         </button>
                                     </div>
                                 </div>
@@ -492,10 +509,10 @@
                                 <div class="col-md-4">
                                     <div class="d-flex gap-2">
                                         <button class="btn btn-outline-secondary" data-action="export" data-type="sales">
-                                            <i class="bi bi-download me-2"></i>Exportar
+                                            <i class="bi bi-download me-2"></i><span data-i18n="export">Exportar</span>
                                         </button>
                                         <button class="btn btn-outline-secondary" data-action="print" data-type="sales">
-                                            <i class="bi bi-printer me-2"></i>Imprimir
+                                            <i class="bi bi-printer me-2"></i><span data-i18n="print">Imprimir</span>
                                         </button>
                                     </div>
                                 </div>
@@ -565,7 +582,7 @@
                             </form>
                             <hr class="my-4">
                             <div id="reportResults">
-                                <p class="text-center text-muted">Selecione um período e clique em "Gerar Relatório" para ver os resultados.</p>
+                                <p class="text-center text-muted" data-i18n="selectPeriodAndGenerateReport">Selecione um período e clique em "Gerar Relatório" para ver os resultados.</p>
                             </div>
                         </div>
                     </div>
@@ -578,21 +595,21 @@
                             <form id="cashFlowReportForm" data-action="generateCashFlowReport">
                                 <div class="row g-3">
                                     <div class="col-md-5">
-                                        <label for="cashFlowStartDate" class="form-label">Data Inicial</label>
+                                        <label for="cashFlowStartDate" class="form-label" data-i18n="startDate">Data Inicial</label>
                                         <input type="date" class="form-control" id="cashFlowStartDate" required>
                                     </div>
                                     <div class="col-md-5">
-                                        <label for="cashFlowEndDate" class="form-label">Data Final</label>
+                                        <label for="cashFlowEndDate" class="form-label" data-i18n="endDate">Data Final</label>
                                         <input type="date" class="form-control" id="cashFlowEndDate" required>
                                     </div>
                                     <div class="col-md-2 d-flex align-items-end">
-                                        <button type="submit" class="btn btn-success w-100"><i class="bi bi-cash-stack me-2"></i>Gerar Fluxo</button>
+                                        <button type="submit" class="btn btn-success w-100"><i class="bi bi-cash-stack me-2"></i><span data-i18n="generateFlow">Gerar Fluxo</span></button>
                                     </div>
                                 </div>
                             </form>
                             <hr class="my-4">
                             <div id="cashFlowReportResults">
-                                <p class="text-center text-muted">Selecione um período e clique em "Gerar Fluxo" para ver o fluxo de caixa.</p>
+                                <p class="text-center text-muted" data-i18n="selectPeriodAndGenerateFlow">Selecione um período e clique em "Gerar Fluxo" para ver o fluxo de caixa.</p>
                             </div>
                         </div>
                     </div>
@@ -605,19 +622,19 @@
                             <form id="accountingReportForm" data-action="exportAccountingReport">
                                 <div class="row g-3">
                                     <div class="col-md-5">
-                                        <label for="accountingStartDate" class="form-label">Data Inicial</label>
+                                        <label for="accountingStartDate" class="form-label" data-i18n="startDate">Data Inicial</label>
                                         <input type="date" class="form-control" id="accountingStartDate" required>
                                     </div>
                                     <div class="col-md-5">
-                                        <label for="accountingEndDate" class="form-label">Data Final</label>
+                                        <label for="accountingEndDate" class="form-label" data-i18n="endDate">Data Final</label>
                                         <input type="date" class="form-control" id="accountingEndDate" required>
                                     </div>
                                     <div class="col-md-2 d-flex align-items-end">
-                                        <button type="submit" class="btn btn-info w-100 text-white"><i class="bi bi-download me-2"></i>Exportar CSV</button>
+                                        <button type="submit" class="btn btn-info w-100 text-white"><i class="bi bi-download me-2"></i><span data-i18n="exportCSV">Exportar CSV</span></button>
                                     </div>
                                 </div>
                             </form>
-                            <p class="text-muted text-center mt-3 mb-0">Este relatório gera um arquivo CSV com todas as transações financeiras (entradas e saídas) do período.</p>
+                            <p class="text-muted text-center mt-3 mb-0" data-i18n="accountingReportDescription">Este relatório gera um arquivo CSV com todas as transações financeiras (entradas e saídas) do período.</p>
                         </div>
                     </div>
                     
@@ -629,17 +646,17 @@
                             <form id="salesPredictionForm" data-action="generateSalesPrediction">
                                 <div class="row g-3">
                                     <div class="col-md-10">
-                                        <label for="predictionMonths" class="form-label">Histórico de Meses para Análise (3-24)</label>
+                                        <label for="predictionMonths" class="form-label" data-i18n="predictionMonthsLabel">Histórico de Meses para Análise (3-24)</label>
                                         <input type="number" class="form-control" id="predictionMonths" value="12" min="3" max="24" required>
                                     </div>
                                     <div class="col-md-2 d-flex align-items-end">
-                                        <button type="submit" class="btn btn-warning w-100"><i class="bi bi-lightbulb me-2"></i>Gerar Projeção</button>
+                                        <button type="submit" class="btn btn-warning w-100"><i class="bi bi-lightbulb me-2"></i><span data-i18n="generateProjection">Gerar Projeção</span></button>
                                     </div>
                                 </div>
                             </form>
                             <hr class="my-4">
                             <div id="salesPredictionResults">
-                                <p class="text-center text-muted">Selecione o histórico de meses e clique em "Gerar Projeção" para ver a análise.</p>
+                                <p class="text-center text-muted" data-i18n="selectMonthsAndGenerateProjection">Selecione o histórico de meses e clique em "Gerar Projeção" para ver a análise.</p>
                             </div>
                         </div>
                     </div>
@@ -669,10 +686,10 @@
                                 <div class="col-md-4">
                                     <div class="d-flex gap-2">
                                         <button class="btn btn-outline-secondary" data-action="export" data-type="products">
-                                            <i class="bi bi-download me-2"></i>Exportar
+                                            <i class="bi bi-download me-2"></i><span data-i18n="export">Exportar</span>
                                         </button>
                                         <button class="btn btn-outline-secondary" data-action="print" data-type="products">
-                                            <i class="bi bi-printer me-2"></i>Imprimir
+                                            <i class="bi bi-printer me-2"></i><span data-i18n="print">Imprimir</span>
                                         </button>
                                     </div>
                                 </div>
@@ -743,10 +760,10 @@
                                 <div class="col-md-4">
                                     <div class="d-flex gap-2">
                                         <button class="btn btn-outline-secondary" data-action="export" data-type="users">
-                                            <i class="bi bi-download me-2"></i>Exportar
+                                            <i class="bi bi-download me-2"></i><span data-i18n="export">Exportar</span>
                                         </button>
                                         <button class="btn btn-outline-secondary" data-action="print" data-type="users">
-                                            <i class="bi bi-printer me-2"></i>Imprimir
+                                            <i class="bi bi-printer me-2"></i><span data-i18n="print">Imprimir</span>
                                         </button>
                                     </div>
                                 </div>
@@ -815,10 +832,10 @@
                                 <div class="col-md-4">
                                     <div class="d-flex gap-2">
                                         <button class="btn btn-outline-secondary" data-action="export" data-type="suppliers">
-                                            <i class="bi bi-download me-2"></i>Exportar
+                                            <i class="bi bi-download me-2"></i><span data-i18n="export">Exportar</span>
                                         </button>
                                         <button class="btn btn-outline-secondary" data-action="print" data-type="suppliers">
-                                            <i class="bi bi-printer me-2"></i>Imprimir
+                                            <i class="bi bi-printer me-2"></i><span data-i18n="print">Imprimir</span>
                                         </button>
                                     </div>
                                 </div>
@@ -883,10 +900,10 @@
                                 <div class="col-md-4">
                                     <div class="d-flex gap-2">
                                         <button class="btn btn-outline-secondary" data-action="export" data-type="purchases">
-                                            <i class="bi bi-download me-2"></i>Exportar
+                                            <i class="bi bi-download me-2"></i><span data-i18n="export">Exportar</span>
                                         </button>
                                         <button class="btn btn-outline-secondary" data-action="print" data-type="purchases">
-                                            <i class="bi bi-printer me-2"></i>Imprimir
+                                            <i class="bi bi-printer me-2"></i><span data-i18n="print">Imprimir</span>
                                         </button>
                                     </div>
                                 </div>
@@ -1703,6 +1720,76 @@
         </div>
     </div>
 
+    <!-- Stock Settings Modal -->
+    <div class="modal fade" id="stockSettingsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-gear me-2"></i>
+                        <span data-i18n="stockSettingsTitle">Configurações de Alertas de Estoque</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-exclamation-triangle me-2"></i>
+                                        <span data-i18n="warningAlert">Alerta Amarelo</span>
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted small" data-i18n="warningAlertDescription">
+                                        Produtos com estoque abaixo deste limite gerarão alertas amarelos.
+                                    </p>
+                                    <div class="mb-3">
+                                        <label for="warningThreshold" class="form-label" data-i18n="warningThreshold">Limite para Alerta Amarelo:</label>
+                                        <input type="number" class="form-control" id="warningThreshold" min="0" value="10">
+                                        <div class="form-text" data-i18n="warningThresholdHelp">Quantidade mínima para gerar alerta amarelo</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-exclamation-circle me-2"></i>
+                                        <span data-i18n="criticalAlert">Alerta Vermelho</span>
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted small" data-i18n="criticalAlertDescription">
+                                        Produtos com estoque abaixo deste limite gerarão alertas vermelhos.
+                                    </p>
+                                    <div class="mb-3">
+                                        <label for="criticalThreshold" class="form-label" data-i18n="criticalThreshold">Limite para Alerta Vermelho:</label>
+                                        <input type="number" class="form-control" id="criticalThreshold" min="0" value="5">
+                                        <div class="form-text" data-i18n="criticalThresholdHelp">Quantidade mínima para gerar alerta vermelho</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <span data-i18n="stockSettingsInfo">
+                            Estas configurações são salvas localmente e aplicadas apenas a este estabelecimento.
+                        </span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="saveStockSettings" data-i18n="saveSettings">Salvar Configurações</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1711,6 +1798,8 @@
     <!-- Core Modules -->
     <script src="js/i18n/translations.js"></script>
     <script src="js/i18n/i18n.js"></script>
+
+    <script src="js/stock-notifications.js"></script>
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/utils.js"></script>
@@ -1769,31 +1858,7 @@
             }
         });
     </script>
-    <script src="js/test-crud-system.js"></script>
-    <script src="js/debug-auth.js"></script>
-    <script src="js/test-restore-functionality.js"></script>
-    <script src="js/test-complete-restore.js"></script>
-    <script src="js/quick-fix-test.js"></script>
-    <script src="js/final-test.js"></script>
-    <script src="js/diagnose-issues.js"></script>
-    <script src="js/simple-client-test.js"></script>
-    <script src="js/test-product-creation.js"></script>
-    <script src="js/sku-generator.js"></script>
-    <script src="js/test-product-display.js"></script>
-    <script src="js/test-product-delete.js"></script>
-    <script src="js/test-product-edit.js"></script>
-    <script src="js/test-client-creation.js"></script>
-    <script src="js/test-functions-exposed.js"></script>
-    <script src="js/final-cleanup.js"></script>
-    <script src="js/debug-client-submit.js"></script>
-    <script src="js/fix-client-submit.js"></script>
-    <script src="js/test-api-client.js"></script>
-    <script src="js/test-client-fix.js"></script>
-    <script src="js/test-client-display.js"></script>
-    <script src="js/test-client-display-fix.js"></script>
-    <script src="js/test-client-routes.js"></script>
-    <script src="js/test-client-edit.js"></script>
-    <script src="js/test-client-details.js"></script>
+
     <script>
         // Definir datas padrão para relatórios
         document.addEventListener('DOMContentLoaded', function() {

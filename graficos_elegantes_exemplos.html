@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exemplos de Gráficos Elegantes - Gestor PRO</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+        }
+        
+        .chart-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .chart-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .stat-item {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 1. Gráfico de Vendas com Gradiente e Animações -->
+        <div class="chart-card">
+            <h2 class="chart-title">📈 Vendas Mensais Comparativo</h2>
+            <div class="chart-container">
+                <canvas id="salesChart"></canvas>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value">R$ 284.5K</div>
+                    <div class="stat-label">Vendas 2024</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">+23.4%</div>
+                    <div class="stat-label">Crescimento</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Gráfico de Pizza 3D com Produtos -->
+        <div class="chart-card">
+            <h2 class="chart-title">🍕 Top Produtos por Vendas</h2>
+            <div class="chart-container">
+                <canvas id="productsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 3. Gráfico de Linha com Área -->
+        <div class="chart-card">
+            <h2 class="chart-title">💰 Fluxo de Caixa</h2>
+            <div class="chart-container">
+                <canvas id="cashFlowChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 4. Gráfico de Barras Horizontais -->
+        <div class="chart-card">
+            <h2 class="chart-title">👥 Performance dos Vendedores</h2>
+            <div class="chart-container">
+                <canvas id="sellersChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 5. Gráfico de Radar -->
+        <div class="chart-card">
+            <h2 class="chart-title">📊 Métricas de Negócio</h2>
+            <div class="chart-container">
+                <canvas id="radarChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 6. Gráfico de Timeline -->
+        <div class="chart-card">
+            <h2 class="chart-title">📅 Evolução Anual</h2>
+            <div class="chart-container">
+                <canvas id="timelineChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuração global do Chart.js
+        Chart.defaults.font.family = 'Inter, sans-serif';
+        Chart.defaults.color = '#64748b';
+        Chart.defaults.plugins.legend.position = 'top';
+        Chart.defaults.plugins.legend.labels.usePointStyle = true;
+        Chart.defaults.plugins.legend.labels.padding = 20;
+
+        // 1. Gráfico de Vendas com Gradiente
+        const salesCtx = document.getElementById('salesChart').getContext('2d');
+        const salesGradient1 = salesCtx.createLinearGradient(0, 0, 0, 400);
+        salesGradient1.addColorStop(0, 'rgba(102, 126, 234, 0.8)');
+        salesGradient1.addColorStop(1, 'rgba(102, 126, 234, 0.1)');
+
+        const salesGradient2 = salesCtx.createLinearGradient(0, 0, 0, 400);
+        salesGradient2.addColorStop(0, 'rgba(118, 75, 162, 0.8)');
+        salesGradient2.addColorStop(1, 'rgba(118, 75, 162, 0.1)');
+
+        new Chart(salesCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                datasets: [{
+                    label: '2023',
+                    data: [45, 52, 48, 61, 55, 67, 72, 68, 75, 82, 78, 89],
+                    backgroundColor: salesGradient1,
+                    borderColor: '#667eea',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    borderSkipped: false,
+                }, {
+                    label: '2024',
+                    data: [52, 58, 55, 68, 62, 75, 82, 78, 85, 92, 88, 98],
+                    backgroundColor: salesGradient2,
+                    borderColor: '#764ba2',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            font: { size: 12, weight: '600' }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            callback: (value) => `R$ ${value}K`,
+                            font: { size: 11 }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 11, weight: '600' } }
+                    }
+                }
+            }
+        });
+
+        // 2. Gráfico de Pizza 3D
+        const productsCtx = document.getElementById('productsChart').getContext('2d');
+        new Chart(productsCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Smartphones', 'Laptops', 'Tablets', 'Acessórios', 'Outros'],
+                datasets: [{
+                    data: [35, 25, 20, 15, 5],
+                    backgroundColor: [
+                        '#667eea',
+                        '#764ba2',
+                        '#f093fb',
+                        '#f5576c',
+                        '#4facfe'
+                    ],
+                    borderWidth: 0,
+                    cutout: '60%'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            font: { size: 12 }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 3. Gráfico de Linha com Área
+        const cashFlowCtx = document.getElementById('cashFlowChart').getContext('2d');
+        const cashFlowGradient = cashFlowCtx.createLinearGradient(0, 0, 0, 400);
+        cashFlowGradient.addColorStop(0, 'rgba(102, 126, 234, 0.3)');
+        cashFlowGradient.addColorStop(1, 'rgba(102, 126, 234, 0.05)');
+
+        new Chart(cashFlowCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                datasets: [{
+                    label: 'Receitas',
+                    data: [120, 135, 128, 145, 138, 155, 162, 158, 165, 172, 168, 178],
+                    borderColor: '#667eea',
+                    backgroundColor: cashFlowGradient,
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#667eea',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 3,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { font: { size: 12, weight: '600' } }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            callback: (value) => `R$ ${value}K`,
+                            font: { size: 11 }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 11, weight: '600' } }
+                    }
+                }
+            }
+        });
+
+        // 4. Gráfico de Barras Horizontais
+        const sellersCtx = document.getElementById('sellersChart').getContext('2d');
+        new Chart(sellersCtx, {
+            type: 'bar',
+            data: {
+                labels: ['João Silva', 'Maria Santos', 'Pedro Costa', 'Ana Oliveira', 'Carlos Lima'],
+                datasets: [{
+                    label: 'Vendas (R$)',
+                    data: [125000, 118000, 105000, 98000, 92000],
+                    backgroundColor: [
+                        'rgba(102, 126, 234, 0.8)',
+                        'rgba(118, 75, 162, 0.8)',
+                        'rgba(240, 147, 251, 0.8)',
+                        'rgba(245, 87, 108, 0.8)',
+                        'rgba(79, 172, 254, 0.8)'
+                    ],
+                    borderColor: [
+                        '#667eea',
+                        '#764ba2',
+                        '#f093fb',
+                        '#f5576c',
+                        '#4facfe'
+                    ],
+                    borderWidth: 2,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            callback: (value) => `R$ ${(value/1000).toFixed(0)}K`,
+                            font: { size: 11 }
+                        }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { font: { size: 11, weight: '600' } }
+                    }
+                }
+            }
+        });
+
+        // 5. Gráfico de Radar
+        const radarCtx = document.getElementById('radarChart').getContext('2d');
+        new Chart(radarCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Vendas', 'Lucro', 'Clientes', 'Produtividade', 'Satisfação', 'Inovação'],
+                datasets: [{
+                    label: 'Meta',
+                    data: [90, 85, 95, 80, 88, 75],
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#667eea',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6
+                }, {
+                    label: 'Atual',
+                    data: [75, 70, 85, 65, 80, 60],
+                    borderColor: '#764ba2',
+                    backgroundColor: 'rgba(118, 75, 162, 0.2)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#764ba2',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { font: { size: 12, weight: '600' } }
+                    }
+                },
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
+                            font: { size: 11 },
+                            stepSize: 20
+                        }
+                    }
+                }
+            }
+        });
+
+        // 6. Gráfico de Timeline
+        const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+        new Chart(timelineCtx, {
+            type: 'line',
+            data: {
+                labels: ['2019', '2020', '2021', '2022', '2023', '2024'],
+                datasets: [{
+                    label: 'Faturamento',
+                    data: [500, 650, 800, 950, 1200, 1450],
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderWidth: 4,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#667eea',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 3,
+                    pointRadius: 8,
+                    pointHoverRadius: 10
+                }, {
+                    label: 'Funcionários',
+                    data: [5, 8, 12, 15, 18, 22],
+                    borderColor: '#764ba2',
+                    backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                    borderWidth: 4,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#764ba2',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 3,
+                    pointRadius: 8,
+                    pointHoverRadius: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { font: { size: 12, weight: '600' } }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            font: { size: 11 }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 11, weight: '600' } }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

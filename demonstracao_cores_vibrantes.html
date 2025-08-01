@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demonstração - Cores Vibrantes - Gestor PRO</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Estilos elegantes -->
+    <link rel="stylesheet" href="elegant_charts_styles.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #1D4E89 0%, #2A6FA8 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .color-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .color-sample {
+            width: 100%;
+            height: 60px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .gradient-sample {
+            width: 100%;
+            height: 80px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="text-center mb-4">
+            <h1 class="text-white mb-3">🎨 Demonstração - Cores Vibrantes</h1>
+            <p class="text-white-50">Paleta de cores atualizada com gradientes mais fortes e vibrantes</p>
+        </div>
+        
+        <!-- Paleta de Cores -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">🎨 Paleta de Cores do Projeto</h5>
+            </div>
+            <div class="card-body">
+                <div class="color-palette">
+                    <div class="color-card">
+                        <div class="color-sample" style="background: #1D4E89;">
+                            Primary Color<br>#1D4E89
+                        </div>
+                        <h6>Primary Color</h6>
+                        <small class="text-muted">Cor principal do projeto</small>
+                    </div>
+                    
+                    <div class="color-card">
+                        <div class="color-sample" style="background: #2A6FA8;">
+                            Primary Light<br>#2A6FA8
+                        </div>
+                        <h6>Primary Light</h6>
+                        <small class="text-muted">Cor secundária mais clara</small>
+                    </div>
+                    
+                    <div class="color-card">
+                        <div class="gradient-sample" style="background: linear-gradient(135deg, #1D4E89 0%, #2A6FA8 50%, #1D4E89 100%);">
+                            Gradiente<br>Vibrante
+                        </div>
+                        <h6>Gradiente Vibrante</h6>
+                        <small class="text-muted">Gradiente com 3 pontos de parada</small>
+                    </div>
+                    
+                    <div class="color-card">
+                        <div class="gradient-sample" style="background: linear-gradient(135deg, #1D4E89 0%, #2A6FA8 30%, #1D4E89 70%, #2A6FA8 100%);">
+                            Hover<br>Efeito
+                        </div>
+                        <h6>Hover Effect</h6>
+                        <small class="text-muted">Gradiente com 4 pontos de parada</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gráfico com Cores Vibrantes -->
+        <div class="elegant-chart-container elegant-fade-in">
+            <h2 class="elegant-chart-title" data-i18n="monthlySalesComparison">📈 Vendas Mensais Comparativo</h2>
+            <p class="elegant-chart-subtitle">Demonstração das cores vibrantes no gráfico</p>
+            
+            <div class="elegant-chart-wrapper">
+                <canvas id="salesChart" height="300"></canvas>
+            </div>
+            
+            <div class="elegant-stats-grid">
+                <div class="elegant-stat-item">
+                    <span class="elegant-stat-value" id="totalSales2024">R$ 893K</span>
+                    <span class="elegant-stat-label">Vendas 2024</span>
+                </div>
+                <div class="elegant-stat-item">
+                    <span class="elegant-stat-value" id="growthRate">+12.8%</span>
+                    <span class="elegant-stat-label">Crescimento</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Comparação Antes/Depois -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">🔴 Antes - Cores Suaves</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="gradient-sample" style="background: linear-gradient(135deg, rgba(29, 78, 137, 0.8), rgba(29, 78, 137, 0.1));">
+                            Opacidade: 0.8 → 0.1<br>
+                            <small>Gradiente simples</small>
+                        </div>
+                        <ul class="list-unstyled">
+                            <li>• Opacidade máxima: 0.8</li>
+                            <li>• Gradiente simples</li>
+                            <li>• Cores menos vibrantes</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">🟢 Agora - Cores Vibrantes</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="gradient-sample" style="background: linear-gradient(135deg, rgba(29, 78, 137, 0.95), rgba(29, 78, 137, 0.7), rgba(29, 78, 137, 0.2));">
+                            Opacidade: 0.95 → 0.7 → 0.2<br>
+                            <small>Gradiente com 3 pontos</small>
+                        </div>
+                        <ul class="list-unstyled">
+                            <li>• Opacidade máxima: 0.95</li>
+                            <li>• Gradiente com 3 pontos</li>
+                            <li>• Cores mais vibrantes</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Melhorias Implementadas -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">✨ Melhorias nas Cores:</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>🎨 Gradientes do Gráfico:</h6>
+                        <ul>
+                            <li>✅ Opacidade aumentada de 0.8 para 0.95</li>
+                            <li>✅ Adicionado ponto médio no gradiente (0.7)</li>
+                            <li>✅ Base mais suave (0.2 em vez de 0.1)</li>
+                            <li>✅ Gradiente com 3 pontos de parada</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>🎨 Elementos Visuais:</h6>
+                        <ul>
+                            <li>✅ Cards com gradiente de 3 pontos</li>
+                            <li>✅ Sombras mais pronunciadas</li>
+                            <li>✅ Efeitos hover mais vibrantes</li>
+                            <li>✅ Texto com sombra sutil</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Função para criar o gráfico com cores vibrantes
+        function createVibrantChart() {
+            const ctx = document.getElementById('salesChart');
+            if (!ctx) return;
+
+            // Obter ano atual e anterior dinamicamente
+            const currentYear = new Date().getFullYear();
+            const previousYear = currentYear - 1;
+
+            // Dados de vendas
+            const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            const salesPreviousYear = [45, 52, 48, 61, 55, 67, 72, 68, 75, 82, 78, 89];
+            const salesCurrentYear = [52, 58, 55, 68, 62, 75, 82, 78, 85, 92, 88, 98];
+
+            console.log('📊 Renderizando gráfico com cores vibrantes');
+
+            // Criar gradientes vibrantes
+            const gradient1 = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+            gradient1.addColorStop(0, 'rgba(29, 78, 137, 0.95)'); // Mais forte
+            gradient1.addColorStop(0.5, 'rgba(29, 78, 137, 0.7)'); // Meio
+            gradient1.addColorStop(1, 'rgba(29, 78, 137, 0.2)'); // Base
+
+            const gradient2 = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+            gradient2.addColorStop(0, 'rgba(42, 111, 168, 0.95)'); // Mais forte
+            gradient2.addColorStop(0.5, 'rgba(42, 111, 168, 0.7)'); // Meio
+            gradient2.addColorStop(1, 'rgba(42, 111, 168, 0.2)'); // Base
+
+            const chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: `Vendas ${previousYear} (R$)`,
+                        data: salesPreviousYear,
+                        backgroundColor: gradient1,
+                        borderColor: '#1D4E89',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }, {
+                        label: `Vendas ${currentYear} (R$)`,
+                        data: salesCurrentYear,
+                        backgroundColor: gradient2,
+                        borderColor: '#2A6FA8',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart'
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    family: 'Inter, sans-serif',
+                                    size: 12,
+                                    weight: '600'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#1D4E89',
+                            borderWidth: 2,
+                            cornerRadius: 8,
+                            displayColors: true
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return 'R$ ' + value.toFixed(0) + 'K';
+                                },
+                                font: {
+                                    family: 'Inter, sans-serif',
+                                    size: 11
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    family: 'Inter, sans-serif',
+                                    size: 11,
+                                    weight: '600'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Atualizar estatísticas
+            updateStatistics(salesCurrentYear, salesPreviousYear);
+            
+            console.log('✅ Gráfico com cores vibrantes renderizado');
+        }
+
+        // Função para atualizar estatísticas
+        function updateStatistics(currentYearData, previousYearData) {
+            const totalCurrentYear = currentYearData.reduce((sum, value) => sum + value, 0);
+            const totalPreviousYear = previousYearData.reduce((sum, value) => sum + value, 0);
+            const growthRate = ((totalCurrentYear - totalPreviousYear) / totalPreviousYear * 100).toFixed(1);
+            
+            const totalSalesElement = document.getElementById('totalSales2024');
+            const growthElement = document.getElementById('growthRate');
+            
+            if (totalSalesElement) {
+                totalSalesElement.textContent = `R$ ${totalCurrentYear}K`;
+            }
+            
+            if (growthElement) {
+                const growthText = growthRate >= 0 ? `+${growthRate}%` : `${growthRate}%`;
+                growthElement.textContent = growthText;
+                growthElement.style.color = growthRate >= 0 ? '#10b981' : '#ef4444';
+            }
+        }
+
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Iniciando demonstração de cores vibrantes...');
+            createVibrantChart();
+        });
+    </script>
+</body>
+</html> 

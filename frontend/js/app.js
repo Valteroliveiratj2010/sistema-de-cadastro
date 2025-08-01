@@ -12,6 +12,7 @@
         currentSection: null,
         modals: new Map(),
         charts: new Map(),
+        detailModalData: null, // Armazenar dados do modal de detalhes ativo
         data: {
             clients: { page: 1, data: [], total: 0, loaded: false },
             sales: { page: 1, data: [], total: 0, loaded: false },
@@ -21,6 +22,9 @@
             users: { page: 1, data: [], total: 0, loaded: false }
         }
     };
+
+    // Expor estado globalmente para i18n.js
+    window.state = state;
 
     /**
      * Helper function to show toast notifications
@@ -33,6 +37,102 @@
         } else {
             alert(`${type.toUpperCase()}: ${message}`);
         }
+    }
+
+    /**
+     * Helper function to get translated value
+     */
+    function getTranslatedValue(key, fallback) {
+        return window.i18n ? window.i18n.t(key) : fallback;
+    }
+
+    /**
+     * Helper function to translate status
+     */
+    function getTranslatedStatus(status) {
+        if (!status) return getTranslatedValue('dash', '-');
+        
+        // Mapear status para chaves de tradução
+        const statusMap = {
+            'Pago': 'paid',
+            'Pendente': 'pending',
+            'Concluída': 'completed',
+            'Concluida': 'completed',
+            'Cancelada': 'cancelled',
+            'Cancelado': 'cancelled',
+            'Paid': 'paid',
+            'Pending': 'pending',
+            'Completed': 'completed',
+            'Cancelled': 'cancelled',
+            'Pagado': 'paid',
+            'Pendiente': 'pending',
+            'Completado': 'completed',
+            'Cancelado': 'cancelled'
+        };
+        
+        const translationKey = statusMap[status] || status.toLowerCase();
+        return getTranslatedValue(translationKey, status);
+    }
+
+    /**
+     * Update detail modals when language changes
+     */
+    function updateDetailModals() {
+        // Verificar se há algum modal de detalhes aberto
+        const detailModals = [
+            'clientDetailModal',
+            'saleDetailModal', 
+            'purchaseDetailModal',
+            'supplierDetailModal',
+            'userDetailModal'
+        ];
+
+        detailModals.forEach(modalId => {
+            const modal = document.getElementById(modalId);
+            if (modal && modal.classList.contains('show')) {
+                console.log(`🔄 Atualizando modal ${modalId}...`);
+                
+                // Atualizar todos os elementos com getTranslatedValue
+                const elements = modal.querySelectorAll('[id^="detail"]');
+                elements.forEach(element => {
+                    const currentText = element.textContent.trim();
+                    
+                    // Verificar se o elemento é um status (contém 'Status' no ID)
+                    if (element.id && element.id.includes('Status')) {
+                        const newText = getTranslatedStatus(currentText);
+                        if (newText !== currentText) {
+                            element.textContent = newText;
+                            console.log(`✅ Status traduzido: "${currentText}" → "${newText}"`);
+                        }
+                    }
+                    // Verificar se o texto atual é um valor traduzível
+                    else if (currentText === '-' || currentText === 'N/A' || currentText === 'Não informado' || 
+                        currentText === 'Not informed' || currentText === 'No informado') {
+                        
+                        // Determinar qual chave de tradução usar baseado no ID do elemento
+                        let translationKey = 'dash';
+                        if (currentText === 'N/A') {
+                            translationKey = 'notAvailable';
+                        } else if (currentText === 'Não informado' || currentText === 'Not informed' || currentText === 'No informado') {
+                            translationKey = 'notInformed';
+                        }
+                        
+                        const newText = getTranslatedValue(translationKey, currentText);
+                        if (newText !== currentText) {
+                            element.textContent = newText;
+                            console.log(`✅ Traduzido: "${currentText}" → "${newText}"`);
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    /**
+     * Clear detail modal data when modal is closed
+     */
+    function clearDetailModalData() {
+        state.detailModalData = null;
     }
 
     /**
@@ -97,6 +197,22 @@
     function setupEventListeners() {
         // Section load events
         document.addEventListener('sectionLoad', handleSectionLoad);
+        
+        // Modal close events for detail modals
+        const detailModals = [
+            'clientDetailModal',
+            'saleDetailModal', 
+            'purchaseDetailModal',
+            'supplierDetailModal',
+            'userDetailModal'
+        ];
+
+        detailModals.forEach(modalId => {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.addEventListener('hidden.bs.modal', clearDetailModalData);
+            }
+        });
         
         // Form submissions
         document.addEventListener('submit', handleFormSubmit);
@@ -483,6 +599,17 @@
             console.error('❌ Erro ao carregar dashboard:', error);
             // Renderizar dashboard com dados vazios em caso de erro
             renderDashboard({});
+        }
+
+        // Carregar notificações de estoque após o dashboard
+        if (window.stockNotificationManager) {
+            console.log('✅ Sistema de notificações encontrado no dashboard');
+            setTimeout(() => {
+                console.log('🔄 Forçando verificação de alertas...');
+                window.stockNotificationManager.forceCheck();
+            }, 1000);
+        } else {
+            console.error('❌ Sistema de notificações não encontrado no dashboard');
         }
     }
 
@@ -1236,12 +1363,23 @@
         ] : ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
         
         // Dados de vendas do ano anterior (azul primário)
-        const salesPreviousYear = [5, 8, 12, 15, 18, 22, 25, 28, 30, 35, 40, 45];
+        const salesPreviousYear = [45, 52, 48, 61, 55, 67, 72, 68, 75, 82, 78, 89];
         
         // Dados de vendas do ano atual (azul claro)
-        const salesCurrentYear = [8, 12, 15, 18, 22, 25, 28, 32, 35, 38, 42, 48];
+        const salesCurrentYear = [52, 58, 55, 68, 62, 75, 82, 78, 85, 92, 88, 98];
 
-        console.log('📊 Renderizando gráfico de vendas comparativo');
+        console.log('📊 Renderizando gráfico de vendas comparativo elegante');
+
+        // Criar gradientes elegantes com cores mais vibrantes
+        const gradient1 = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+        gradient1.addColorStop(0, 'rgba(29, 78, 137, 0.95)'); // var(--primary-color) - mais forte
+        gradient1.addColorStop(0.5, 'rgba(29, 78, 137, 0.7)'); // Meio do gradiente
+        gradient1.addColorStop(1, 'rgba(29, 78, 137, 0.2)'); // Base mais suave
+
+        const gradient2 = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+        gradient2.addColorStop(0, 'rgba(42, 111, 168, 0.95)'); // var(--primary-light) - mais forte
+        gradient2.addColorStop(0.5, 'rgba(42, 111, 168, 0.7)'); // Meio do gradiente
+        gradient2.addColorStop(1, 'rgba(42, 111, 168, 0.2)'); // Base mais suave
 
         const chart = new Chart(ctx, {
             type: 'bar',
@@ -1250,24 +1388,28 @@
                 datasets: [{
                     label: `${window.i18n ? window.i18n.t('sales') : 'Vendas'} ${previousYear} (${window.i18n ? window.i18n.formatCurrency(0).replace('0,00', '') : 'R$'})`,
                     data: salesPreviousYear,
-                    backgroundColor: '#1D4E89',
-                    borderColor: '#1D4E89',
-                    borderWidth: 1,
-                    borderRadius: 4,
+                    backgroundColor: gradient1,
+                    borderColor: '#1D4E89', // var(--primary-color)
+                    borderWidth: 2,
+                    borderRadius: 8,
                     borderSkipped: false,
                 }, {
                     label: `${window.i18n ? window.i18n.t('sales') : 'Vendas'} ${currentYear} (${window.i18n ? window.i18n.formatCurrency(0).replace('0,00', '') : 'R$'})`,
                     data: salesCurrentYear,
-                    backgroundColor: '#2A6FA8',
-                    borderColor: '#2A6FA8',
-                    borderWidth: 1,
-                    borderRadius: 4,
+                    backgroundColor: gradient2,
+                    borderColor: '#2A6FA8', // var(--primary-light)
+                    borderWidth: 2,
+                    borderRadius: 8,
                     borderSkipped: false,
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: {
+                    duration: 2000,
+                    easing: 'easeInOutQuart'
+                },
                 plugins: {
                     legend: {
                         position: 'top',
@@ -1276,15 +1418,25 @@
                             padding: 20,
                             font: {
                                 family: 'Inter, sans-serif',
-                                size: 12
+                                size: 12,
+                                weight: '600'
                             }
                         }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: '#667eea',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        displayColors: true
                     }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        max: 50,
+                        max: 100,
                         grid: {
                             color: 'rgba(0, 0, 0, 0.05)',
                             drawBorder: false
@@ -1294,7 +1446,7 @@
                                 if (window.i18n) {
                                     return window.i18n.formatCurrency(value);
                                 }
-                                return 'R$ ' + value.toFixed(2);
+                                return 'R$ ' + value.toFixed(0) + 'K';
                             },
                             font: {
                                 family: 'Inter, sans-serif',
@@ -1309,7 +1461,8 @@
                         ticks: {
                             font: {
                                 family: 'Inter, sans-serif',
-                                size: 11
+                                size: 11,
+                                weight: '600'
                             }
                         }
                     }
@@ -1318,7 +1471,50 @@
         });
 
         state.charts.set('salesChart', chart);
-        console.log('✅ Gráfico de vendas comparativo renderizado com sucesso');
+        
+        // Atualizar estatísticas
+        updateSalesStatistics(salesCurrentYear, salesPreviousYear);
+        
+        console.log('✅ Gráfico de vendas comparativo elegante renderizado com sucesso');
+    }
+
+    /**
+     * Update sales statistics
+     */
+    function updateSalesStatistics(currentYearData, previousYearData) {
+        const totalCurrentYear = currentYearData.reduce((sum, value) => sum + value, 0);
+        const totalPreviousYear = previousYearData.reduce((sum, value) => sum + value, 0);
+        const growthRate = ((totalCurrentYear - totalPreviousYear) / totalPreviousYear * 100).toFixed(1);
+        
+        // Obter anos dinamicamente
+        const currentYear = new Date().getFullYear();
+        const previousYear = currentYear - 1;
+        
+        // Atualizar anos no HTML
+        const previousYearElement = document.getElementById('previousYear');
+        const currentYearElement = document.getElementById('currentYear');
+        
+        if (previousYearElement) {
+            previousYearElement.textContent = previousYear;
+        }
+        
+        if (currentYearElement) {
+            currentYearElement.textContent = currentYear;
+        }
+        
+        // Atualizar elementos de estatísticas
+        const totalSalesElement = document.getElementById('totalSales2024');
+        const growthElement = document.getElementById('growthRate');
+        
+        if (totalSalesElement) {
+            totalSalesElement.textContent = `R$ ${totalCurrentYear}K`;
+        }
+        
+        if (growthElement) {
+            const growthText = growthRate >= 0 ? `+${growthRate}%` : `${growthRate}%`;
+            growthElement.textContent = growthText;
+            growthElement.style.color = growthRate >= 0 ? '#10b981' : '#ef4444';
+        }
     }
 
     /**
@@ -1336,6 +1532,17 @@
         const currentYear = new Date().getFullYear();
         const previousYear = currentYear - 1;
 
+        // Criar gradientes elegantes para gráfico vazio com cores mais vibrantes
+        const gradient1 = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+        gradient1.addColorStop(0, 'rgba(29, 78, 137, 0.6)'); // var(--primary-color) - mais forte
+        gradient1.addColorStop(0.5, 'rgba(29, 78, 137, 0.4)'); // Meio do gradiente
+        gradient1.addColorStop(1, 'rgba(29, 78, 137, 0.1)'); // Base mais suave
+
+        const gradient2 = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+        gradient2.addColorStop(0, 'rgba(42, 111, 168, 0.6)'); // var(--primary-light) - mais forte
+        gradient2.addColorStop(0.5, 'rgba(42, 111, 168, 0.4)'); // Meio do gradiente
+        gradient2.addColorStop(1, 'rgba(42, 111, 168, 0.1)'); // Base mais suave
+
         const chart = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -1348,30 +1555,81 @@
                 datasets: [{
                     label: `${window.i18n ? window.i18n.t('sales') : 'Vendas'} ${previousYear} (${window.i18n ? window.i18n.formatCurrency(0).replace('0,00', '') : 'R$'})`,
                     data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    backgroundColor: '#1D4E89',
-                    borderColor: '#1D4E89',
-                    borderWidth: 1
+                    backgroundColor: gradient1,
+                    borderColor: '#1D4E89', // var(--primary-color)
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    borderSkipped: false
                 }, {
                     label: `${window.i18n ? window.i18n.t('sales') : 'Vendas'} ${currentYear} (${window.i18n ? window.i18n.formatCurrency(0).replace('0,00', '') : 'R$'})`,
                     data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    backgroundColor: '#6C757D',
-                    borderColor: '#6C757D',
-                    borderWidth: 1
+                    backgroundColor: gradient2,
+                    borderColor: '#2A6FA8', // var(--primary-light)
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    borderSkipped: false
                 }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 2000,
+                    easing: 'easeInOutQuart'
+                },
                 plugins: {
                     legend: {
                         position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: {
+                                family: 'Inter, sans-serif',
+                                size: 12,
+                                weight: '600'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: '#667eea',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        displayColors: true
                     }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
+                        max: 100,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        },
                         ticks: {
                             callback: function(value) {
-                                return 'R$ ' + value.toFixed(2);
+                                if (window.i18n) {
+                                    return window.i18n.formatCurrency(value);
+                                }
+                                return 'R$ ' + value.toFixed(0) + 'K';
+                            },
+                            font: {
+                                family: 'Inter, sans-serif',
+                                size: 11
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                family: 'Inter, sans-serif',
+                                size: 11,
+                                weight: '600'
                             }
                         }
                     }
@@ -1647,10 +1905,10 @@
         tbody.innerHTML = sales.map(sale => `
             <tr>
                 <td>${sale.id}</td>
-                <td>${Utils.sanitizeHTML(sale.client?.nome || sale.cliente?.nome || 'N/A')}</td>
+                <td>${Utils.sanitizeHTML(sale.client?.nome || sale.cliente?.nome || getTranslatedValue('notAvailable', 'N/A'))}</td>
                 <td>${Utils.formatCurrency(sale.valorTotal)}</td>
                 <td>${Utils.formatDate(sale.dataVenda)}</td>
-                <td><span class="badge bg-${getStatusColor(sale.status)}">${sale.status}</span></td>
+                <td><span class="badge bg-${getStatusColor(sale.status)}">${getTranslatedStatus(sale.status)}</span></td>
                 <td>
                     <button class="btn btn-outline-info btn-sm" data-action="view" data-type="sale" data-id="${sale.id}">
                         <i class="bi bi-eye"></i>
@@ -1736,11 +1994,11 @@
 
         tbody.innerHTML = purchases.map(purchase => `
             <tr>
-                <td>${purchase.id || 'N/A'}</td>
-                <td>${Utils.sanitizeHTML(purchase.supplier?.nome || purchase.fornecedor?.nome || 'N/A')}</td>
+                <td>${purchase.id || getTranslatedValue('notAvailable', 'N/A')}</td>
+                <td>${Utils.sanitizeHTML(purchase.supplier?.nome || purchase.fornecedor?.nome || getTranslatedValue('notAvailable', 'N/A'))}</td>
                 <td>${Utils.formatCurrency(purchase.valorTotal || 0)}</td>
-                <td>${Utils.formatDate(purchase.dataCompra) || 'N/A'}</td>
-                <td><span class="badge bg-${getStatusColor(purchase.status)}">${purchase.status || 'N/A'}</span></td>
+                <td>${Utils.formatDate(purchase.dataCompra) || getTranslatedValue('notAvailable', 'N/A')}</td>
+                <td><span class="badge bg-${getStatusColor(purchase.status)}">${getTranslatedStatus(purchase.status)}</span></td>
                 <td>
                     <button class="btn btn-outline-info btn-sm" data-action="view" data-type="purchase" data-id="${purchase.id}">
                         <i class="bi bi-eye"></i>
@@ -1782,10 +2040,10 @@
 
         tbody.innerHTML = suppliers.map(supplier => `
             <tr>
-                <td>${Utils.sanitizeHTML(supplier.nome || 'N/A')}</td>
-                <td>${Utils.formatDocument(supplier.cnpj || 'N/A')}</td>
-                <td>${Utils.formatPhone(supplier.telefone || 'N/A')}</td>
-                <td>${Utils.sanitizeHTML(supplier.email || 'N/A')}</td>
+                <td>${Utils.sanitizeHTML(supplier.nome || getTranslatedValue('notAvailable', 'N/A'))}</td>
+                <td>${Utils.formatDocument(supplier.cnpj || getTranslatedValue('notAvailable', 'N/A'))}</td>
+                <td>${Utils.formatPhone(supplier.telefone || getTranslatedValue('notAvailable', 'N/A'))}</td>
+                <td>${Utils.sanitizeHTML(supplier.email || getTranslatedValue('notAvailable', 'N/A'))}</td>
                 <td>
                     <button class="btn btn-outline-info btn-sm" data-action="view" data-type="supplier" data-id="${supplier.id}">
                         <i class="bi bi-eye"></i>
@@ -1827,9 +2085,9 @@
 
         tbody.innerHTML = users.map(user => `
             <tr>
-                <td>${Utils.sanitizeHTML(user.username || 'N/A')}</td>
-                <td>${Utils.sanitizeHTML(user.email || 'N/A')}</td>
-                <td><span class="badge bg-primary">${auth.getRoleDisplayName(user.role) || 'N/A'}</span></td>
+                <td>${Utils.sanitizeHTML(user.username || getTranslatedValue('notAvailable', 'N/A'))}</td>
+                <td>${Utils.sanitizeHTML(user.email || getTranslatedValue('notAvailable', 'N/A'))}</td>
+                <td><span class="badge bg-primary">${auth.getRoleDisplayName(user.role) || getTranslatedValue('notAvailable', 'N/A')}</span></td>
                 <td>
                     <button class="btn btn-outline-primary btn-sm" data-action="edit" data-type="user" data-id="${user.id}">
                         <i class="bi bi-pencil"></i>
@@ -2029,6 +2287,13 @@
                     await loadProductsForDropdown();
                     await loadProductsForPurchaseDropdown();
                 }, 500);
+                
+                // Atualizar notificações de estoque
+                if (window.stockNotificationManager) {
+                    setTimeout(() => {
+                        window.stockNotificationManager.forceCheck();
+                    }, 1000);
+                }
             } else {
                 console.log('❌ Erro na resposta da API:', response);
                 showToast(response.message || 'Erro ao criar produto', 'error');
@@ -2182,6 +2447,13 @@
                     await loadProductsForDropdown();
                     await loadProductsForPurchaseDropdown();
                 }, 500);
+                
+                // Atualizar notificações de estoque
+                if (window.stockNotificationManager) {
+                    setTimeout(() => {
+                        window.stockNotificationManager.forceCheck();
+                    }, 1000);
+                }
             } else {
                 console.log('❌ Erro na resposta da API:', response);
                 showToast(response.message || 'Erro ao atualizar produto', 'error');
@@ -2500,14 +2772,14 @@
             try {
                 // Preencher modal de detalhes do cliente
                 const elements = {
-                    'detailClientName': data.nome || '-',
-                    'detailClientEmail': data.email || '-',
-                    'detailClientPhone': Utils.formatPhone(data.telefone) || '-',
-                    'detailClientCpfCnpj': Utils.formatDocument(data.cpfCnpj) || '-',
-                    'detailClientAddress': data.endereco || 'Não informado',
-                    'detailClientId': data.id || '-',
-                    'detailClientCreated': Utils.formatDate(data.createdAt) || '-',
-                    'detailClientUpdated': Utils.formatDate(data.updatedAt) || '-'
+                    'detailClientName': data.nome || getTranslatedValue('dash', '-'),
+                    'detailClientEmail': data.email || getTranslatedValue('dash', '-'),
+                    'detailClientPhone': Utils.formatPhone(data.telefone) || getTranslatedValue('dash', '-'),
+                    'detailClientCpfCnpj': Utils.formatDocument(data.cpfCnpj) || getTranslatedValue('dash', '-'),
+                    'detailClientAddress': data.endereco || getTranslatedValue('notInformed', 'Não informado'),
+                    'detailClientId': data.id || getTranslatedValue('dash', '-'),
+                    'detailClientCreated': Utils.formatDate(data.createdAt) || getTranslatedValue('dash', '-'),
+                    'detailClientUpdated': Utils.formatDate(data.updatedAt) || getTranslatedValue('dash', '-')
                 };
                 
                 // Preencher cada elemento
@@ -2565,11 +2837,11 @@
             // Lógica para vendas (já existente)
             try {
                 // Preencher modal de detalhes da venda
-                document.getElementById('detailSaleId').textContent = data.id || '-';
-                document.getElementById('detailSaleClient').textContent = data.client?.nome || data.cliente?.nome || 'N/A';
-                document.getElementById('detailSaleDate').textContent = Utils.formatDate(data.dataVenda) || '-';
-                document.getElementById('detailSaleTotal').textContent = Utils.formatCurrency(data.valorTotal) || '-';
-                document.getElementById('detailSaleStatus').textContent = data.status || '-';
+                document.getElementById('detailSaleId').textContent = data.id || getTranslatedValue('dash', '-');
+                document.getElementById('detailSaleClient').textContent = data.client?.nome || data.cliente?.nome || getTranslatedValue('notAvailable', 'N/A');
+                document.getElementById('detailSaleDate').textContent = Utils.formatDate(data.dataVenda) || getTranslatedValue('dash', '-');
+                document.getElementById('detailSaleTotal').textContent = Utils.formatCurrency(data.valorTotal) || getTranslatedValue('dash', '-');
+                document.getElementById('detailSaleStatus').textContent = getTranslatedStatus(data.status);
                 
                 // Mostrar o modal
                 const modal = document.getElementById('saleDetailModal');
@@ -2585,11 +2857,11 @@
             // Lógica para compras (já existente)
             try {
                 // Preencher modal de detalhes da compra
-                document.getElementById('detailPurchaseId').textContent = data.id || '-';
-                document.getElementById('detailPurchaseSupplier').textContent = data.supplier?.nome || data.fornecedor?.nome || 'N/A';
-                document.getElementById('detailPurchaseDate').textContent = Utils.formatDate(data.dataCompra) || '-';
-                document.getElementById('detailPurchaseTotal').textContent = Utils.formatCurrency(data.valorTotal) || '-';
-                document.getElementById('detailPurchaseStatus').textContent = data.status || '-';
+                document.getElementById('detailPurchaseId').textContent = data.id || getTranslatedValue('dash', '-');
+                document.getElementById('detailPurchaseSupplier').textContent = data.supplier?.nome || data.fornecedor?.nome || getTranslatedValue('notAvailable', 'N/A');
+                document.getElementById('detailPurchaseDate').textContent = Utils.formatDate(data.dataCompra) || getTranslatedValue('dash', '-');
+                document.getElementById('detailPurchaseTotal').textContent = Utils.formatCurrency(data.valorTotal) || getTranslatedValue('dash', '-');
+                document.getElementById('detailPurchaseStatus').textContent = getTranslatedStatus(data.status);
                 
                 // Mostrar o modal
                 const modal = document.getElementById('purchaseDetailModal');
@@ -2616,14 +2888,14 @@
                 
                 // Preencher dados do fornecedor
                 const elements = {
-                    'detailSupplierName': data.nome || '-',
-                    'detailSupplierEmail': data.email || '-',
-                    'detailSupplierPhone': Utils.formatPhone(data.telefone) || '-',
-                    'detailSupplierCnpj': Utils.formatDocument(data.cnpj) || '-',
-                    'detailSupplierAddress': data.endereco || 'Não informado',
-                    'detailSupplierId': data.id || '-',
-                    'detailSupplierCreated': Utils.formatDate(data.createdAt) || '-',
-                    'detailSupplierUpdated': Utils.formatDate(data.updatedAt) || '-'
+                    'detailSupplierName': data.nome || getTranslatedValue('dash', '-'),
+                    'detailSupplierEmail': data.email || getTranslatedValue('dash', '-'),
+                    'detailSupplierPhone': Utils.formatPhone(data.telefone) || getTranslatedValue('dash', '-'),
+                    'detailSupplierCnpj': Utils.formatDocument(data.cnpj) || getTranslatedValue('dash', '-'),
+                    'detailSupplierAddress': data.endereco || getTranslatedValue('notInformed', 'Não informado'),
+                    'detailSupplierId': data.id || getTranslatedValue('dash', '-'),
+                    'detailSupplierCreated': Utils.formatDate(data.createdAt) || getTranslatedValue('dash', '-'),
+                    'detailSupplierUpdated': Utils.formatDate(data.updatedAt) || getTranslatedValue('dash', '-')
                 };
                 
                 // Preencher cada elemento
@@ -2690,12 +2962,12 @@
                 
                 // Preencher dados do usuário
                 const elements = {
-                    'detailUserName': data.username || '-',
-                    'detailUserEmail': data.email || '-',
-                    'detailUserRole': auth.getRoleDisplayName(data.role) || '-',
-                    'detailUserId': data.id || '-',
-                    'detailUserCreated': Utils.formatDate(data.createdAt) || '-',
-                    'detailUserUpdated': Utils.formatDate(data.updatedAt) || '-'
+                    'detailUserName': data.username || getTranslatedValue('dash', '-'),
+                    'detailUserEmail': data.email || getTranslatedValue('dash', '-'),
+                    'detailUserRole': auth.getRoleDisplayName(data.role) || getTranslatedValue('dash', '-'),
+                    'detailUserId': data.id || getTranslatedValue('dash', '-'),
+                    'detailUserCreated': Utils.formatDate(data.createdAt) || getTranslatedValue('dash', '-'),
+                    'detailUserUpdated': Utils.formatDate(data.updatedAt) || getTranslatedValue('dash', '-')
                 };
                 
                 // Preencher cada elemento
@@ -2793,14 +3065,14 @@
             try {
                 // Preencher modal de detalhes do cliente
                 const elements = {
-                    'detailClientName': data.nome || '-',
-                    'detailClientEmail': data.email || '-',
-                    'detailClientPhone': Utils.formatPhone(data.telefone) || '-',
-                    'detailClientCpfCnpj': Utils.formatDocument(data.cpfCnpj) || '-',
-                    'detailClientAddress': data.endereco || 'Não informado',
-                    'detailClientId': data.id || '-',
-                    'detailClientCreated': Utils.formatDate(data.createdAt) || '-',
-                    'detailClientUpdated': Utils.formatDate(data.updatedAt) || '-'
+                    'detailClientName': data.nome || getTranslatedValue('dash', '-'),
+                    'detailClientEmail': data.email || getTranslatedValue('dash', '-'),
+                    'detailClientPhone': Utils.formatPhone(data.telefone) || getTranslatedValue('dash', '-'),
+                    'detailClientCpfCnpj': Utils.formatDocument(data.cpfCnpj) || getTranslatedValue('dash', '-'),
+                    'detailClientAddress': data.endereco || getTranslatedValue('notInformed', 'Não informado'),
+                    'detailClientId': data.id || getTranslatedValue('dash', '-'),
+                    'detailClientCreated': Utils.formatDate(data.createdAt) || getTranslatedValue('dash', '-'),
+                    'detailClientUpdated': Utils.formatDate(data.updatedAt) || getTranslatedValue('dash', '-')
                 };
                 
                 // Preencher cada elemento
@@ -2858,11 +3130,11 @@
             // Lógica para vendas (já existente)
             try {
                 // Preencher modal de detalhes da venda
-                document.getElementById('detailSaleId').textContent = data.id || '-';
-                document.getElementById('detailSaleClient').textContent = data.client?.nome || data.cliente?.nome || 'N/A';
-                document.getElementById('detailSaleDate').textContent = Utils.formatDate(data.dataVenda) || '-';
-                document.getElementById('detailSaleTotal').textContent = Utils.formatCurrency(data.valorTotal) || '-';
-                document.getElementById('detailSaleStatus').textContent = data.status || '-';
+                document.getElementById('detailSaleId').textContent = data.id || getTranslatedValue('dash', '-');
+                document.getElementById('detailSaleClient').textContent = data.client?.nome || data.cliente?.nome || getTranslatedValue('notAvailable', 'N/A');
+                document.getElementById('detailSaleDate').textContent = Utils.formatDate(data.dataVenda) || getTranslatedValue('dash', '-');
+                document.getElementById('detailSaleTotal').textContent = Utils.formatCurrency(data.valorTotal) || getTranslatedValue('dash', '-');
+                document.getElementById('detailSaleStatus').textContent = getTranslatedStatus(data.status);
                 
                 // Mostrar o modal
                 const modal = document.getElementById('saleDetailModal');
@@ -2878,11 +3150,11 @@
             // Lógica para compras (já existente)
             try {
                 // Preencher modal de detalhes da compra
-                document.getElementById('detailPurchaseId').textContent = data.id || '-';
-                document.getElementById('detailPurchaseSupplier').textContent = data.supplier?.nome || data.fornecedor?.nome || 'N/A';
-                document.getElementById('detailPurchaseDate').textContent = Utils.formatDate(data.dataCompra) || '-';
-                document.getElementById('detailPurchaseTotal').textContent = Utils.formatCurrency(data.valorTotal) || '-';
-                document.getElementById('detailPurchaseStatus').textContent = data.status || '-';
+                document.getElementById('detailPurchaseId').textContent = data.id || getTranslatedValue('dash', '-');
+                document.getElementById('detailPurchaseSupplier').textContent = data.supplier?.nome || data.fornecedor?.nome || getTranslatedValue('notAvailable', 'N/A');
+                document.getElementById('detailPurchaseDate').textContent = Utils.formatDate(data.dataCompra) || getTranslatedValue('dash', '-');
+                document.getElementById('detailPurchaseTotal').textContent = Utils.formatCurrency(data.valorTotal) || getTranslatedValue('dash', '-');
+                document.getElementById('detailPurchaseStatus').textContent = getTranslatedStatus(data.status);
                 
                 // Mostrar o modal
                 const modal = document.getElementById('purchaseDetailModal');
@@ -2909,14 +3181,14 @@
                 
                 // Preencher dados do fornecedor
                 const elements = {
-                    'detailSupplierName': data.nome || '-',
-                    'detailSupplierEmail': data.email || '-',
-                    'detailSupplierPhone': Utils.formatPhone(data.telefone) || '-',
-                    'detailSupplierCnpj': Utils.formatDocument(data.cnpj) || '-',
-                    'detailSupplierAddress': data.endereco || 'Não informado',
-                    'detailSupplierId': data.id || '-',
-                    'detailSupplierCreated': Utils.formatDate(data.createdAt) || '-',
-                    'detailSupplierUpdated': Utils.formatDate(data.updatedAt) || '-'
+                    'detailSupplierName': data.nome || getTranslatedValue('dash', '-'),
+                    'detailSupplierEmail': data.email || getTranslatedValue('dash', '-'),
+                    'detailSupplierPhone': Utils.formatPhone(data.telefone) || getTranslatedValue('dash', '-'),
+                    'detailSupplierCnpj': Utils.formatDocument(data.cnpj) || getTranslatedValue('dash', '-'),
+                    'detailSupplierAddress': data.endereco || getTranslatedValue('notInformed', 'Não informado'),
+                    'detailSupplierId': data.id || getTranslatedValue('dash', '-'),
+                    'detailSupplierCreated': Utils.formatDate(data.createdAt) || getTranslatedValue('dash', '-'),
+                    'detailSupplierUpdated': Utils.formatDate(data.updatedAt) || getTranslatedValue('dash', '-')
                 };
                 
                 // Preencher cada elemento
@@ -2983,12 +3255,12 @@
                 
                 // Preencher dados do usuário
                 const elements = {
-                    'detailUserName': data.username || '-',
-                    'detailUserEmail': data.email || '-',
-                    'detailUserRole': auth.getRoleDisplayName(data.role) || '-',
-                    'detailUserId': data.id || '-',
-                    'detailUserCreated': Utils.formatDate(data.createdAt) || '-',
-                    'detailUserUpdated': Utils.formatDate(data.updatedAt) || '-'
+                    'detailUserName': data.username || getTranslatedValue('dash', '-'),
+                    'detailUserEmail': data.email || getTranslatedValue('dash', '-'),
+                    'detailUserRole': auth.getRoleDisplayName(data.role) || getTranslatedValue('dash', '-'),
+                    'detailUserId': data.id || getTranslatedValue('dash', '-'),
+                    'detailUserCreated': Utils.formatDate(data.createdAt) || getTranslatedValue('dash', '-'),
+                    'detailUserUpdated': Utils.formatDate(data.updatedAt) || getTranslatedValue('dash', '-')
                 };
                 
                 // Preencher cada elemento
@@ -3397,7 +3669,7 @@
             if (data.overduePayable && data.overduePayable.length > 0) {
                 overduePayableTable.innerHTML = data.overduePayable.map(item => `
                     <tr>
-                        <td>${item.id || '-'}</td>
+                        <td>${item.id || getTranslatedValue('dash', '-')}</td>
                         <td>${item.fornecedor || 'Fornecedor'}</td>
                         <td>${Utils.formatDate(item.vencimento)}</td>
                         <td>${Utils.formatCurrency(item.valor || 0)}</td>
@@ -3498,6 +3770,11 @@
                     window.i18n.reloadDropdowns();
                 }
             }, 500);
+            
+            // Atualizar modais de detalhes
+            setTimeout(() => {
+                updateDetailModals();
+            }, 600);
         }
     });
     
@@ -3605,7 +3882,7 @@
         const exportButton = `
             <div class="mb-3">
                 <button type="button" class="btn btn-success" onclick="exportSalesReport('${period.startDate}', '${period.endDate}')">
-                    <i class="bi bi-download me-2"></i>Exportar Relatório CSV
+                    <i class="bi bi-download me-2"></i><span data-i18n="exportCSV">Exportar Relatório CSV</span>
                 </button>
             </div>
         `;
@@ -3623,7 +3900,7 @@
                     <td>R$ ${Utils.formatCurrency(sale.totalValue)}</td>
                     <td>R$ ${Utils.formatCurrency(sale.paidValue)}</td>
                     <td class="${sale.dueValue > 0 ? 'text-danger' : 'text-success'}">R$ ${Utils.formatCurrency(sale.dueValue)}</td>
-                    <td><span class="badge bg-${getStatusColor(sale.status)}">${sale.status}</span></td>
+                    <td><span class="badge bg-${getStatusColor(sale.status)}">${getTranslatedStatus(sale.status)}</span></td>
                 </tr>
             `).join('');
         }

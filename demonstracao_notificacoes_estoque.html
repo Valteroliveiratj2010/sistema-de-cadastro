@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demonstração - Notificações Toast de Estoque - Gestor PRO</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #1D4E89 0%, #2A6FA8 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .feature-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            margin-bottom: 20px;
+        }
+        
+        .kpi-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .kpi-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .kpi-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .kpi-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        /* Estilos para Notificações de Estoque */
+        .stock-notifications-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 400px;
+            pointer-events: none;
+        }
+        
+        .stock-notification {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            margin-bottom: 10px;
+            overflow: hidden;
+            pointer-events: auto;
+            animation: slideInRight 0.3s ease-out;
+            border-left: 4px solid #007bff;
+        }
+        
+        .stock-notification-critical {
+            border-left-color: #dc3545;
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe6e6 100%);
+        }
+        
+        .stock-notification-warning {
+            border-left-color: #ffc107;
+            background: linear-gradient(135deg, #fffbf0 0%, #fff3cd 100%);
+        }
+        
+        .stock-notification-success {
+            border-left-color: #28a745;
+            background: linear-gradient(135deg, #f0fff4 0%, #d4edda 100%);
+        }
+        
+        .stock-notification-error {
+            border-left-color: #dc3545;
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe6e6 100%);
+        }
+        
+        .stock-notification-content {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            gap: 12px;
+        }
+        
+        .stock-notification-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        
+        .stock-notification-critical .stock-notification-icon,
+        .stock-notification-error .stock-notification-icon {
+            color: #dc3545;
+        }
+        
+        .stock-notification-warning .stock-notification-icon {
+            color: #ffc107;
+        }
+        
+        .stock-notification-success .stock-notification-icon {
+            color: #28a745;
+        }
+        
+        .stock-notification-message {
+            flex: 1;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            color: #333;
+        }
+        
+        .stock-notification-actions {
+            display: flex;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+        
+        .stock-notification-actions .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+            border-radius: 5px;
+        }
+        
+        .stock-notification-dismissing {
+            animation: slideOutRight 0.3s ease-in forwards;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+        
+        /* Responsividade para Notificações */
+        @media (max-width: 768px) {
+            .stock-notifications-container {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+            
+            .stock-notification {
+                margin-bottom: 8px;
+            }
+            
+            .stock-notification-content {
+                padding: 12px;
+                gap: 10px;
+            }
+            
+            .stock-notification-message {
+                font-size: 0.85rem;
+            }
+            
+            .stock-notification-actions .btn {
+                padding: 0.2rem 0.4rem;
+                font-size: 0.75rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .stock-notifications-container {
+                top: 5px;
+                right: 5px;
+                left: 5px;
+            }
+            
+            .stock-notification-content {
+                padding: 10px;
+                gap: 8px;
+            }
+            
+            .stock-notification-message {
+                font-size: 0.8rem;
+            }
+            
+            .stock-notification-icon {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="text-center mb-4">
+            <h1 class="text-white mb-3">🔔 Notificações Toast de Estoque</h1>
+            <p class="text-white-50">Sistema discreto que não ocupa espaço no dashboard</p>
+        </div>
+        
+        <!-- Simulação do Dashboard -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-grid-1x2 me-2"></i>
+                    Dashboard - Gestor PRO
+                </h5>
+            </div>
+            <div class="card-body">
+                
+                <!-- KPI Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-2">
+                        <div class="kpi-card">
+                            <div class="kpi-icon text-primary">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                            <div class="kpi-value text-primary">1,234</div>
+                            <div class="kpi-label">Total de Clientes</div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="kpi-card">
+                            <div class="kpi-icon text-success">
+                                <i class="bi bi-cart-check-fill"></i>
+                            </div>
+                            <div class="kpi-value text-success">R$ 45.678</div>
+                            <div class="kpi-label">Vendas do Mês</div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="kpi-card">
+                            <div class="kpi-icon text-info">
+                                <i class="bi bi-cash-stack"></i>
+                            </div>
+                            <div class="kpi-value text-info">R$ 12.345</div>
+                            <div class="kpi-label">A Receber</div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="kpi-card">
+                            <div class="kpi-icon text-warning">
+                                <i class="bi bi-credit-card-fill"></i>
+                            </div>
+                            <div class="kpi-value text-warning">R$ 8.901</div>
+                            <div class="kpi-label">A Pagar</div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="kpi-card">
+                            <div class="kpi-icon text-success">
+                                <i class="bi bi-graph-up-arrow"></i>
+                            </div>
+                            <div class="kpi-value text-success">R$ 36.777</div>
+                            <div class="kpi-label">Lucro</div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="kpi-card">
+                            <div class="kpi-icon text-danger">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                            </div>
+                            <div class="kpi-value text-danger">R$ 2.100</div>
+                            <div class="kpi-label">Vendas Vencidas</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Conteúdo do Dashboard -->
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>📈 Gráfico de Vendas</h5>
+                                <p class="text-muted">Dashboard limpo sem alertas ocupando espaço</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>📊 Estatísticas</h5>
+                                <p class="text-muted">Interface limpa e organizada</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        
+        <!-- Características do Sistema -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #28A745, #20C997);">
+                        <i class="bi bi-eye-slash"></i>
+                    </div>
+                    <h5>👁️ Discreto</h5>
+                    <p class="text-muted">Não ocupa espaço no dashboard. Aparece apenas quando necessário.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #FF6B35, #F7931E);">
+                        <i class="bi bi-bell"></i>
+                    </div>
+                    <h5>🔔 Notificações Toast</h5>
+                    <p class="text-muted">Alertas aparecem como notificações elegantes no canto superior direito.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #17A2B8, #6F42C1);">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </div>
+                    <h5>🔄 Automático</h5>
+                    <p class="text-muted">Desaparecem automaticamente quando o estoque é reposto.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Controles de Demonstração -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">🎮 Controles de Demonstração:</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <button class="btn btn-danger w-100 mb-2" onclick="simulateCriticalStock()">
+                            <i class="bi bi-exclamation-circle me-2"></i>
+                            Estoque Crítico
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-warning w-100 mb-2" onclick="simulateLowStock()">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Estoque Baixo
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-success w-100 mb-2" onclick="simulateStockResolved()">
+                            <i class="bi bi-check-circle me-2"></i>
+                            Estoque Reposto
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-info w-100 mb-2" onclick="clearAllNotifications()">
+                            <i class="bi bi-trash me-2"></i>
+                            Limpar Todas
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Como Funciona -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">📖 Como Funciona:</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>✅ Vantagens:</h6>
+                        <ul>
+                            <li>Dashboard limpo e organizado</li>
+                            <li>Alertas aparecem apenas quando necessário</li>
+                            <li>Notificações elegantes e não intrusivas</li>
+                            <li>Desaparecem automaticamente</li>
+                            <li>Responsivo em todos os dispositivos</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>🎯 Funcionalidades:</h6>
+                        <ul>
+                            <li>Verificação automática a cada 30s</li>
+                            <li>Notificações para estoque crítico e baixo</li>
+                            <li>Modal detalhado ao clicar em "Ver"</li>
+                            <li>Configurações personalizáveis</li>
+                            <li>Animações suaves de entrada/saída</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let notificationCounter = 0;
+        
+        function simulateCriticalStock() {
+            const notificationId = 'demo-notification-' + (++notificationCounter);
+            
+            const notification = document.createElement('div');
+            notification.id = notificationId;
+            notification.className = 'stock-notification stock-notification-critical';
+            notification.innerHTML = `
+                <div class="stock-notification-content">
+                    <div class="stock-notification-icon">
+                        <i class="bi bi-exclamation-circle"></i>
+                    </div>
+                    <div class="stock-notification-message">
+                        2 produto(s) com estoque crítico! Clique para ver detalhes.
+                    </div>
+                    <div class="stock-notification-actions">
+                        <button class="btn btn-sm btn-outline-light" onclick="showAlertsModal()">Ver</button>
+                        <button class="btn btn-sm btn-outline-light" onclick="dismissNotification('${notificationId}')">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            getNotificationContainer().appendChild(notification);
+            
+            // Auto-remover após 8 segundos
+            setTimeout(() => {
+                dismissNotification(notificationId);
+            }, 8000);
+        }
+        
+        function simulateLowStock() {
+            const notificationId = 'demo-notification-' + (++notificationCounter);
+            
+            const notification = document.createElement('div');
+            notification.id = notificationId;
+            notification.className = 'stock-notification stock-notification-warning';
+            notification.innerHTML = `
+                <div class="stock-notification-content">
+                    <div class="stock-notification-icon">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div class="stock-notification-message">
+                        1 produto(s) com estoque baixo. Clique para ver detalhes.
+                    </div>
+                    <div class="stock-notification-actions">
+                        <button class="btn btn-sm btn-outline-light" onclick="showAlertsModal()">Ver</button>
+                        <button class="btn btn-sm btn-outline-light" onclick="dismissNotification('${notificationId}')">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            getNotificationContainer().appendChild(notification);
+            
+            // Auto-remover após 8 segundos
+            setTimeout(() => {
+                dismissNotification(notificationId);
+            }, 8000);
+        }
+        
+        function simulateStockResolved() {
+            const notificationId = 'demo-notification-' + (++notificationCounter);
+            
+            const notification = document.createElement('div');
+            notification.id = notificationId;
+            notification.className = 'stock-notification stock-notification-success';
+            notification.innerHTML = `
+                <div class="stock-notification-content">
+                    <div class="stock-notification-icon">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="stock-notification-message">
+                        3 alerta(s) de estoque resolvido(s)!
+                    </div>
+                    <div class="stock-notification-actions">
+                        <button class="btn btn-sm btn-outline-light" onclick="dismissNotification('${notificationId}')">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            getNotificationContainer().appendChild(notification);
+            
+            // Auto-remover após 5 segundos
+            setTimeout(() => {
+                dismissNotification(notificationId);
+            }, 5000);
+        }
+        
+        function dismissNotification(notificationId) {
+            const notification = document.getElementById(notificationId);
+            if (notification) {
+                notification.classList.add('stock-notification-dismissing');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }
+        }
+        
+        function clearAllNotifications() {
+            const container = getNotificationContainer();
+            const notifications = container.querySelectorAll('.stock-notification');
+            
+            notifications.forEach(notification => {
+                notification.classList.add('stock-notification-dismissing');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            });
+        }
+        
+        function getNotificationContainer() {
+            let container = document.getElementById('stock-notifications-container');
+            
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'stock-notifications-container';
+                container.className = 'stock-notifications-container';
+                document.body.appendChild(container);
+            }
+            
+            return container;
+        }
+        
+        function showAlertsModal() {
+            alert('Modal de alertas seria aberto aqui mostrando detalhes dos produtos com estoque baixo!');
+        }
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Demonstração de Notificações Toast carregada');
+        });
+    </script>
+</body>
+</html> 
