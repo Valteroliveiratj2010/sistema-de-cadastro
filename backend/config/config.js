@@ -43,7 +43,11 @@ module.exports = {
     }
   },
   production: {
-    use_env_variable: 'DATABASE_URL',
+    username: process.env.PGUSER || 'postgres',
+    password: process.env.PGPASSWORD || 'gestor_pro_password',
+    database: process.env.PGDATABASE || 'gestor_pro',
+    host: process.env.PGHOST || 'localhost',
+    port: process.env.PGPORT || 5432,
     dialect: 'postgres',
     dialectOptions: {
       ssl: {
