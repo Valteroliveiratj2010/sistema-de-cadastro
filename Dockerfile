@@ -1,6 +1,8 @@
 # ========================================
 # GESTOR PRO - DOCKERFILE
 # ========================================
+# Build: 2025-08-02 - Corrigido para Node.js 20
+# ========================================
 
 # Imagem base Node.js 20 Alpine (leve e segura)
 FROM node:20-alpine
