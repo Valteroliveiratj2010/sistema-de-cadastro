@@ -2,8 +2,8 @@
 # GESTOR PRO - DOCKERFILE
 # ========================================
 
-# Imagem base Node.js 18 Alpine (leve e segura)
-FROM node:18-alpine
+# Imagem base Node.js 20 Alpine (leve e segura)
+FROM node:20-alpine
 
 # Definir diretório de trabalho
 WORKDIR /app
@@ -19,7 +19,7 @@ RUN apk add --no-cache \
 COPY package*.json ./
 
 # Instalar dependências de produção
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci --omit=dev && npm cache clean --force
 
 # Copiar código fonte
 COPY . .
