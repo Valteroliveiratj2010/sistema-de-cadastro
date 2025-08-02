@@ -43,9 +43,21 @@ module.exports = {
     }
   },
   production: {
-    dialect: 'sqlite',
-    storage: './database.sqlite',
+    use_env_variable: 'DATABASE_URL',
+    dialect: 'postgres',
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false
+      }
+    },
     logging: false,
+    pool: {
+      max: 10,
+      min: 2,
+      acquire: 30000,
+      idle: 10000
+    },
     define: {
       timestamps: true,
       underscored: true,

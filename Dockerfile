@@ -36,8 +36,13 @@ ENV ADMIN_USERNAME=admin
 ENV ADMIN_PASSWORD=admin123
 ENV ADMIN_EMAIL=admin@gestorpro.com
 
-# Configuração do banco de dados (SQLite para produção)
-ENV DATABASE_URL=sqlite:///app/database.sqlite
+# Configuração do banco de dados (PostgreSQL para produção)
+# DATABASE_URL será fornecida pelo Railway
+ENV PGDATABASE=gestor_pro
+ENV PGUSER=postgres
+ENV PGPASSWORD=gestor_pro_password
+ENV PGHOST=localhost
+ENV PGPORT=5432
 
 # Criar diretório para uploads
 RUN mkdir -p uploads && chmod 755 uploads
