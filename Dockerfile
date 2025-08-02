@@ -21,7 +21,7 @@ RUN apk add --no-cache \
 COPY package*.json ./
 
 # Instalar dependências de produção
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm install --omit=dev && npm cache clean --force
 
 # Copiar código fonte
 COPY . .

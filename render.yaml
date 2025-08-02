@@ -3,7 +3,7 @@ services:
     name: sistema-de-cadastro
     env: node
     plan: free
-    buildCommand: npm ci --omit=dev
+    buildCommand: npm install --omit=dev
     startCommand: node server.js
     envVars:
       - key: NODE_ENV
