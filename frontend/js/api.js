@@ -25,7 +25,7 @@ class ApiService {
         if (isLocalhost) {
             return 'http://localhost:3000/api';
         } else {
-            return 'https://sistema-de-cadastro-production.up.railway.app/api';
+            return 'https://sistema-de-cadastro-backend.onrender.com/api';
         }
     }
 
