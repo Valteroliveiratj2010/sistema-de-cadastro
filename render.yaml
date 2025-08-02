@@ -10,5 +10,17 @@ services:
         value: production
       - key: PORT
         value: 10000
+      - key: JWT_SECRET
+        value: gestor_pro_jwt_secret_2024_production_secure
+      - key: JWT_EXPIRES_IN
+        value: 24h
+      - key: ENABLE_LOGGING
+        value: true
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        value: admin123
+      - key: ADMIN_EMAIL
+        value: admin@gestorpro.com
     healthCheckPath: /
     autoDeploy: true 
