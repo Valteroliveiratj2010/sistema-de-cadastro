@@ -40,6 +40,41 @@ app.use(cors(corsOptions));
 console.log(`[SERVER_DEBUG] Current Working Directory (CWD): ${process.cwd()}`);
 console.log(`[SERVER_DEBUG] __dirname: ${__dirname}`);
 
+// --- INICIALIZAÇÃO DO BANCO DE DADOS ---
+const db = require('./backend/database');
+const sequelize = db.sequelize;
+
+// Função para inicializar o banco de dados
+async function initializeDatabase() {
+  try {
+    // Testar conexão
+    await sequelize.authenticate();
+    console.log('✅ Conexão com o banco de dados estabelecida com sucesso.');
+
+    // Sincronizar modelos (criar tabelas se não existirem)
+    await sequelize.sync({ force: false });
+    console.log('✅ Modelos sincronizados com o banco de dados.');
+
+    // Verificar se existe usuário admin
+    const { User } = db;
+    const adminUser = await User.findOne({ where: { username: 'admin' } });
+    
+    if (!adminUser) {
+      console.log('⚠️ Usuário admin não encontrado. Criando...');
+      // Executar seeder de admin
+      require('./backend/seeders/adminSeeder');
+    } else {
+      console.log('✅ Usuário admin já existe.');
+    }
+
+  } catch (error) {
+    console.error('❌ Erro ao inicializar banco de dados:', error);
+  }
+}
+
+// Inicializar banco de dados
+initializeDatabase();
+
 // --- ROTAS DA API ---
 const apiRoutesPath = path.join(__dirname, 'backend', 'routes', 'api.js');
 console.log(`[SERVER_DEBUG] Caminho ABSOLUTO para api.js: ${apiRoutesPath}`);
