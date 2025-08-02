@@ -26,6 +26,16 @@ RUN npm install --omit=dev && npm cache clean --force
 # Copiar código fonte
 COPY . .
 
+# Definir variáveis de ambiente para produção
+ENV NODE_ENV=production
+ENV PORT=8080
+ENV JWT_SECRET=gestor_pro_jwt_secret_2024_production_secure
+ENV JWT_EXPIRES_IN=24h
+ENV ENABLE_LOGGING=true
+ENV ADMIN_USERNAME=admin
+ENV ADMIN_PASSWORD=admin123
+ENV ADMIN_EMAIL=admin@gestorpro.com
+
 # Criar diretório para uploads
 RUN mkdir -p uploads && chmod 755 uploads
 

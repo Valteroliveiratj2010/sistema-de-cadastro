@@ -38,6 +38,22 @@ Servidor Express rodando na porta: 8080
 Ambiente: development
 ```
 
+### **Deploy Mais Recente (Variáveis não aplicadas):**
+```
+Starting Container
+
+[SERVER_DEBUG] Current Working Directory (CWD): /app
+[SERVER_DEBUG] __dirname: /app
+[SERVER_DEBUG] Caminho ABSOLUTO para api.js: /app/backend/routes/api.js
+[AUTH_MIDDLEWARE] JWT_SECRET não definido no ambiente! Usando chave padrão
+[AUTH] JWT_SECRET não definido no ambiente! Usando chave padrão
+--- ROUTER API ATIVADO (TESTE DE LOG) ---
+[SERVER_LOG] Servindo arquivos estáticos de: /app/frontend
+Servidor Express rodando na porta: 8080
+Ambiente: development
+[CORS] Permitindo origem local: undefined
+```
+
 ## 🔧 Problemas Resolvidos
 
 ### ✅ **Conflito de Versão Node.js**
@@ -52,8 +68,8 @@ Ambiente: development
 
 ### ✅ **Variáveis de Ambiente**
 - **Problema**: JWT_SECRET não definido, warnings de segurança
-- **Solução**: Configuradas no render.yaml e railway.toml
-- **Status**: ✅ Resolvido (warnings desapareceram)
+- **Solução**: Configuradas no render.yaml, railway.toml, railway.json e Dockerfile
+- **Status**: ⚠️ Em correção (warnings voltaram, aplicando múltiplas configurações)
 
 ### ✅ **Cache do Railway**
 - **Problema**: Railway usando versão em cache
@@ -63,8 +79,9 @@ Ambiente: development
 ## ⚠️ Ajustes Necessários
 
 ### 1. **Variáveis de Ambiente**
-- ✅ `JWT_SECRET` configurado (warnings desapareceram)
-- ⚠️ `NODE_ENV` ainda mostrando `development` (configurando via railway.toml)
+- ⚠️ `JWT_SECRET` warnings voltaram (aplicando múltiplas configurações)
+- ⚠️ `NODE_ENV` ainda mostrando `development` (configurando via Dockerfile)
+- 🔧 **Nova estratégia**: Variáveis definidas diretamente no Dockerfile
 
 ### 2. **Configurações Atualizadas**
 ```yaml
