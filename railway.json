@@ -16,6 +16,7 @@
     "ENABLE_LOGGING": "true",
     "ADMIN_USERNAME": "admin",
     "ADMIN_PASSWORD": "admin123",
-    "ADMIN_EMAIL": "admin@gestorpro.com"
+    "ADMIN_EMAIL": "admin@gestorpro.com",
+    "DATABASE_URL": "sqlite:///app/database.sqlite"
   }
 } 

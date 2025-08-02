@@ -36,6 +36,9 @@ ENV ADMIN_USERNAME=admin
 ENV ADMIN_PASSWORD=admin123
 ENV ADMIN_EMAIL=admin@gestorpro.com
 
+# Configuração do banco de dados (SQLite para produção)
+ENV DATABASE_URL=sqlite:///app/database.sqlite
+
 # Criar diretório para uploads
 RUN mkdir -p uploads && chmod 755 uploads
 
