@@ -1,0 +1,19 @@
+[build]
+builder = "DOCKERFILE"
+
+[deploy]
+startCommand = "node server.js"
+healthcheckPath = "/"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[deploy.envs]
+NODE_ENV = "production"
+PORT = "8080"
+JWT_SECRET = "gestor_pro_jwt_secret_2024_production_secure"
+JWT_EXPIRES_IN = "24h"
+ENABLE_LOGGING = "true"
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "admin123"
+ADMIN_EMAIL = "admin@gestorpro.com" 

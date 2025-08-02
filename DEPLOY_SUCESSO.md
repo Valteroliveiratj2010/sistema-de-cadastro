@@ -9,6 +9,7 @@
 
 ## 📊 Logs de Sucesso
 
+### **Deploy Inicial (13:36 PM):**
 ```
 > app-cadastro@2.1.0 start
 > node server.js
@@ -18,6 +19,19 @@
 [SERVER_DEBUG] Caminho ABSOLUTO para api.js: /app/backend/routes/api.js
 [AUTH_MIDDLEWARE] JWT_SECRET não definido no ambiente! Usando chave padrão
 [AUTH] JWT_SECRET não definido no ambiente! Usando chave padrão
+--- ROUTER API ATIVADO (TESTE DE LOG) ---
+[SERVER_LOG] Servindo arquivos estáticos de: /app/frontend
+Servidor Express rodando na porta: 8080
+Ambiente: development
+```
+
+### **Deploy Atualizado (Com Variáveis de Ambiente):**
+```
+Starting Container
+
+[SERVER_DEBUG] Current Working Directory (CWD): /app
+[SERVER_DEBUG] __dirname: /app
+[SERVER_DEBUG] Caminho ABSOLUTO para api.js: /app/backend/routes/api.js
 --- ROUTER API ATIVADO (TESTE DE LOG) ---
 [SERVER_LOG] Servindo arquivos estáticos de: /app/frontend
 Servidor Express rodando na porta: 8080
@@ -36,6 +50,11 @@ Ambiente: development
 - **Solução**: Alterado para `npm install --omit=dev`
 - **Status**: ✅ Resolvido
 
+### ✅ **Variáveis de Ambiente**
+- **Problema**: JWT_SECRET não definido, warnings de segurança
+- **Solução**: Configuradas no render.yaml e railway.toml
+- **Status**: ✅ Resolvido (warnings desapareceram)
+
 ### ✅ **Cache do Railway**
 - **Problema**: Railway usando versão em cache
 - **Solução**: Configurado para usar Dockerfile
@@ -44,8 +63,8 @@ Ambiente: development
 ## ⚠️ Ajustes Necessários
 
 ### 1. **Variáveis de Ambiente**
-- ⚠️ `JWT_SECRET` não definido (usando padrão)
-- ⚠️ `NODE_ENV` mostrando `development` (deveria ser `production`)
+- ✅ `JWT_SECRET` configurado (warnings desapareceram)
+- ⚠️ `NODE_ENV` ainda mostrando `development` (configurando via railway.toml)
 
 ### 2. **Configurações Atualizadas**
 ```yaml
@@ -117,9 +136,9 @@ curl https://sistema-de-cadastro-production.up.railway.app/health
 - [x] ✅ Servidor iniciando
 - [x] ✅ API routes funcionando
 - [x] ✅ Arquivos estáticos servindo
-- [ ] ⚠️ Variáveis de ambiente configuradas
-- [ ] ⚠️ Ambiente production definido
-- [ ] ⚠️ JWT_SECRET configurado
+- [x] ✅ Variáveis de ambiente configuradas
+- [ ] ⚠️ Ambiente production definido (configurando via railway.toml)
+- [x] ✅ JWT_SECRET configurado
 - [ ] ⚠️ Testes em produção realizados
 
 ---
