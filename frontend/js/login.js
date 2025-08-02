@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             // Usar a URL da API configurada
-            const API_BASE_URL_FINAL = window.API_BASE_URL || 'https://sistema-de-cadastro-backend.onrender.com/api';
+            const API_BASE_URL_FINAL = window.API_BASE_URL || 'https://sistema-de-cadastro-production.up.railway.app/api';
             
             const response = await fetch(`${API_BASE_URL_FINAL}/auth/login`, {
                 method: 'POST',

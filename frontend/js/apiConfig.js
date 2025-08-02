@@ -8,8 +8,8 @@ if (isLocalhost) {
     window.API_BASE_URL = 'http://localhost:3000/api';
     console.log('🌐 Ambiente: DESENVOLVIMENTO LOCAL');
 } else {
-    // Produção (Vercel)
-    window.API_BASE_URL = 'https://sistema-de-cadastro-backend.onrender.com/api';
+    // Produção (Railway)
+    window.API_BASE_URL = 'https://sistema-de-cadastro-production.up.railway.app/api';
     console.log('🌐 Ambiente: PRODUÇÃO');
 }
 
