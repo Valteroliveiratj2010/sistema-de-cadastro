@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug: Dados do Gráfico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; background: #f8f9fa; }
+        .debug-container { max-width: 1200px; margin: 0 auto; }
+        .log-success { color: #059669; font-weight: bold; }
+        .log-error { color: #DC2626; font-weight: bold; }
+        .log-warning { color: #D97706; font-weight: bold; }
+        .log-info { color: #2563EB; font-weight: bold; }
+        .chart-debug { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1>🔍 Debug: Dados do Gráfico</h1>
+        <p>Investigando por que o gráfico não está mudando mesmo com logs de sucesso.</p>
+        
+        <div class="alert alert-warning">
+            <h6>⚠️ Problema Identificado:</h6>
+            <ul>
+                <li><strong>Logs mostram sucesso</strong> mas gráfico não muda</li>
+                <li><strong>Possível causa:</strong> Dados vazios ou formato incorreto</li>
+                <li><strong>Investigação:</strong> Verificar dados passados para renderSalesChart</li>
+            </ul>
+        </div>
+        
+        <div class="chart-debug">
+            <h4>📊 Gráfico de Debug</h4>
+            <canvas id="debugChart" height="300"></canvas>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6>📊 Dados Passados para renderSalesChart:</h6>
+                    <div id="chartData">🔄 Verificando...</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6>📈 Dados Processados:</h6>
+                    <div id="processedChartData">🔄 Processando...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="alert alert-secondary">
+            <h6>🔍 Logs de Debug:</h6>
+            <div id="debugLogs">🔄 Iniciando debug...</div>
+        </div>
+        
+        <div class="mt-4">
+            <button class="btn btn-primary" onclick="debugGrafico()">
+                🔍 Debug Gráfico
+            </button>
+            <button class="btn btn-success" onclick="testarComDadosSimulados()">
+                🧪 Testar Dados Simulados
+            </button>
+            <button class="btn btn-warning" onclick="verificarAPI()">
+                🌐 Verificar API
+            </button>
+            <button class="btn btn-info" onclick="forcarRenderizacao()">
+                🔄 Forçar Renderização
+            </button>
+        </div>
+        
+        <div class="mt-4">
+            <h5>📋 Possíveis Causas:</h5>
+            <div class="alert alert-danger">
+                <ol>
+                    <li><strong>Dados vazios:</strong> API não retorna vendas</li>
+                    <li><strong>Formato incorreto:</strong> Estrutura de dados diferente</li>
+                    <li><strong>Datas inválidas:</strong> Campos de data não encontrados</li>
+                    <li><strong>Valores zero:</strong> Todas as vendas com valor 0</li>
+                    <li><strong>Cache do gráfico:</strong> Gráfico não está sendo destruído</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/i18n/i18n.js"></script>
+    <script src="js/app.js?v=1.6"></script>
+    
+    <script>
+        let debugLogs = [];
+        
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            debugLogs.push({ message: logEntry, type });
+            console.log(logEntry);
+            updateLogs();
+        }
+        
+        function updateLogs() {
+            const container = document.getElementById('debugLogs');
+            let html = '<div style="max-height: 300px; overflow-y: auto;">';
+            
+            debugLogs.forEach(log => {
+                const color = log.type === 'error' ? 'red' : log.type === 'success' ? 'green' : log.type === 'warning' ? 'orange' : 'blue';
+                html += `<div style="color: ${color}; font-family: monospace; font-size: 12px; margin: 2px 0;">${log.message}</div>`;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        async function debugGrafico() {
+            addLog('🔍 Iniciando debug do gráfico...', 'info');
+            
+            try {
+                // 1. Verificar dados da API
+                addLog('🌐 Buscando dados da API...', 'info');
+                const response = await api.get('/dashboard/stats');
+                addLog(`📊 Resposta da API: ${JSON.stringify(response).substring(0, 200)}...`, 'info');
+                
+                // 2. Verificar se há vendas
+                let salesData = null;
+                if (response && response.sales) {
+                    salesData = response.sales;
+                    addLog(`✅ Vendas encontradas no dashboard: ${salesData.length}`, 'success');
+                } else if (response && response.vendas) {
+                    salesData = response.vendas;
+                    addLog(`✅ Vendas encontradas no dashboard: ${salesData.length}`, 'success');
+                } else {
+                    addLog('⚠️ Nenhuma venda no dashboard, buscando separadamente...', 'warning');
+                    
+                    const salesResponse = await api.get('/sales', { limit: 1000 });
+                    if (salesResponse && (salesResponse.sales || salesResponse.data || Array.isArray(salesResponse))) {
+                        salesData = salesResponse.sales || salesResponse.data || salesResponse;
+                        addLog(`✅ Vendas carregadas separadamente: ${salesData.length}`, 'success');
+                    } else {
+                        addLog('❌ Nenhuma venda encontrada', 'error');
+                        salesData = [];
+                    }
+                }
+                
+                // 3. Mostrar dados passados para renderSalesChart
+                document.getElementById('chartData').innerHTML = `
+                    <div><strong>Dados originais:</strong> ${salesData ? salesData.length : 0} registros</div>
+                    <div><strong>Primeiro registro:</strong> ${salesData && salesData.length > 0 ? JSON.stringify(salesData[0]).substring(0, 100) + '...' : 'N/A'}</div>
+                    <div><strong>Tipo de dados:</strong> ${Array.isArray(salesData) ? 'Array' : typeof salesData}</div>
+                `;
+                
+                // 4. Simular processamento da função renderSalesChart
+                if (salesData && salesData.length > 0) {
+                    addLog('📈 Processando dados como na função renderSalesChart...', 'info');
+                    
+                    const currentYear = new Date().getFullYear();
+                    const previousYear = currentYear - 1;
+                    const salesCurrentYear = new Array(12).fill(0);
+                    const salesPreviousYear = new Array(12).fill(0);
+                    
+                    let processedCount = 0;
+                    let errorCount = 0;
+                    
+                    salesData.forEach((sale, index) => {
+                        try {
+                            const saleDate = new Date(sale.date || sale.createdAt || sale.data_venda);
+                            const saleYear = saleDate.getFullYear();
+                            const saleMonth = saleDate.getMonth();
+                            const saleValue = parseFloat(sale.total || sale.valor_total || sale.amount || 0);
+                            
+                            if (saleYear === currentYear) {
+                                salesCurrentYear[saleMonth] += saleValue;
+                                processedCount++;
+                            } else if (saleYear === previousYear) {
+                                salesPreviousYear[saleMonth] += saleValue;
+                                processedCount++;
+                            }
+                            
+                            if (index < 5) { // Mostrar apenas os primeiros 5
+                                addLog(`Venda ${index + 1}: Data=${saleDate.toLocaleDateString()}, Valor=${saleValue}, Ano=${saleYear}`, 'info');
+                            }
+                        } catch (error) {
+                            errorCount++;
+                            addLog(`❌ Erro ao processar venda ${index + 1}: ${error.message}`, 'error');
+                        }
+                    });
+                    
+                    const totalCurrentYear = salesCurrentYear.reduce((sum, val) => sum + val, 0);
+                    const totalPreviousYear = salesPreviousYear.reduce((sum, val) => sum + val, 0);
+                    
+                    addLog(`📊 Processamento concluído: ${processedCount} vendas processadas, ${errorCount} erros`, 'success');
+                    addLog(`📈 Total ano atual: R$ ${totalCurrentYear.toFixed(2)}`, 'success');
+                    addLog(`📈 Total ano anterior: R$ ${totalPreviousYear.toFixed(2)}`, 'success');
+                    
+                    // 5. Mostrar dados processados
+                    document.getElementById('processedChartData').innerHTML = `
+                        <div><strong>Vendas processadas:</strong> ${processedCount}</div>
+                        <div><strong>Erros:</strong> ${errorCount}</div>
+                        <div><strong>Ano ${currentYear}:</strong> R$ ${totalCurrentYear.toFixed(2)}</div>
+                        <div><strong>Ano ${previousYear}:</strong> R$ ${totalPreviousYear.toFixed(2)}</div>
+                        <div><strong>Dados por mês (atual):</strong> ${salesCurrentYear.join(', ')}</div>
+                    `;
+                    
+                    // 6. Renderizar gráfico de debug
+                    renderizarGraficoDebug(salesCurrentYear, salesPreviousYear);
+                    
+                } else {
+                    addLog('⚠️ Nenhum dado de venda para processar', 'warning');
+                    document.getElementById('processedChartData').innerHTML = '<div class="text-warning">⚠️ Nenhum dado disponível</div>';
+                    renderizarGraficoVazio();
+                }
+                
+            } catch (error) {
+                addLog(`❌ Erro no debug: ${error.message}`, 'error');
+            }
+        }
+        
+        function renderizarGraficoDebug(salesCurrentYear, salesPreviousYear) {
+            addLog('📊 Renderizando gráfico de debug...', 'info');
+            
+            try {
+                // Destruir gráfico existente
+                if (window.debugChart) {
+                    window.debugChart.destroy();
+                }
+                
+                const currentYear = new Date().getFullYear();
+                const previousYear = currentYear - 1;
+                const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                
+                window.debugChart = new Chart(document.getElementById('debugChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: `Vendas ${previousYear} (Debug)`,
+                            data: salesPreviousYear,
+                            backgroundColor: '#DC2626',
+                            borderColor: '#DC2626',
+                            borderWidth: 2,
+                            borderRadius: 8,
+                        }, {
+                            label: `Vendas ${currentYear} (Debug)`,
+                            data: salesCurrentYear,
+                            backgroundColor: '#059669',
+                            borderColor: '#059669',
+                            borderWidth: 2,
+                            borderRadius: 8,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return 'R$ ' + value.toFixed(2);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                addLog('✅ Gráfico de debug renderizado com sucesso!', 'success');
+                
+            } catch (error) {
+                addLog(`❌ Erro ao renderizar gráfico de debug: ${error.message}`, 'error');
+            }
+        }
+        
+        function renderizarGraficoVazio() {
+            addLog('📊 Renderizando gráfico vazio...', 'info');
+            
+            try {
+                if (window.debugChart) {
+                    window.debugChart.destroy();
+                }
+                
+                const currentYear = new Date().getFullYear();
+                const previousYear = currentYear - 1;
+                const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                
+                window.debugChart = new Chart(document.getElementById('debugChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: `Vendas ${previousYear} (Vazio)`,
+                            data: new Array(12).fill(0),
+                            backgroundColor: '#DC2626',
+                            borderColor: '#DC2626',
+                            borderWidth: 2,
+                            borderRadius: 8,
+                        }, {
+                            label: `Vendas ${currentYear} (Vazio)`,
+                            data: new Array(12).fill(0),
+                            backgroundColor: '#059669',
+                            borderColor: '#059669',
+                            borderWidth: 2,
+                            borderRadius: 8,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    callback: function(value) {
+                                        return 'R$ ' + value.toFixed(2);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                addLog('✅ Gráfico vazio renderizado', 'success');
+                
+            } catch (error) {
+                addLog(`❌ Erro ao renderizar gráfico vazio: ${error.message}`, 'error');
+            }
+        }
+        
+        function testarComDadosSimulados() {
+            addLog('🧪 Testando com dados simulados...', 'info');
+            
+            const dadosSimulados = [
+                { date: '2024-01-15', total: 1500.50 },
+                { date: '2024-02-20', total: 2300.75 },
+                { date: '2024-03-10', total: 1800.25 },
+                { date: '2024-04-05', total: 3200.00 },
+                { date: '2024-05-12', total: 2800.30 },
+                { date: '2024-06-18', total: 4100.80 },
+                { date: '2024-07-22', total: 3600.45 },
+                { date: '2024-08-08', total: 2900.60 },
+                { date: '2024-09-14', total: 3800.90 },
+                { date: '2024-10-25', total: 4200.15 },
+                { date: '2024-11-30', total: 3500.70 },
+                { date: '2024-12-03', total: 4800.40 }
+            ];
+            
+            document.getElementById('chartData').innerHTML = `
+                <div><strong>Dados simulados:</strong> ${dadosSimulados.length} registros</div>
+                <div><strong>Primeiro registro:</strong> ${JSON.stringify(dadosSimulados[0])}</div>
+                <div><strong>Tipo de dados:</strong> Array</div>
+            `;
+            
+            // Processar dados simulados
+            const currentYear = new Date().getFullYear();
+            const previousYear = currentYear - 1;
+            const salesCurrentYear = new Array(12).fill(0);
+            const salesPreviousYear = new Array(12).fill(0);
+            
+            dadosSimulados.forEach((sale, index) => {
+                const saleDate = new Date(sale.date);
+                const saleYear = saleDate.getFullYear();
+                const saleMonth = saleDate.getMonth();
+                const saleValue = parseFloat(sale.total);
+                
+                if (saleYear === currentYear) {
+                    salesCurrentYear[saleMonth] += saleValue;
+                } else if (saleYear === previousYear) {
+                    salesPreviousYear[saleMonth] += saleValue;
+                }
+            });
+            
+            const totalCurrentYear = salesCurrentYear.reduce((sum, val) => sum + val, 0);
+            const totalPreviousYear = salesPreviousYear.reduce((sum, val) => sum + val, 0);
+            
+            addLog(`📊 Dados simulados processados: Ano atual R$ ${totalCurrentYear.toFixed(2)}, Ano anterior R$ ${totalPreviousYear.toFixed(2)}`, 'success');
+            
+            document.getElementById('processedChartData').innerHTML = `
+                <div><strong>Vendas processadas:</strong> ${dadosSimulados.length}</div>
+                <div><strong>Erros:</strong> 0</div>
+                <div><strong>Ano ${currentYear}:</strong> R$ ${totalCurrentYear.toFixed(2)}</div>
+                <div><strong>Ano ${previousYear}:</strong> R$ ${totalPreviousYear.toFixed(2)}</div>
+                <div><strong>Dados por mês (atual):</strong> ${salesCurrentYear.join(', ')}</div>
+            `;
+            
+            renderizarGraficoDebug(salesCurrentYear, salesPreviousYear);
+        }
+        
+        async function verificarAPI() {
+            addLog('🌐 Verificando APIs...', 'info');
+            
+            try {
+                // Testar API de vendas
+                const salesResponse = await api.get('/sales', { limit: 10 });
+                addLog(`📈 API vendas: ${JSON.stringify(salesResponse).substring(0, 100)}...`, 'info');
+                
+                // Testar API dashboard
+                const dashboardResponse = await api.get('/dashboard/stats');
+                addLog(`📊 API dashboard: ${JSON.stringify(dashboardResponse).substring(0, 100)}...`, 'info');
+                
+            } catch (error) {
+                addLog(`❌ Erro ao verificar APIs: ${error.message}`, 'error');
+            }
+        }
+        
+        function forcarRenderizacao() {
+            addLog('🔄 Forçando renderização do gráfico...', 'info');
+            
+            // Chamar diretamente a função renderSalesChart com dados simulados
+            const dadosSimulados = [
+                { date: '2024-01-15', total: 1500.50 },
+                { date: '2024-02-20', total: 2300.75 },
+                { date: '2024-03-10', total: 1800.25 }
+            ];
+            
+            if (typeof renderSalesChart === 'function') {
+                renderSalesChart(dadosSimulados);
+                addLog('✅ Função renderSalesChart chamada com dados simulados', 'success');
+            } else {
+                addLog('❌ Função renderSalesChart não encontrada', 'error');
+            }
+        }
+        
+        // Debug automático ao carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(debugGrafico, 1000);
+        });
+    </script>
+</body>
+</html> 

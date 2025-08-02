@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste: KPI Total de Clientes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="style.css?v=1.9" rel="stylesheet">
+    <style>
+        body { padding: 20px; background: #f8f9fa; }
+        .test-container { max-width: 800px; margin: 0 auto; }
+        .kpi-test { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .status-success { color: #059669; font-weight: bold; }
+        .status-error { color: #DC2626; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔍 Teste: KPI Total de Clientes</h1>
+        <p>Verificando se o KPI "Total de Clientes" está mostrando número inteiro em vez de formato de moeda.</p>
+        
+        <div class="alert alert-info">
+            <h6>📋 Correção Aplicada:</h6>
+            <ul>
+                <li><strong>Problema:</strong> KPI "Total de Clientes" estava sendo formatado como moeda</li>
+                <li><strong>Solução:</strong> Tratamento especial para o ID 'totalClients'</li>
+                <li><strong>Resultado:</strong> Deve mostrar número inteiro com separadores de milhares</li>
+                <li><strong>Exemplo:</strong> "1,250" em vez de "R$ 1.250,00"</li>
+            </ul>
+        </div>
+        
+        <div class="kpi-test">
+            <h4>📊 Teste de KPIs</h4>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="kpi-card" id="totalClients">
+                        <div class="card-body">
+                            <h6>Total de Clientes</h6>
+                            <div class="fs-2">0</div>
+                            <small class="text-muted">Deve ser número inteiro</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="kpi-card" id="salesThisMonth">
+                        <div class="card-body">
+                            <h6>Vendas do Mês</h6>
+                            <div class="fs-2">R$ 0,00</div>
+                            <small class="text-muted">Deve ser formato de moeda</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="kpi-card" id="totalReceivable">
+                        <div class="card-body">
+                            <h6>Total a Receber</h6>
+                            <div class="fs-2">R$ 0,00</div>
+                            <small class="text-muted">Deve ser formato de moeda</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="kpi-test">
+            <h4>🧪 Testes Automáticos</h4>
+            <div id="testResults" class="alert alert-secondary">
+                <div>🔄 Executando testes...</div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <button class="btn btn-primary" onclick="testarKPIs()">
+                🔍 Testar KPIs
+            </button>
+            <button class="btn btn-success" onclick="abrirDashboard()">
+                📊 Abrir Dashboard
+            </button>
+            <button class="btn btn-warning" onclick="limparCache()">
+                🧹 Limpar Cache
+            </button>
+        </div>
+        
+        <div class="mt-4">
+            <h5>📋 Instruções para Teste:</h5>
+            <div class="alert alert-warning">
+                <ol>
+                    <li><strong>Verifique se "Total de Clientes" mostra número inteiro</strong> (ex: 1,250)</li>
+                    <li><strong>Confirme se outros KPIs mostram formato de moeda</strong> (ex: R$ 15.250,00)</li>
+                    <li><strong>Teste com diferentes valores</strong> usando os botões abaixo</li>
+                    <li><strong>Verifique no dashboard real</strong> se a correção foi aplicada</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <h5>🎯 Testes Manuais:</h5>
+            <div class="row">
+                <div class="col-md-3">
+                    <button class="btn btn-outline-primary" onclick="testarValor('totalClients', 1250)">
+                        Testar: 1,250 clientes
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-outline-primary" onclick="testarValor('totalClients', 0)">
+                        Testar: 0 clientes
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-outline-primary" onclick="testarValor('salesThisMonth', 15250)">
+                        Testar: R$ 15.250,00
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-outline-primary" onclick="testarValor('totalReceivable', 8500)">
+                        Testar: R$ 8.500,00
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/i18n/i18n.js"></script>
+    <script src="js/app.js?v=1.5"></script>
+    
+    <script>
+        function testarKPIs() {
+            console.log('🔍 Testando KPIs...');
+            
+            let results = '<h6>🔍 Resultado dos Testes:</h6>';
+            
+            // Teste 1: Verificar se a função updateKPICard existe
+            if (typeof updateKPICard === 'function') {
+                results += '<div class="status-success">✅ Função updateKPICard encontrada</div>';
+            } else {
+                results += '<div class="status-error">❌ Função updateKPICard não encontrada</div>';
+                document.getElementById('testResults').innerHTML = results;
+                return;
+            }
+            
+            // Teste 2: Testar com valores específicos
+            const testCases = [
+                { id: 'totalClients', value: 1250, expected: '1,250' },
+                { id: 'totalClients', value: 0, expected: '0' },
+                { id: 'totalClients', value: 1000000, expected: '1,000,000' },
+                { id: 'salesThisMonth', value: 15250, expected: 'R$' },
+                { id: 'totalReceivable', value: 8500, expected: 'R$' }
+            ];
+            
+            results += '<div class="mt-3"><h6>📊 Testes de Valores:</h6>';
+            
+            testCases.forEach((testCase, index) => {
+                // Aplicar valor
+                updateKPICard(testCase.id, testCase.value);
+                
+                // Verificar resultado
+                const element = document.getElementById(testCase.id);
+                const valueElement = element ? element.querySelector('.fs-2') : null;
+                const actualValue = valueElement ? valueElement.textContent : 'N/A';
+                
+                let testResult = '';
+                if (testCase.id === 'totalClients') {
+                    // Para clientes, verificar se é número inteiro (não tem R$)
+                    if (!actualValue.includes('R$') && !actualValue.includes('$')) {
+                        testResult = '<span class="status-success">✅ Correto</span>';
+                    } else {
+                        testResult = '<span class="status-error">❌ Erro: Mostrando moeda</span>';
+                    }
+                } else {
+                    // Para outros KPIs, verificar se tem formato de moeda
+                    if (actualValue.includes('R$') || actualValue.includes('$')) {
+                        testResult = '<span class="status-success">✅ Correto</span>';
+                    } else {
+                        testResult = '<span class="status-error">❌ Erro: Não mostrando moeda</span>';
+                    }
+                }
+                
+                results += `<div class="mb-2">
+                    <strong>Teste ${index + 1}:</strong> ${testCase.id} = ${testCase.value} 
+                    → <strong>${actualValue}</strong> ${testResult}
+                </div>`;
+            });
+            
+            results += '</div>';
+            
+            document.getElementById('testResults').innerHTML = results;
+        }
+        
+        function testarValor(id, value) {
+            console.log(`🧪 Testando ${id} com valor ${value}`);
+            updateKPICard(id, value);
+            
+            const element = document.getElementById(id);
+            const valueElement = element ? element.querySelector('.fs-2') : null;
+            const actualValue = valueElement ? valueElement.textContent : 'N/A';
+            
+            alert(`Valor aplicado: ${value}\nResultado: ${actualValue}`);
+        }
+        
+        function abrirDashboard() {
+            window.open('index.html', '_blank');
+        }
+        
+        function limparCache() {
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    for (let name of names) {
+                        caches.delete(name);
+                    }
+                });
+            }
+            alert('Cache limpo! Recarregando página...');
+            location.reload();
+        }
+        
+        // Testar automaticamente ao carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(testarKPIs, 1000);
+        });
+    </script>
+</body>
+</html> 

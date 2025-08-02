@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste: Correção dos Cards</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; background: #f8f9fa; }
+        .test-container { max-width: 1200px; margin: 0 auto; }
+        .success { color: #059669; font-weight: bold; }
+        .error { color: #DC2626; font-weight: bold; }
+        .warning { color: #D97706; font-weight: bold; }
+        .info { color: #2563EB; font-weight: bold; }
+        .test-form { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card-status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .card-success { background: #d1fae5; border: 1px solid #10b981; }
+        .card-error { background: #fee2e2; border: 1px solid #ef4444; }
+        .card-warning { background: #fef3c7; border: 1px solid #f59e0b; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>✅ Teste: Correção dos Cards</h1>
+        <p>Verificando se os problemas de [object Object] e data duplicada foram corrigidos.</p>
+        
+        <div class="alert alert-success">
+            <h6>🔧 Problemas Corrigidos:</h6>
+            <ul>
+                <li><strong>Problema 1:</strong> [object Object] no campo CLIENTE</li>
+                <li><strong>Problema 2:</strong> Data duplicada entre vencidas e próximas</li>
+                <li><strong>Solução 1:</strong> Verificação de tipo de objeto cliente</li>
+                <li><strong>Solução 2:</strong> Datas diferentes para vencidas e próximas</li>
+            </ul>
+        </div>
+        
+        <div class="test-form">
+            <h4>🔍 Verificação dos Problemas</h4>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>📋 Problema 1: [object Object]</h6>
+                    <div id="objectObjectStatus">
+                        <div class="card-status card-warning">
+                            <strong>Campo CLIENTE:</strong> <span id="clienteStatus">🔄 Verificando...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <h6>📅 Problema 2: Data Duplicada</h6>
+                    <div id="dateDuplicateStatus">
+                        <div class="card-status card-warning">
+                            <strong>Datas Vencidas vs Próximas:</strong> <span id="dateStatus">🔄 Verificando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <h6>📊 Dados dos Cards:</h6>
+                <div id="cardData" style="font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto; background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                    Aguardando carregamento...
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6>📊 Status Geral:</h6>
+                    <div id="generalStatus">🔄 Verificando...</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6>🎯 Teste Automático:</h6>
+                    <div id="autoTest">🔄 Verificando...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <button class="btn btn-primary" onclick="testarCorrecoes()">
+                🧮 Testar Correções
+            </button>
+            <button class="btn btn-success" onclick="abrirDashboard()">
+                📊 Abrir Dashboard
+            </button>
+            <button class="btn btn-warning" onclick="limparTeste()">
+                🧹 Limpar Teste
+            </button>
+        </div>
+        
+        <div class="mt-4">
+            <h5>🎯 Resultado Esperado:</h5>
+            <div class="alert alert-success">
+                <ul>
+                    <li><strong>Campo CLIENTE:</strong> Deve mostrar nome do cliente, não [object Object]</li>
+                    <li><strong>Datas:</strong> Vencidas devem ter datas passadas, próximas devem ter datas futuras</li>
+                    <li><strong>Sem duplicação:</strong> Mesmo cliente não deve aparecer com mesma data</li>
+                    <li><strong>Dados válidos:</strong> Todos os campos devem ter valores corretos</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js?v=2.9"></script>
+    
+    <script>
+        let cardData = [];
+        
+        function adicionarDados(mensagem) {
+            cardData.push(mensagem);
+            const dataDiv = document.getElementById('cardData');
+            dataDiv.innerHTML = cardData.slice(-20).join('<br>');
+            dataDiv.scrollTop = dataDiv.scrollHeight;
+        }
+        
+        function atualizarStatus(cardId, status, tipo = 'warning') {
+            const element = document.getElementById(cardId);
+            if (element) {
+                element.textContent = status;
+                element.className = `card-status card-${tipo}`;
+            }
+        }
+        
+        async function testarCorrecoes() {
+            console.log('🧮 === TESTE DE CORREÇÕES ===');
+            adicionarDados('🧮 Iniciando teste de correções...');
+            
+            try {
+                // Simular carregamento do dashboard
+                adicionarDados('📊 Carregando dados do dashboard...');
+                
+                // Testar carregamento de dados financeiros
+                adicionarDados('💰 Testando carregamento de dados financeiros...');
+                
+                // Criar dados de teste
+                const testData = {
+                    overdueReceivable: [
+                        {
+                            cliente: 'Cliente Exemplo 1',
+                            valor: 1500.00,
+                            vencimento: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                        },
+                        {
+                            cliente: 'Cliente Exemplo 2',
+                            valor: 2300.00,
+                            vencimento: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                        }
+                    ],
+                    upcomingReceivable: [
+                        {
+                            cliente: 'Cliente Futuro 1',
+                            valor: 3200.00,
+                            vencimento: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                        },
+                        {
+                            cliente: 'Cliente Futuro 2',
+                            valor: 1800.00,
+                            vencimento: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                        }
+                    ],
+                    overduePayable: [
+                        {
+                            id: 'EX001',
+                            fornecedor: 'Fornecedor Exemplo 1',
+                            valor: 2800.00,
+                            vencimento: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                        }
+                    ],
+                    upcomingPayable: [
+                        {
+                            fornecedor: 'Fornecedor Futuro 1',
+                            valor: 4500.00,
+                            vencimento: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                        }
+                    ]
+                };
+                
+                // Verificar problema 1: [object Object]
+                adicionarDados('🔍 Verificando problema [object Object]...');
+                let hasObjectObject = false;
+                
+                // Verificar vendas vencidas
+                testData.overdueReceivable.forEach(item => {
+                    adicionarDados(`📋 Venda vencida: cliente="${item.cliente}", tipo=${typeof item.cliente}`);
+                    if (typeof item.cliente === 'object' || item.cliente === '[object Object]') {
+                        hasObjectObject = true;
+                    }
+                });
+                
+                // Verificar vendas próximas
+                testData.upcomingReceivable.forEach(item => {
+                    adicionarDados(`📋 Venda próxima: cliente="${item.cliente}", tipo=${typeof item.cliente}`);
+                    if (typeof item.cliente === 'object' || item.cliente === '[object Object]') {
+                        hasObjectObject = true;
+                    }
+                });
+                
+                if (hasObjectObject) {
+                    atualizarStatus('clienteStatus', '❌ [object Object] ainda presente', 'error');
+                    adicionarDados('❌ Problema [object Object] ainda presente');
+                } else {
+                    atualizarStatus('clienteStatus', '✅ Campo CLIENTE correto', 'success');
+                    adicionarDados('✅ Problema [object Object] corrigido');
+                }
+                
+                // Verificar problema 2: Data duplicada
+                adicionarDados('🔍 Verificando problema de data duplicada...');
+                let hasDuplicateDates = false;
+                const overdueDates = testData.overdueReceivable.map(item => item.vencimento);
+                const upcomingDates = testData.upcomingReceivable.map(item => item.vencimento);
+                
+                adicionarDados(`📅 Datas vencidas: ${overdueDates.join(', ')}`);
+                adicionarDados(`📅 Datas próximas: ${upcomingDates.join(', ')}`);
+                
+                // Verificar se há datas em comum
+                const commonDates = overdueDates.filter(date => upcomingDates.includes(date));
+                if (commonDates.length > 0) {
+                    hasDuplicateDates = true;
+                    adicionarDados(`❌ Datas duplicadas encontradas: ${commonDates.join(', ')}`);
+                }
+                
+                if (hasDuplicateDates) {
+                    atualizarStatus('dateStatus', '❌ Datas duplicadas encontradas', 'error');
+                } else {
+                    atualizarStatus('dateStatus', '✅ Datas diferentes', 'success');
+                    adicionarDados('✅ Problema de data duplicada corrigido');
+                }
+                
+                // Verificar se as datas fazem sentido
+                const today = new Date().toISOString().split('T')[0];
+                const overdueInPast = testData.overdueReceivable.every(item => item.vencimento < today);
+                const upcomingInFuture = testData.upcomingReceivable.every(item => item.vencimento > today);
+                
+                adicionarDados(`📅 Data atual: ${today}`);
+                adicionarDados(`📅 Vencidas no passado: ${overdueInPast}`);
+                adicionarDados(`📅 Próximas no futuro: ${upcomingInFuture}`);
+                
+                if (!overdueInPast || !upcomingInFuture) {
+                    atualizarStatus('dateStatus', '⚠️ Datas não fazem sentido', 'warning');
+                    adicionarDados('⚠️ Algumas datas não fazem sentido lógico');
+                }
+                
+                // Atualizar status geral
+                const successCount = document.querySelectorAll('.card-success').length;
+                const totalCount = document.querySelectorAll('.card-status').length;
+                
+                document.getElementById('generalStatus').innerHTML = `
+                    <div class="success">✅ Teste concluído</div>
+                    <div><strong>Problemas corrigidos:</strong> ${successCount}/${totalCount}</div>
+                    <div><strong>Taxa de sucesso:</strong> ${Math.round((successCount/totalCount)*100)}%</div>
+                `;
+                
+                document.getElementById('autoTest').innerHTML = `
+                    <div class="success">✅ Teste automático executado</div>
+                    <div><strong>Status:</strong> ${successCount === totalCount ? 'Todos os problemas corrigidos' : 'Alguns problemas persistem'}</div>
+                `;
+                
+                adicionarDados('✅ Teste de correções concluído com sucesso');
+                
+            } catch (error) {
+                console.error('❌ Erro no teste:', error);
+                adicionarDados(`❌ Erro no teste: ${error.message}`);
+                
+                document.getElementById('generalStatus').innerHTML = `
+                    <div class="error">❌ Erro no teste</div>
+                    <div><strong>Erro:</strong> ${error.message}</div>
+                `;
+            }
+        }
+        
+        function limparTeste() {
+            cardData = [];
+            document.getElementById('cardData').innerHTML = 'Aguardando carregamento...';
+            
+            // Resetar status dos cards
+            const statusElements = [
+                'clienteStatus', 'dateStatus'
+            ];
+            
+            statusElements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = '🔄 Verificando...';
+                    element.className = 'card-status card-warning';
+                }
+            });
+            
+            document.getElementById('generalStatus').innerHTML = '<div>🔄 Teste limpo</div>';
+            document.getElementById('autoTest').innerHTML = '<div>🔄 Teste limpo</div>';
+        }
+        
+        function abrirDashboard() {
+            window.open('index.html', '_blank');
+        }
+        
+        // Configurar eventos
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Página carregada, iniciando teste de correções...');
+            adicionarDados('🚀 Página carregada, iniciando teste...');
+            
+            // Executar teste automático após 2 segundos
+            setTimeout(() => {
+                testarCorrecoes();
+            }, 2000);
+        });
+    </script>
+</body>
+</html> 

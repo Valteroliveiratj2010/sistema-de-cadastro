@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forçar Cores Harmoniosas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="style.css?v=1.2" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>🎨 Forçar Cores Harmoniosas</h1>
+        <p>Script para forçar a aplicação das cores harmoniosas no gráfico do dashboard.</p>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>🔧 Ações</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary mb-2 w-100" onclick="forcarCoresHarmoniosas()">
+                            <i class="bi bi-palette"></i> Forçar Cores Harmoniosas
+                        </button>
+                        
+                        <button class="btn btn-success mb-2 w-100" onclick="testarDashboard()">
+                            <i class="bi bi-speedometer2"></i> Testar Dashboard
+                        </button>
+                        
+                        <button class="btn btn-warning w-100" onclick="limparCacheCompleto()">
+                            <i class="bi bi-arrow-clockwise"></i> Limpar Cache Completo
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5>📋 Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="status">
+                            <div class="alert alert-info">
+                                <h6>🔄 Aguardando ação...</h6>
+                                <p>Clique em "Forçar Cores Harmoniosas" para aplicar as correções.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>📊 Log de Execução</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="executionLog" style="height: 300px; overflow-y: auto; background: #f8f9fa; padding: 10px; font-family: monospace; font-size: 12px;">
+                            <div>🚀 Script de forçar cores inicializado...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="alert alert-warning">
+                    <h6>⚠️ Instruções:</h6>
+                    <ol>
+                        <li>Clique em "Forçar Cores Harmoniosas" para aplicar as correções</li>
+                        <li>Clique em "Testar Dashboard" para abrir o dashboard</li>
+                        <li>Verifique se as cores do gráfico estão harmoniosas</li>
+                        <li>Se não estiver, clique em "Limpar Cache Completo"</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/api.js?v=1.1"></script>
+    <script src="js/i18n/translations.js?v=1.1"></script>
+    <script src="js/i18n/i18n.js?v=1.1"></script>
+    <script src="js/stock-notifications.js?v=1.1"></script>
+    <script src="js/app.js?v=1.2"></script>
+    
+    <script>
+        function addLog(message) {
+            const log = document.getElementById('executionLog');
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            const alertClass = type === 'success' ? 'alert-success' : 
+                             type === 'error' ? 'alert-danger' : 
+                             type === 'warning' ? 'alert-warning' : 'alert-info';
+            
+            status.innerHTML = `
+                <div class="alert ${alertClass}">
+                    <h6>${type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : '🔄'} ${message}</h6>
+                </div>
+            `;
+        }
+        
+        function forcarCoresHarmoniosas() {
+            addLog('🎨 Iniciando forçar cores harmoniosas...');
+            updateStatus('Aplicando cores harmoniosas...', 'info');
+            
+            // Sobrescrever a função renderSalesChart com cores harmoniosas
+            if (window.renderSalesChart) {
+                const originalRenderSalesChart = window.renderSalesChart;
+                
+                window.renderSalesChart = function(data) {
+                    addLog('📊 Sobrescrevendo renderSalesChart com cores harmoniosas...');
+                    
+                    const ctx = document.getElementById('salesChart');
+                    if (!ctx) {
+                        addLog('❌ Canvas salesChart não encontrado');
+                        return;
+                    }
+
+                    if (window.state && window.state.charts && window.state.charts.has('salesChart')) {
+                        window.state.charts.get('salesChart').destroy();
+                        addLog('🗑️ Gráfico anterior destruído');
+                    }
+
+                    // Obter ano atual e anterior dinamicamente
+                    const currentYear = new Date().getFullYear();
+                    const previousYear = currentYear - 1;
+
+                    // Dados de exemplo se não houver dados
+                    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                    const salesPreviousYear = data?.previousYear || [45, 52, 38, 67, 89, 76, 94, 82, 71, 88, 95, 78];
+                    const salesCurrentYear = data?.currentYear || [52, 58, 45, 72, 95, 82, 102, 88, 78, 95, 105, 85];
+
+                    addLog('🎨 Criando gradientes harmoniosos...');
+
+                    // Criar gradientes harmoniosos com a paleta do sistema
+                    const gradient1 = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+                    gradient1.addColorStop(0, 'rgba(29, 78, 137, 0.9)'); // var(--primary-color) - azul escuro
+                    gradient1.addColorStop(0.5, 'rgba(29, 78, 137, 0.6)'); // Meio do gradiente
+                    gradient1.addColorStop(1, 'rgba(29, 78, 137, 0.15)'); // Base mais suave
+
+                    const gradient2 = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+                    gradient2.addColorStop(0, 'rgba(74, 144, 226, 0.9)'); // var(--info-color) - azul info
+                    gradient2.addColorStop(0.5, 'rgba(74, 144, 226, 0.6)'); // Meio do gradiente
+                    gradient2.addColorStop(1, 'rgba(74, 144, 226, 0.15)'); // Base mais suave
+
+                    addLog('✅ Gradientes criados com cores harmoniosas');
+
+                    const chart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: months,
+                            datasets: [{
+                                label: `Vendas ${previousYear} (R$)`,
+                                data: salesPreviousYear,
+                                backgroundColor: gradient1,
+                                borderColor: '#1D4E89', // var(--primary-color)
+                                borderWidth: 2,
+                                borderRadius: 8,
+                                borderSkipped: false,
+                            }, {
+                                label: `Vendas ${currentYear} (R$)`,
+                                data: salesCurrentYear,
+                                backgroundColor: gradient2,
+                                borderColor: '#4A90E2', // var(--info-color)
+                                borderWidth: 2,
+                                borderRadius: 8,
+                                borderSkipped: false,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                duration: 2000,
+                                easing: 'easeInOutQuart'
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 20,
+                                        font: {
+                                            family: 'Inter, sans-serif',
+                                            size: 12,
+                                            weight: '600'
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(29, 78, 137, 0.95)', // var(--primary-color)
+                                    titleColor: '#fff',
+                                    bodyColor: '#fff',
+                                    borderColor: '#1D4E89', // var(--primary-color)
+                                    borderWidth: 1,
+                                    cornerRadius: 8,
+                                    displayColors: true
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 120,
+                                    grid: {
+                                        color: 'rgba(29, 78, 137, 0.08)', // var(--primary-color) com transparência
+                                        drawBorder: false
+                                    },
+                                    ticks: {
+                                        callback: function(value) {
+                                            return 'R$ ' + value.toFixed(0) + 'K';
+                                        },
+                                        font: {
+                                            family: 'Inter, sans-serif',
+                                            size: 11
+                                        }
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    },
+                                    ticks: {
+                                        font: {
+                                            family: 'Inter, sans-serif',
+                                            size: 11,
+                                            weight: '600'
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    // Salvar no estado
+                    if (window.state && window.state.charts) {
+                        window.state.charts.set('salesChart', chart);
+                    }
+
+                    addLog('✅ Gráfico criado com cores harmoniosas!');
+                    addLog('🎨 Cores aplicadas:');
+                    addLog('   - Dataset 1: Azul escuro (#1D4E89)');
+                    addLog('   - Dataset 2: Azul info (#4A90E2)');
+                    addLog('   - Tooltip: Azul escuro com transparência');
+                    addLog('   - Grid: Azul escuro com baixa transparência');
+                    
+                    updateStatus('Cores harmoniosas aplicadas com sucesso!', 'success');
+                };
+                
+                addLog('✅ Função renderSalesChart sobrescrita com cores harmoniosas');
+            } else {
+                addLog('❌ Função renderSalesChart não encontrada');
+                updateStatus('Erro: Função renderSalesChart não encontrada', 'error');
+            }
+        }
+        
+        function testarDashboard() {
+            addLog('📊 Abrindo dashboard para teste...');
+            window.open('index.html', '_blank');
+        }
+        
+        function limparCacheCompleto() {
+            addLog('🧹 Limpando cache completo...');
+            updateStatus('Limpando cache...', 'warning');
+            
+            // Limpar cache do navegador
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    for (let name of names) {
+                        caches.delete(name);
+                    }
+                });
+            }
+            
+            // Limpar localStorage
+            localStorage.clear();
+            
+            // Limpar sessionStorage
+            sessionStorage.clear();
+            
+            addLog('✅ Cache limpo. Recarregando página...');
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        }
+        
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('🚀 Script de forçar cores inicializado');
+            addLog('📋 Verificando dependências...');
+            
+            if (typeof Chart !== 'undefined') {
+                addLog('✅ Chart.js disponível');
+            } else {
+                addLog('❌ Chart.js não encontrado');
+            }
+            
+            if (window.renderSalesChart) {
+                addLog('✅ Função renderSalesChart encontrada');
+            } else {
+                addLog('⚠️ Função renderSalesChart não encontrada (será criada)');
+            }
+        });
+    </script>
+</body>
+</html> 

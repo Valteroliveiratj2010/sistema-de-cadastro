@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✅ Teste Correção Campo Preço</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; background-color: #f8f9fa; }
+        .test-card { margin-bottom: 20px; }
+        .success-bg { background-color: #d4edda; border-color: #c3e6cb; }
+        .info-bg { background-color: #d1ecf1; border-color: #bee5eb; }
+        .warning-bg { background-color: #fff3cd; border-color: #ffeaa7; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h3 class="mb-0">✅ Correção Campo Preço - Modal Vendas</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <h5>🔧 Problema Corrigido:</h5>
+                            <p><strong>Campo de preço não permitia digitação no modal de novas vendas</strong></p>
+                        </div>
+
+                        <div class="test-card">
+                            <h5>📋 O que foi corrigido:</h5>
+                            <ul>
+                                <li>✅ Removido atributo <code>readonly</code> do campo de preço</li>
+                                <li>✅ Adicionado código JavaScript para garantir que o campo permaneça editável</li>
+                                <li>✅ Implementado eventos <code>focus</code> e <code>input</code> para manter o campo ativo</li>
+                                <li>✅ Atualizada versão do arquivo para <code>v=3.8</code></li>
+                            </ul>
+                        </div>
+
+                        <div class="test-card">
+                            <h5>🧪 Como testar:</h5>
+                            <ol>
+                                <li>Clique no botão "Nova Venda" no sistema principal</li>
+                                <li>Selecione um produto no dropdown</li>
+                                <li>Tente editar o campo "Preço Unit."</li>
+                                <li>O campo deve permitir digitação livre</li>
+                            </ol>
+                        </div>
+
+                        <div class="test-card">
+                            <h5>🎯 Código implementado:</h5>
+                            <div class="bg-light p-3 rounded">
+                                <pre><code>// Garantir que o campo de preço seja sempre editável
+const priceInput = document.getElementById('productUnitPrice');
+if (priceInput) {
+    // Remover readonly se existir
+    priceInput.removeAttribute('readonly');
+    priceInput.disabled = false;
+    
+    // Adicionar evento para garantir que permaneça editável
+    priceInput.addEventListener('focus', () => {
+        priceInput.removeAttribute('readonly');
+        priceInput.disabled = false;
+    });
+    
+    priceInput.addEventListener('input', () => {
+        priceInput.removeAttribute('readonly');
+        priceInput.disabled = false;
+    });
+}</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="test-card">
+                            <h5>📊 Status da correção:</h5>
+                            <div class="alert alert-success">
+                                <strong>✅ CORREÇÃO APLICADA COM SUCESSO!</strong><br>
+                                O campo de preço agora permite edição manual no modal de vendas.
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <a href="index.html" class="btn btn-primary btn-lg">
+                                <i class="fas fa-arrow-left me-2"></i>Voltar ao Sistema
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Simular teste do campo de preço
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ Página de teste carregada');
+            console.log('🔧 Correção do campo de preço implementada');
+            console.log('📝 Versão do app.js: v=3.8');
+        });
+    </script>
+</body>
+</html> 

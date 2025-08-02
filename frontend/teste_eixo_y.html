@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste: Correção do Eixo Y</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; background: #f8f9fa; }
+        .test-container { max-width: 1200px; margin: 0 auto; }
+        .chart-test { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .success { color: #059669; font-weight: bold; }
+        .error { color: #DC2626; font-weight: bold; }
+        .warning { color: #D97706; font-weight: bold; }
+        .info { color: #2563EB; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>✅ Teste: Correção do Eixo Y</h1>
+        <p>Verificando se o eixo Y agora mostra os valores corretos sem formatação de moeda.</p>
+        
+        <div class="alert alert-success">
+            <h6>🔧 Problema Corrigido:</h6>
+            <ul>
+                <li><strong>Problema:</strong> Eixo Y mostrava "0,00 €" até "1600,00 €"</li>
+                <li><strong>Dados reais:</strong> Julho: R$ 1.500,00, Agosto: R$ 400,00</li>
+                <li><strong>Solução:</strong> Removida formatação de moeda dos ticks do eixo Y</li>
+                <li><strong>Resultado esperado:</strong> Eixo Y mostra: 0, 400, 800, 1200, 1600</li>
+            </ul>
+        </div>
+        
+        <div class="chart-test">
+            <h4>📊 Gráfico com Eixo Y Corrigido</h4>
+            <canvas id="salesChart" height="300"></canvas>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6>📊 Valores Reais da API:</h6>
+                    <div id="apiValues">🔄 Verificando...</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6>📈 Valores do Eixo Y:</h6>
+                    <div id="yAxisValues">🔄 Verificando...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="alert alert-secondary">
+            <h6>🔍 O que foi alterado:</h6>
+            <div class="code-block" style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace;">
+                <div><strong>Antes:</strong></div>
+                <div>callback: function(value) {</div>
+                <div>  if (window.i18n) {</div>
+                <div>    return window.i18n.formatCurrency(value);</div>
+                <div>  }</div>
+                <div>  return 'R$ ' + value.toFixed(0);</div>
+                <div>}</div>
+                <br>
+                <div><strong>Depois:</strong></div>
+                <div>callback: function(value) {</div>
+                <div>  // Mostrar apenas o valor numérico sem formatação de moeda</div>
+                <div>  return value.toLocaleString('pt-BR');</div>
+                <div>}</div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <button class="btn btn-primary" onclick="testarEixoY()">
+                🔍 Testar Eixo Y
+            </button>
+            <button class="btn btn-success" onclick="abrirDashboard()">
+                📊 Abrir Dashboard
+            </button>
+            <button class="btn btn-warning" onclick="limparCache()">
+                🧹 Limpar Cache
+            </button>
+        </div>
+        
+        <div class="mt-4">
+            <h5>🎯 Resultado Esperado:</h5>
+            <div class="alert alert-success">
+                <ul>
+                    <li><strong>Eixo Y limpo:</strong> Mostra apenas números: 0, 400, 800, 1200, 1600</li>
+                    <li><strong>Sem símbolos:</strong> Não mostra "€" ou "R$" nos valores do eixo</li>
+                    <li><strong>Valores corretos:</strong> Julho: ~1500, Agosto: ~400</li>
+                    <li><strong>Formatação brasileira:</strong> Usa vírgula como separador decimal</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/i18n/i18n.js"></script>
+    <script src="js/app.js?v=2.0"></script>
+    
+    <script>
+        async function testarEixoY() {
+            console.log('🔍 === TESTE DO EIXO Y ===');
+            
+            try {
+                // 1. Buscar dados da API
+                console.log('🌐 Buscando dados da API...');
+                const response = await api.get('/dashboard/stats');
+                console.log('📊 Resposta da API:', response);
+                
+                if (response && response.salesByMonth) {
+                    const salesData = response.salesByMonth;
+                    const valuesWithData = salesData.filter(item => item.total > 0);
+                    
+                    document.getElementById('apiValues').innerHTML = `
+                        <div class="success">✅ Dados encontrados</div>
+                        <div><strong>Total de registros:</strong> ${salesData.length}</div>
+                        <div><strong>Registros com dados:</strong> ${valuesWithData.length}</div>
+                        <div><strong>Valores reais:</strong></div>
+                        ${valuesWithData.map(item => `<div>• ${item.month}: R$ ${item.total.toFixed(2)}</div>`).join('')}
+                    `;
+                } else {
+                    document.getElementById('apiValues').innerHTML = '<div class="error">❌ Nenhum dado encontrado</div>';
+                }
+                
+                // 2. Aguardar renderização e verificar eixo Y
+                setTimeout(() => {
+                    verificarEixoY();
+                }, 2000);
+                
+            } catch (error) {
+                console.error('❌ Erro no teste:', error);
+                document.getElementById('apiValues').innerHTML = `<div class="error">❌ Erro: ${error.message}</div>`;
+            }
+        }
+        
+        function verificarEixoY() {
+            console.log('🔍 Verificando eixo Y...');
+            
+            const canvas = document.getElementById('salesChart');
+            if (!canvas) {
+                document.getElementById('yAxisValues').innerHTML = '<div class="error">❌ Canvas não encontrado</div>';
+                return;
+            }
+            
+            const chart = Chart.getChart(canvas);
+            if (chart && chart.options && chart.options.scales && chart.options.scales.y) {
+                const yAxis = chart.options.scales.y;
+                const ticks = yAxis.ticks;
+                
+                if (ticks && ticks.callback) {
+                    // Testar alguns valores
+                    const testValues = [0, 400, 800, 1200, 1600];
+                    const formattedValues = testValues.map(value => ticks.callback(value));
+                    
+                    console.log('📊 Valores do eixo Y:', formattedValues);
+                    
+                    // Verificar se não tem símbolos de moeda
+                    const hasCurrencySymbols = formattedValues.some(value => 
+                        value.includes('€') || value.includes('R$') || value.includes('$')
+                    );
+                    
+                    if (!hasCurrencySymbols) {
+                        document.getElementById('yAxisValues').innerHTML = `
+                            <div class="success">✅ Eixo Y corrigido</div>
+                            <div><strong>Valores:</strong> ${formattedValues.join(', ')}</div>
+                            <div><strong>Sem símbolos de moeda:</strong> ✅</div>
+                            <div><strong>Formatação brasileira:</strong> ✅</div>
+                        `;
+                    } else {
+                        document.getElementById('yAxisValues').innerHTML = `
+                            <div class="warning">⚠️ Eixo Y ainda tem símbolos de moeda</div>
+                            <div><strong>Valores:</strong> ${formattedValues.join(', ')}</div>
+                        `;
+                    }
+                } else {
+                    document.getElementById('yAxisValues').innerHTML = '<div class="error">❌ Callback do eixo Y não encontrado</div>';
+                }
+            } else {
+                document.getElementById('yAxisValues').innerHTML = '<div class="error">❌ Configuração do eixo Y não encontrada</div>';
+            }
+        }
+        
+        function abrirDashboard() {
+            window.open('index.html', '_blank');
+        }
+        
+        function limparCache() {
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    for (let name of names) {
+                        caches.delete(name);
+                    }
+                });
+            }
+            alert('Cache limpo! Recarregando página...');
+            location.reload();
+        }
+        
+        // Teste automático ao carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Página carregada, iniciando teste do eixo Y...');
+            setTimeout(testarEixoY, 1000);
+        });
+    </script>
+</body>
+</html> 

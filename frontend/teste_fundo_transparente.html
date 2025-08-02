@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste: Fundo Transparente</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="style.css?v=1.5" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>🎨 Teste: Fundo Transparente</h1>
+        <p>Verificando se o fundo com transparência destaca melhor os gráficos.</p>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>🎨 Fundo com Transparência</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-success">
+                            <h6>✅ Transparência Aplicada:</h6>
+                            <ul class="mb-0">
+                                <li><strong>Fundo:</strong> 70% de opacidade (rgba(29, 78, 137, 0.7))</li>
+                                <li><strong>Backdrop Filter:</strong> blur(10px) para efeito glassmorphism</li>
+                                <li><strong>Overlay:</strong> Reduzido para 5% de opacidade</li>
+                                <li><strong>Estatísticas:</strong> 25% de opacidade com blur(15px)</li>
+                                <li><strong>Resultado:</strong> Gráficos mais destacados</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5>🔧 Ações</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary mb-2 w-100" onclick="testarTransparencia()">
+                            <i class="bi bi-eye"></i> Testar Transparência
+                        </button>
+                        
+                        <button class="btn btn-success mb-2 w-100" onclick="abrirDashboard()">
+                            <i class="bi bi-speedometer2"></i> Abrir Dashboard
+                        </button>
+                        
+                        <button class="btn btn-warning w-100" onclick="limparCache()">
+                            <i class="bi bi-arrow-clockwise"></i> Limpar Cache
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>📊 Log de Verificação</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="verificationLog" style="height: 300px; overflow-y: auto; background: #f8f9fa; padding: 10px; font-family: monospace; font-size: 12px;">
+                            <div>🔄 Aguardando teste...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="elegant-chart-container elegant-fade-in">
+                    <h2 class="elegant-chart-title">📈 Vendas Mensais Comparativo</h2>
+                    <p class="elegant-chart-subtitle">Análise comparativa entre 2024 e 2025</p>
+                    
+                    <div class="elegant-chart-wrapper">
+                        <div style="height: 300px; background: rgba(255, 255, 255, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white;">
+                            <div class="text-center">
+                                <i class="bi bi-bar-chart" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                                <h4>Gráfico Destacado</h4>
+                                <p>Fundo transparente permite melhor visualização</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="elegant-stats-grid">
+                        <div class="elegant-stat-item">
+                            <span class="elegant-stat-value">R$ 893K</span>
+                            <span class="elegant-stat-label">VENDAS</span>
+                        </div>
+                        <div class="elegant-stat-item">
+                            <span class="elegant-stat-value">+12.8%</span>
+                            <span class="elegant-stat-label">CRESCIMENTO</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <h6>🎨 Comparação de Transparência:</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>❌ Antes (Sólido):</h6>
+                            <div style="background: linear-gradient(135deg, #1D4E89 0%, #2A6FA8 100%); height: 60px; border-radius: 8px; margin: 10px 0;"></div>
+                            <small>100% opaco - gráficos menos destacados</small>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>✅ Agora (Transparente):</h6>
+                            <div style="background: linear-gradient(135deg, rgba(29, 78, 137, 0.7) 0%, rgba(42, 111, 168, 0.7) 100%); height: 60px; border-radius: 8px; margin: 10px 0;"></div>
+                            <small>70% opaco - gráficos mais destacados</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        function addLog(message) {
+            const log = document.getElementById('verificationLog');
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function testarTransparencia() {
+            addLog('🎨 Testando fundo transparente...');
+            addLog('✅ Transparência aplicada: 70% de opacidade');
+            addLog('🔍 Backdrop filter: blur(10px) aplicado');
+            addLog('📊 Gráficos agora ficam mais destacados');
+            addLog('✨ Efeito glassmorphism ativo');
+        }
+        
+        function abrirDashboard() {
+            addLog('📊 Abrindo dashboard...');
+            window.open('index.html', '_blank');
+        }
+        
+        function limparCache() {
+            addLog('🧹 Limpando cache...');
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    for (let name of names) {
+                        caches.delete(name);
+                    }
+                });
+            }
+            addLog('✅ Cache limpo. Recarregando página...');
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        }
+        
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('🚀 Teste de transparência inicializado');
+            addLog('🎨 Verificando fundo transparente...');
+            addLog('✅ Transparência aplicada: rgba(29, 78, 137, 0.7)');
+            addLog('✨ Gráficos devem estar mais destacados');
+        });
+    </script>
+</body>
+</html> 

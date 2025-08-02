@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Teste Botão Adicionar Produto</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; }
+        .test-section { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .test-result { margin-top: 10px; padding: 10px; border-radius: 4px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">🔧 Teste Botão Adicionar Produto</h1>
+        
+        <div class="test-section">
+            <h3>📋 Teste 1: Verificar Elementos HTML</h3>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#saleModal">
+                Abrir Modal de Vendas
+            </button>
+            <div id="test1-result" class="test-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Teste 2: Verificar JavaScript</h3>
+            <button class="btn btn-info" onclick="testarJavaScript()">
+                Testar JavaScript
+            </button>
+            <div id="test2-result" class="test-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Teste 3: Simular Adição de Produto</h3>
+            <button class="btn btn-success" onclick="simularAdicaoProduto()">
+                Simular Adição
+            </button>
+            <div id="test3-result" class="test-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Logs de Debug</h3>
+            <div id="debug-logs" class="test-result info" style="max-height: 400px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <!-- Modal de Vendas (cópia do original) -->
+    <div class="modal fade" id="saleModal" tabindex="-1" aria-labelledby="saleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 600px !important; width: 600px !important;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="saleModalLabel">Nova Venda</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="saleForm" data-action="createSale">
+                        <input type="hidden" id="saleId">
+                        <div class="mb-3">
+                            <label for="saleClient" class="form-label">Cliente</label>
+                            <select class="form-select" id="saleClient" required>
+                                <option value="">Selecione um cliente</option>
+                                <option value="1">Cliente Teste 1</option>
+                                <option value="2">Cliente Teste 2</option>
+                            </select>
+                        </div>
+                        <div class="card mb-3">
+                            <div class="card-header">Produtos da Venda</div>
+                            <div class="card-body">
+                                <div id="saleProductsList" class="mb-2" style="max-height: 150px; overflow-y: auto;">
+                                    <p class="text-muted text-center m-0">Nenhum produto adicionado.</p>
+                                </div>
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-5">
+                                        <label for="productSelect" class="form-label">Produto</label>
+                                        <select class="form-control" id="productSelect" style="width: 100%;">
+                                            <option value="">Selecione um produto</option>
+                                            <option value="1" data-price="10.50">Produto 1 - R$ 10,50</option>
+                                            <option value="2" data-price="25.00">Produto 2 - R$ 25,00</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="productQuantity" class="form-label">Qtd</label>
+                                        <input type="number" class="form-control" id="productQuantity" value="1" min="1">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label for="productUnitPrice" class="form-label">Preço Unit.</label>
+                                        <input type="number" step="0.01" class="form-control" id="productUnitPrice" placeholder="Preço">
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <button type="button" class="btn btn-primary" id="btnAddProduct">
+                                            <i class="fas fa-plus me-2"></i>Adicionar Produto
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="saleTotalValueDisplay" class="form-label">Valor Total da Venda</label>
+                                <input type="text" class="form-control fw-bold" id="saleTotalValueDisplay" readonly value="R$ 0,00">
+                                <input type="hidden" id="saleTotalValue" value="0">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="saleDueDate" class="form-label">Data de Vencimento</label>
+                                <input type="date" class="form-control" id="saleDueDate">
+                            </div>
+                        </div>
+                        <div class="modal-footer mt-3">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar Venda</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function log(message) {
+            const logsDiv = document.getElementById('debug-logs');
+            const timestamp = new Date().toLocaleTimeString();
+            logsDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            console.log(message);
+        }
+
+        function testarJavaScript() {
+            log('🔍 Iniciando teste do JavaScript...');
+            
+            // Verificar se as funções existem
+            const functions = [
+                'addProductToSale',
+                'removeProductFromSale', 
+                'updateSaleTotal',
+                'showToast'
+            ];
+            
+            let result = '<div class="success">✅ Todas as funções encontradas</div>';
+            let missingFunctions = [];
+            
+            functions.forEach(funcName => {
+                if (typeof window[funcName] === 'function') {
+                    log(`✅ Função ${funcName} encontrada`);
+                } else {
+                    log(`❌ Função ${funcName} NÃO encontrada`);
+                    missingFunctions.push(funcName);
+                }
+            });
+            
+            if (missingFunctions.length > 0) {
+                result = `<div class="error">❌ Funções faltando: ${missingFunctions.join(', ')}</div>`;
+            }
+            
+            document.getElementById('test2-result').innerHTML = result;
+        }
+
+        function simularAdicaoProduto() {
+            log('🎯 Simulando adição de produto...');
+            
+            // Verificar elementos
+            const productSelect = document.getElementById('productSelect');
+            const quantityInput = document.getElementById('productQuantity');
+            const priceInput = document.getElementById('productUnitPrice');
+            const btnAddProduct = document.getElementById('btnAddProduct');
+            const productsList = document.getElementById('saleProductsList');
+            
+            if (!productSelect || !quantityInput || !priceInput || !btnAddProduct || !productsList) {
+                document.getElementById('test3-result').innerHTML = '<div class="error">❌ Elementos não encontrados</div>';
+                return;
+            }
+            
+            log('✅ Todos os elementos encontrados');
+            
+            // Simular seleção de produto
+            productSelect.value = '1';
+            productSelect.dispatchEvent(new Event('change'));
+            
+            // Simular preenchimento de quantidade e preço
+            quantityInput.value = '2';
+            priceInput.value = '15.75';
+            
+            log('📝 Valores preenchidos: Produto=1, Qtd=2, Preço=15.75');
+            
+            // Simular clique no botão
+            setTimeout(() => {
+                log('🖱️ Simulando clique no botão Adicionar Produto...');
+                btnAddProduct.click();
+                
+                setTimeout(() => {
+                    const productElements = productsList.querySelectorAll('.list-group-item');
+                    log(`📦 Produtos na lista após adição: ${productElements.length}`);
+                    
+                    if (productElements.length > 0) {
+                        document.getElementById('test3-result').innerHTML = '<div class="success">✅ Produto adicionado com sucesso!</div>';
+                    } else {
+                        document.getElementById('test3-result').innerHTML = '<div class="error">❌ Produto não foi adicionado</div>';
+                    }
+                }, 500);
+            }, 100);
+        }
+
+        // Função showToast simplificada para teste
+        function showToast(message, type = 'info', duration = 5000) {
+            log(`🔔 Toast: ${type.toUpperCase()} - ${message}`);
+            alert(`${type.toUpperCase()}: ${message}`);
+        }
+
+        // Função addProductToSale para teste
+        function addProductToSale() {
+            log('🚀 Função addProductToSale chamada!');
+            
+            const productSelect = document.getElementById('productSelect');
+            const quantityInput = document.getElementById('productQuantity');
+            const priceInput = document.getElementById('productUnitPrice');
+            const productsList = document.getElementById('saleProductsList');
+
+            if (!productSelect.value) {
+                showToast('Selecione um produto', 'warning');
+                return;
+            }
+
+            if (!quantityInput.value || quantityInput.value <= 0) {
+                showToast('Informe uma quantidade válida', 'warning');
+                return;
+            }
+
+            if (!priceInput.value || priceInput.value <= 0) {
+                showToast('Informe um preço válido', 'warning');
+                return;
+            }
+
+            const selectedOption = productSelect.options[productSelect.selectedIndex];
+            const productId = productSelect.value;
+            const productName = selectedOption.textContent.split(' - ')[0];
+            const quantity = parseInt(quantityInput.value);
+            const price = parseFloat(priceInput.value);
+            const total = quantity * price;
+
+            log(`📊 Dados do produto: ${productName}, Qtd: ${quantity}, Preço: ${price}, Total: ${total}`);
+
+            // Verificar se o produto já foi adicionado
+            const existingProduct = productsList.querySelector(`[data-product-id="${productId}"]`);
+            if (existingProduct) {
+                showToast('Este produto já foi adicionado à venda', 'warning');
+                return;
+            }
+
+            // Criar elemento do produto
+            const productElement = document.createElement('div');
+            productElement.className = 'list-group-item d-flex justify-content-between align-items-center';
+            productElement.dataset.productId = productId;
+            productElement.innerHTML = `
+                <div>
+                    <strong>${productName}</strong>
+                    <br>
+                    <small>Qtd: ${quantity} x R$ ${price.toFixed(2).replace('.', ',')}</small>
+                </div>
+                <div>
+                    <span class="badge bg-primary rounded-pill">R$ ${total.toFixed(2).replace('.', ',')}</span>
+                    <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="removeProductFromSale('${productId}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+
+            // Adicionar à lista
+            if (productsList.querySelector('.text-muted.text-center')) {
+                productsList.innerHTML = '';
+            }
+            productsList.appendChild(productElement);
+
+            log('✅ Produto adicionado à lista');
+
+            // Limpar campos
+            productSelect.value = '';
+            quantityInput.value = '1';
+            priceInput.value = '';
+
+            // Atualizar valor total
+            updateSaleTotal();
+        }
+
+        // Função removeProductFromSale para teste
+        function removeProductFromSale(productId) {
+            log(`🗑️ Removendo produto: ${productId}`);
+            
+            const productElement = document.querySelector(`[data-product-id="${productId}"]`);
+            if (productElement) {
+                productElement.remove();
+                log('✅ Produto removido');
+                updateSaleTotal();
+            }
+        }
+
+        // Função updateSaleTotal para teste
+        function updateSaleTotal() {
+            log('🧮 Atualizando total da venda...');
+            
+            const productsList = document.getElementById('saleProductsList');
+            const totalDisplay = document.getElementById('saleTotalValueDisplay');
+            const totalHidden = document.getElementById('saleTotalValue');
+
+            if (!productsList || !totalDisplay || !totalHidden) {
+                log('❌ Elementos não encontrados para cálculo do total');
+                return;
+            }
+
+            let total = 0;
+            const productElements = productsList.querySelectorAll('.list-group-item');
+            
+            log(`📦 Encontrados ${productElements.length} produtos na lista`);
+            
+            productElements.forEach((element, index) => {
+                const badge = element.querySelector('.badge');
+                if (badge) {
+                    const badgeText = badge.textContent.trim();
+                    const valueMatch = badgeText.match(/R\$ ([\d,]+\.?\d*)/);
+                    if (valueMatch) {
+                        const valueString = valueMatch[1].replace(',', '.');
+                        const productTotal = parseFloat(valueString);
+                        
+                        if (!isNaN(productTotal)) {
+                            total += productTotal;
+                            log(`✅ Valor do produto ${index + 1}: R$ ${productTotal.toFixed(2)}`);
+                        }
+                    }
+                }
+            });
+
+            const formattedTotal = `R$ ${total.toFixed(2).replace('.', ',')}`;
+            totalDisplay.value = formattedTotal;
+            totalHidden.value = total;
+            
+            log(`💰 Total atualizado: ${formattedTotal}`);
+        }
+
+        // Configurar eventos quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 Página carregada, configurando eventos...');
+            
+            // Configurar evento de mudança do produto
+            const productSelect = document.getElementById('productSelect');
+            if (productSelect) {
+                productSelect.addEventListener('change', function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    const priceInput = document.getElementById('productUnitPrice');
+                    
+                    log(`🔄 Produto selecionado: ${selectedOption ? selectedOption.textContent : 'Nenhum'}`);
+                    
+                    if (selectedOption && selectedOption.dataset.price) {
+                        priceInput.value = selectedOption.dataset.price;
+                        log(`💰 Preço definido: ${selectedOption.dataset.price}`);
+                    } else {
+                        priceInput.value = '';
+                        log(`🧹 Campo preço limpo`);
+                    }
+                });
+                
+                log('✅ Evento change configurado para productSelect');
+            }
+            
+            // Configurar evento do botão adicionar produto
+            const btnAddProduct = document.getElementById('btnAddProduct');
+            if (btnAddProduct) {
+                btnAddProduct.addEventListener('click', addProductToSale);
+                log('✅ Evento click configurado para btnAddProduct');
+            } else {
+                log('❌ Botão btnAddProduct não encontrado');
+            }
+        });
+
+        // Expor funções globalmente para teste
+        window.addProductToSale = addProductToSale;
+        window.removeProductFromSale = removeProductFromSale;
+        window.updateSaleTotal = updateSaleTotal;
+        window.showToast = showToast;
+    </script>
+</body>
+</html> 

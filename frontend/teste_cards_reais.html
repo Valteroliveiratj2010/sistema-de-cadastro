@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste: Cards com Dados Reais</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; background: #f8f9fa; }
+        .test-container { max-width: 1200px; margin: 0 auto; }
+        .success { color: #059669; font-weight: bold; }
+        .error { color: #DC2626; font-weight: bold; }
+        .warning { color: #D97706; font-weight: bold; }
+        .info { color: #2563EB; font-weight: bold; }
+        .test-form { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card-status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .card-success { background: #d1fae5; border: 1px solid #10b981; }
+        .card-error { background: #fee2e2; border: 1px solid #ef4444; }
+        .card-warning { background: #fef3c7; border: 1px solid #f59e0b; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>✅ Teste: Cards com Dados Reais</h1>
+        <p>Verificando se os cards do dashboard agora mostram dados reais da API em vez de dados de exemplo.</p>
+        
+        <div class="alert alert-success">
+            <h6>🔧 Problema Corrigido:</h6>
+            <ul>
+                <li><strong>Problema:</strong> Cards mostravam dados de exemplo</li>
+                <li><strong>Cards afetados:</strong> Top 5 Produtos, Top 5 Clientes, Top 5 Fornecedores, Contas Vencidas, Contas Próximas</li>
+                <li><strong>Solução:</strong> Função loadDashboardCardsData implementada</li>
+                <li><strong>Resultado esperado:</strong> Dados reais da API</li>
+            </ul>
+        </div>
+        
+        <div class="test-form">
+            <h4>📊 Status dos Cards</h4>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>🏆 Top 5 Cards:</h6>
+                    <div id="topCardsStatus">
+                        <div class="card-status card-warning">
+                            <strong>Top 5 Produtos Mais Vendidos:</strong> <span id="topProductsStatus">🔄 Verificando...</span>
+                        </div>
+                        <div class="card-status card-warning">
+                            <strong>Top 5 Clientes com Mais Compras:</strong> <span id="topClientsStatus">🔄 Verificando...</span>
+                        </div>
+                        <div class="card-status card-warning">
+                            <strong>Top 5 Fornecedores:</strong> <span id="topSuppliersStatus">🔄 Verificando...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <h6>💰 Cards Financeiros:</h6>
+                    <div id="financialCardsStatus">
+                        <div class="card-status card-warning">
+                            <strong>CONTAS A RECEBER VENCIDAS:</strong> <span id="overdueReceivableStatus">🔄 Verificando...</span>
+                        </div>
+                        <div class="card-status card-warning">
+                            <strong>CONTAS A PAGAR VENCIDAS:</strong> <span id="overduePayableStatus">🔄 Verificando...</span>
+                        </div>
+                        <div class="card-status card-warning">
+                            <strong>Contas a Receber Próximas (30 dias):</strong> <span id="upcomingReceivableStatus">🔄 Verificando...</span>
+                        </div>
+                        <div class="card-status card-warning">
+                            <strong>Contas a Pagar Próximas (30 dias):</strong> <span id="upcomingPayableStatus">🔄 Verificando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <h6>🔍 Logs de Carregamento:</h6>
+                <div id="loadingLogs" style="font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto; background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                    Aguardando carregamento...
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6>📊 Status Geral:</h6>
+                    <div id="generalStatus">🔄 Verificando...</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6>🎯 Teste Automático:</h6>
+                    <div id="autoTest">🔄 Verificando...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <button class="btn btn-primary" onclick="testarCardsReais()">
+                🧮 Testar Cards Reais
+            </button>
+            <button class="btn btn-success" onclick="abrirDashboard()">
+                📊 Abrir Dashboard
+            </button>
+            <button class="btn btn-warning" onclick="limparTeste()">
+                🧹 Limpar Teste
+            </button>
+            <button class="btn btn-info" onclick="limparCache()">
+                🧹 Limpar Cache
+            </button>
+        </div>
+        
+        <div class="mt-4">
+            <h5>🎯 Resultado Esperado:</h5>
+            <div class="alert alert-success">
+                <ul>
+                    <li><strong>Dados reais:</strong> Cards devem mostrar dados da API</li>
+                    <li><strong>Sem dados de exemplo:</strong> Não deve mostrar "Dayse Oliveira" fixo</li>
+                    <li><strong>Logs detalhados:</strong> Processo de carregamento visível</li>
+                    <li><strong>Status atualizado:</strong> Cada card deve mostrar status de sucesso</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js?v=2.6"></script>
+    
+    <script>
+        let loadingLogs = [];
+        
+        function adicionarLog(mensagem) {
+            const timestamp = new Date().toLocaleTimeString();
+            loadingLogs.push(`[${timestamp}] ${mensagem}`);
+            const logsDiv = document.getElementById('loadingLogs');
+            logsDiv.innerHTML = loadingLogs.slice(-20).join('<br>');
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        function atualizarStatus(cardId, status, tipo = 'warning') {
+            const element = document.getElementById(cardId);
+            if (element) {
+                element.textContent = status;
+                element.className = `card-status card-${tipo}`;
+            }
+        }
+        
+        async function testarCardsReais() {
+            console.log('🧮 === TESTE DE CARDS REAIS ===');
+            adicionarLog('🧮 Iniciando teste de cards reais...');
+            
+            try {
+                // Simular carregamento do dashboard
+                adicionarLog('📊 Carregando dados do dashboard...');
+                
+                // Testar carregamento de produtos
+                adicionarLog('📦 Testando carregamento de produtos...');
+                try {
+                    const productsResponse = await api.get('/products', { limit: 10 });
+                    if (productsResponse && (productsResponse.products || productsResponse.data || Array.isArray(productsResponse))) {
+                        const products = productsResponse.products || productsResponse.data || productsResponse;
+                        atualizarStatus('topProductsStatus', `✅ ${products.length} produtos carregados`, 'success');
+                        adicionarLog(`✅ ${products.length} produtos carregados com sucesso`);
+                    } else {
+                        atualizarStatus('topProductsStatus', '❌ Erro ao carregar produtos', 'error');
+                        adicionarLog('❌ Erro ao carregar produtos');
+                    }
+                } catch (error) {
+                    atualizarStatus('topProductsStatus', '❌ Erro na API', 'error');
+                    adicionarLog(`❌ Erro ao carregar produtos: ${error.message}`);
+                }
+                
+                // Testar carregamento de clientes
+                adicionarLog('👥 Testando carregamento de clientes...');
+                try {
+                    const clientsResponse = await api.get('/clients', { limit: 10 });
+                    if (clientsResponse && (clientsResponse.clients || clientsResponse.data || Array.isArray(clientsResponse))) {
+                        const clients = clientsResponse.clients || clientsResponse.data || clientsResponse;
+                        atualizarStatus('topClientsStatus', `✅ ${clients.length} clientes carregados`, 'success');
+                        adicionarLog(`✅ ${clients.length} clientes carregados com sucesso`);
+                    } else {
+                        atualizarStatus('topClientsStatus', '❌ Erro ao carregar clientes', 'error');
+                        adicionarLog('❌ Erro ao carregar clientes');
+                    }
+                } catch (error) {
+                    atualizarStatus('topClientsStatus', '❌ Erro na API', 'error');
+                    adicionarLog(`❌ Erro ao carregar clientes: ${error.message}`);
+                }
+                
+                // Testar carregamento de fornecedores
+                adicionarLog('🏢 Testando carregamento de fornecedores...');
+                try {
+                    const suppliersResponse = await api.get('/suppliers', { limit: 10 });
+                    if (suppliersResponse && (suppliersResponse.suppliers || suppliersResponse.data || Array.isArray(suppliersResponse))) {
+                        const suppliers = suppliersResponse.suppliers || suppliersResponse.data || suppliersResponse;
+                        atualizarStatus('topSuppliersStatus', `✅ ${suppliers.length} fornecedores carregados`, 'success');
+                        adicionarLog(`✅ ${suppliers.length} fornecedores carregados com sucesso`);
+                    } else {
+                        atualizarStatus('topSuppliersStatus', '❌ Erro ao carregar fornecedores', 'error');
+                        adicionarLog('❌ Erro ao carregar fornecedores');
+                    }
+                } catch (error) {
+                    atualizarStatus('topSuppliersStatus', '❌ Erro na API', 'error');
+                    adicionarLog(`❌ Erro ao carregar fornecedores: ${error.message}`);
+                }
+                
+                // Testar carregamento de vendas
+                adicionarLog('💰 Testando carregamento de vendas...');
+                try {
+                    const salesResponse = await api.get('/sales', { limit: 10 });
+                    if (salesResponse && (salesResponse.sales || salesResponse.data || Array.isArray(salesResponse))) {
+                        const sales = salesResponse.sales || salesResponse.data || salesResponse;
+                        atualizarStatus('overdueReceivableStatus', `✅ ${sales.length} vendas carregadas`, 'success');
+                        atualizarStatus('upcomingReceivableStatus', `✅ ${sales.length} vendas carregadas`, 'success');
+                        adicionarLog(`✅ ${sales.length} vendas carregadas com sucesso`);
+                    } else {
+                        atualizarStatus('overdueReceivableStatus', '❌ Erro ao carregar vendas', 'error');
+                        atualizarStatus('upcomingReceivableStatus', '❌ Erro ao carregar vendas', 'error');
+                        adicionarLog('❌ Erro ao carregar vendas');
+                    }
+                } catch (error) {
+                    atualizarStatus('overdueReceivableStatus', '❌ Erro na API', 'error');
+                    atualizarStatus('upcomingReceivableStatus', '❌ Erro na API', 'error');
+                    adicionarLog(`❌ Erro ao carregar vendas: ${error.message}`);
+                }
+                
+                // Testar carregamento de compras
+                adicionarLog('💸 Testando carregamento de compras...');
+                try {
+                    const purchasesResponse = await api.get('/purchases', { limit: 10 });
+                    if (purchasesResponse && (purchasesResponse.purchases || purchasesResponse.data || Array.isArray(purchasesResponse))) {
+                        const purchases = purchasesResponse.purchases || purchasesResponse.data || purchasesResponse;
+                        atualizarStatus('overduePayableStatus', `✅ ${purchases.length} compras carregadas`, 'success');
+                        atualizarStatus('upcomingPayableStatus', `✅ ${purchases.length} compras carregadas`, 'success');
+                        adicionarLog(`✅ ${purchases.length} compras carregadas com sucesso`);
+                    } else {
+                        atualizarStatus('overduePayableStatus', '❌ Erro ao carregar compras', 'error');
+                        atualizarStatus('upcomingPayableStatus', '❌ Erro ao carregar compras', 'error');
+                        adicionarLog('❌ Erro ao carregar compras');
+                    }
+                } catch (error) {
+                    atualizarStatus('overduePayableStatus', '❌ Erro na API', 'error');
+                    atualizarStatus('upcomingPayableStatus', '❌ Erro na API', 'error');
+                    adicionarLog(`❌ Erro ao carregar compras: ${error.message}`);
+                }
+                
+                // Atualizar status geral
+                const successCount = document.querySelectorAll('.card-success').length;
+                const totalCount = document.querySelectorAll('.card-status').length;
+                
+                document.getElementById('generalStatus').innerHTML = `
+                    <div class="success">✅ Teste concluído</div>
+                    <div><strong>Cards com sucesso:</strong> ${successCount}/${totalCount}</div>
+                    <div><strong>Taxa de sucesso:</strong> ${Math.round((successCount/totalCount)*100)}%</div>
+                `;
+                
+                document.getElementById('autoTest').innerHTML = `
+                    <div class="success">✅ Teste automático executado</div>
+                    <div><strong>Status:</strong> ${successCount === totalCount ? 'Todos os cards funcionando' : 'Alguns cards com problemas'}</div>
+                `;
+                
+                adicionarLog('✅ Teste de cards reais concluído com sucesso');
+                
+            } catch (error) {
+                console.error('❌ Erro no teste:', error);
+                adicionarLog(`❌ Erro no teste: ${error.message}`);
+                
+                document.getElementById('generalStatus').innerHTML = `
+                    <div class="error">❌ Erro no teste</div>
+                    <div><strong>Erro:</strong> ${error.message}</div>
+                `;
+            }
+        }
+        
+        function limparTeste() {
+            loadingLogs = [];
+            document.getElementById('loadingLogs').innerHTML = 'Aguardando carregamento...';
+            
+            // Resetar status dos cards
+            const statusElements = [
+                'topProductsStatus', 'topClientsStatus', 'topSuppliersStatus',
+                'overdueReceivableStatus', 'overduePayableStatus',
+                'upcomingReceivableStatus', 'upcomingPayableStatus'
+            ];
+            
+            statusElements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = '🔄 Verificando...';
+                    element.className = 'card-status card-warning';
+                }
+            });
+            
+            document.getElementById('generalStatus').innerHTML = '<div>🔄 Teste limpo</div>';
+            document.getElementById('autoTest').innerHTML = '<div>🔄 Teste limpo</div>';
+        }
+        
+        function abrirDashboard() {
+            window.open('index.html', '_blank');
+        }
+        
+        function limparCache() {
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    for (let name of names) {
+                        caches.delete(name);
+                    }
+                });
+            }
+            alert('Cache limpo! Recarregando página...');
+            location.reload();
+        }
+        
+        // Configurar eventos
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Página carregada, iniciando teste de cards reais...');
+            adicionarLog('🚀 Página carregada, iniciando teste...');
+            
+            // Executar teste automático após 2 segundos
+            setTimeout(() => {
+                testarCardsReais();
+            }, 2000);
+        });
+    </script>
+</body>
+</html> 

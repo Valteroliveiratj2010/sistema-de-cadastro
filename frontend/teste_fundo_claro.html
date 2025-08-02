@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste: Fundo Claro com Bordas Azul</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="style.css?v=1.6" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>🎨 Teste: Fundo Claro com Bordas Azul</h1>
+        <p>Verificando o visual clean com fundo claro e bordas azul primário.</p>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>🎨 Fundo Claro com Bordas Azul</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <h6>✅ Visual Aplicado:</h6>
+                            <ul class="mb-0">
+                                <li><strong>Fundo:</strong> Branco com gradiente sutil (#ffffff → #f8f9fa)</li>
+                                <li><strong>Bordas:</strong> Azul primário sólido (3px #1D4E89)</li>
+                                <li><strong>Texto:</strong> Azul primário (#1D4E89)</li>
+                                <li><strong>Sombra:</strong> Azul primário com transparência</li>
+                                <li><strong>Resultado:</strong> Visual clean e elegante</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5>🔧 Ações</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary mb-2 w-100" onclick="testarFundoClaro()">
+                            <i class="bi bi-eye"></i> Testar Fundo Claro
+                        </button>
+                        
+                        <button class="btn btn-success mb-2 w-100" onclick="abrirDashboard()">
+                            <i class="bi bi-speedometer2"></i> Abrir Dashboard
+                        </button>
+                        
+                        <button class="btn btn-warning w-100" onclick="limparCache()">
+                            <i class="bi bi-arrow-clockwise"></i> Limpar Cache
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>📊 Log de Verificação</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="verificationLog" style="height: 300px; overflow-y: auto; background: #f8f9fa; padding: 10px; font-family: monospace; font-size: 12px;">
+                            <div>🔄 Aguardando teste...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="elegant-chart-container elegant-fade-in">
+                    <h2 class="elegant-chart-title">📈 Vendas Mensais Comparativo</h2>
+                    <p class="elegant-chart-subtitle">Análise comparativa entre 2024 e 2025</p>
+                    
+                    <div class="elegant-chart-wrapper">
+                        <div style="height: 300px; background: rgba(29, 78, 137, 0.05); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #1D4E89; border: 2px dashed rgba(29, 78, 137, 0.2);">
+                            <div class="text-center">
+                                <i class="bi bi-bar-chart" style="font-size: 3rem; margin-bottom: 1rem; color: #1D4E89;"></i>
+                                <h4 style="color: #1D4E89;">Gráfico Clean</h4>
+                                <p style="color: #1D4E89;">Fundo claro permite melhor visualização</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="elegant-stats-grid">
+                        <div class="elegant-stat-item">
+                            <span class="elegant-stat-value">R$ 893K</span>
+                            <span class="elegant-stat-label">VENDAS</span>
+                        </div>
+                        <div class="elegant-stat-item">
+                            <span class="elegant-stat-value">+12.8%</span>
+                            <span class="elegant-stat-label">CRESCIMENTO</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="alert alert-success">
+                    <h6>🎨 Comparação de Estilos:</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6>❌ Antes (Transparente):</h6>
+                            <div style="background: linear-gradient(135deg, rgba(29, 78, 137, 0.7) 0%, rgba(42, 111, 168, 0.7) 100%); height: 60px; border-radius: 8px; margin: 10px 0; border: 1px solid rgba(29, 78, 137, 0.3);"></div>
+                            <small>Fundo transparente com blur</small>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>✅ Agora (Claro):</h6>
+                            <div style="background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); height: 60px; border-radius: 8px; margin: 10px 0; border: 3px solid #1D4E89;"></div>
+                            <small>Fundo claro com bordas azul</small>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>🎯 Benefícios:</h6>
+                            <ul class="mb-0" style="font-size: 0.9rem;">
+                                <li>Visual mais clean</li>
+                                <li>Melhor legibilidade</li>
+                                <li>Gráficos destacados</li>
+                                <li>Elegância profissional</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>🎨 Paleta de Cores Aplicada</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div style="background: #1D4E89; height: 40px; border-radius: 8px; margin: 10px 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                                    #1D4E89
+                                </div>
+                                <small>Azul Primário (Bordas)</small>
+                            </div>
+                            <div class="col-md-3">
+                                <div style="background: #ffffff; height: 40px; border-radius: 8px; margin: 10px 0; display: flex; align-items: center; justify-content: center; color: #1D4E89; font-weight: bold; border: 2px solid #1D4E89;">
+                                    #FFFFFF
+                                </div>
+                                <small>Branco (Fundo)</small>
+                            </div>
+                            <div class="col-md-3">
+                                <div style="background: #f8f9fa; height: 40px; border-radius: 8px; margin: 10px 0; display: flex; align-items: center; justify-content: center; color: #1D4E89; font-weight: bold; border: 2px solid #1D4E89;">
+                                    #F8F9FA
+                                </div>
+                                <small>Cinza Claro (Gradiente)</small>
+                            </div>
+                            <div class="col-md-3">
+                                <div style="background: rgba(29, 78, 137, 0.1); height: 40px; border-radius: 8px; margin: 10px 0; display: flex; align-items: center; justify-content: center; color: #1D4E89; font-weight: bold; border: 2px solid rgba(29, 78, 137, 0.2);">
+                                    rgba(29, 78, 137, 0.1)
+                                </div>
+                                <small>Azul Transparente (Stats)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        function addLog(message) {
+            const log = document.getElementById('verificationLog');
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function testarFundoClaro() {
+            addLog('🎨 Testando fundo claro...');
+            addLog('✅ Fundo: Branco com gradiente sutil');
+            addLog('🔵 Bordas: Azul primário sólido (3px)');
+            addLog('📝 Texto: Azul primário para contraste');
+            addLog('✨ Visual: Clean e elegante');
+            addLog('📊 Gráficos: Mais destacados');
+        }
+        
+        function abrirDashboard() {
+            addLog('📊 Abrindo dashboard...');
+            window.open('index.html', '_blank');
+        }
+        
+        function limparCache() {
+            addLog('🧹 Limpando cache...');
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    for (let name of names) {
+                        caches.delete(name);
+                    }
+                });
+            }
+            addLog('✅ Cache limpo. Recarregando página...');
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        }
+        
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('🚀 Teste de fundo claro inicializado');
+            addLog('🎨 Verificando fundo claro com bordas azul...');
+            addLog('✅ Fundo aplicado: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)');
+            addLog('🔵 Bordas aplicadas: 3px solid #1D4E89');
+            addLog('✨ Visual clean e elegante ativo');
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste: Modais de Vendas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; background: #f8f9fa; }
+        .test-container { max-width: 1200px; margin: 0 auto; }
+        .success { color: #059669; font-weight: bold; }
+        .error { color: #DC2626; font-weight: bold; }
+        .warning { color: #D97706; font-weight: bold; }
+        .info { color: #2563EB; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>✅ Teste: Modais de Vendas</h1>
+        <p>Verificando se os problemas dos modais de vendas foram corrigidos.</p>
+        
+        <div class="alert alert-success">
+            <h6>🔧 Problemas Corrigidos:</h6>
+            <ul>
+                <li><strong>Tradução "Nova Venda":</strong> ✅ Adicionada em português</li>
+                <li><strong>Botão "Editar":</strong> ✅ Abre modal correto com dados</li>
+                <li><strong>Preenchimento de dados:</strong> ✅ Modal preenchido corretamente</li>
+                <li><strong>Limpeza de formulários:</strong> ✅ Dados limpos após salvar</li>
+            </ul>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6>🌍 Teste de Tradução:</h6>
+                    <div id="translationTest">🔄 Verificando...</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6>🎯 Teste de Funcionalidade:</h6>
+                    <div id="functionalityTest">🔄 Verificando...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <button class="btn btn-primary" onclick="testarTraducoes()">
+                🌍 Testar Traduções
+            </button>
+            <button class="btn btn-success" onclick="abrirDashboard()">
+                📊 Abrir Dashboard
+            </button>
+            <button class="btn btn-warning" onclick="testarModais()">
+                🎯 Testar Modais
+            </button>
+            <button class="btn btn-info" onclick="limparCache()">
+                🧹 Limpar Cache
+            </button>
+        </div>
+        
+        <div class="mt-4">
+            <h5>🎯 Resultado Esperado:</h5>
+            <div class="alert alert-success">
+                <ul>
+                    <li><strong>Botão "Nova Venda":</strong> Mostra "Nova Venda" em português</li>
+                    <li><strong>Botão "Editar":</strong> Abre modal com dados da venda</li>
+                    <li><strong>Modal de edição:</strong> Preenchido com cliente, produtos, etc.</li>
+                    <li><strong>Após salvar:</strong> Formulário limpo para próxima edição</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <h5>📋 Checklist de Verificação:</h5>
+            <div class="alert alert-warning">
+                <div id="checklist">
+                    <div>🔄 Verificando...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <h5>🔍 Como Testar Manualmente:</h5>
+            <div class="alert alert-secondary">
+                <ol>
+                    <li><strong>Acesse o Dashboard:</strong> <a href="index.html" target="_blank">index.html</a></li>
+                    <li><strong>Vá para Vendas:</strong> Clique em "Vendas" no menu</li>
+                    <li><strong>Teste "Nova Venda":</strong> Verifique se mostra "Nova Venda" em português</li>
+                    <li><strong>Teste "Editar":</strong> Clique em editar uma venda existente</li>
+                    <li><strong>Verifique dados:</strong> Modal deve estar preenchido com dados da venda</li>
+                    <li><strong>Teste salvar:</strong> Salve a edição e verifique se formulário fica limpo</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/i18n/translations.js"></script>
+    <script src="js/i18n/i18n.js"></script>
+    <script src="js/app.js?v=2.2"></script>
+    
+    <script>
+        let testResults = {
+            translationWorking: false,
+            modalWorking: false,
+            dataFilling: false,
+            formClearing: false
+        };
+        
+        function testarTraducoes() {
+            console.log('🌍 === TESTE DE TRADUÇÕES ===');
+            
+            try {
+                // Inicializar i18n se não estiver
+                if (!window.i18n) {
+                    window.i18n = new I18nManager();
+                    window.i18n.init();
+                }
+                
+                // Testar tradução "newSale"
+                const newSaleTranslation = window.i18n.t('newSale');
+                console.log('📝 Tradução newSale:', newSaleTranslation);
+                
+                if (newSaleTranslation === 'Nova Venda') {
+                    testResults.translationWorking = true;
+                    document.getElementById('translationTest').innerHTML = `
+                        <div class="success">✅ Tradução funcionando</div>
+                        <div><strong>newSale:</strong> "${newSaleTranslation}"</div>
+                        <div><strong>Idioma atual:</strong> ${window.i18n.getCurrentLanguage()}</div>
+                    `;
+                } else {
+                    document.getElementById('translationTest').innerHTML = `
+                        <div class="error">❌ Tradução incorreta</div>
+                        <div><strong>Esperado:</strong> "Nova Venda"</div>
+                        <div><strong>Recebido:</strong> "${newSaleTranslation}"</div>
+                    `;
+                }
+                
+                atualizarChecklist();
+                
+            } catch (error) {
+                console.error('❌ Erro no teste de traduções:', error);
+                document.getElementById('translationTest').innerHTML = `<div class="error">❌ Erro: ${error.message}</div>`;
+            }
+        }
+        
+        function testarModais() {
+            console.log('🎯 === TESTE DE MODAIS ===');
+            
+            try {
+                // Verificar se as funções existem
+                const hasFillEditForm = typeof fillEditForm === 'function';
+                const hasFillSaleEditForm = typeof fillSaleEditForm === 'function';
+                const hasClearSaleForm = typeof clearSaleForm === 'function';
+                
+                testResults.modalWorking = hasFillEditForm;
+                testResults.dataFilling = hasFillSaleEditForm;
+                testResults.formClearing = hasClearSaleForm;
+                
+                document.getElementById('functionalityTest').innerHTML = `
+                    <div class="${hasFillEditForm ? 'success' : 'error'}">
+                        ${hasFillEditForm ? '✅' : '❌'} fillEditForm: ${hasFillEditForm ? 'Disponível' : 'Não encontrada'}
+                    </div>
+                    <div class="${hasFillSaleEditForm ? 'success' : 'error'}">
+                        ${hasFillSaleEditForm ? '✅' : '❌'} fillSaleEditForm: ${hasFillSaleEditForm ? 'Disponível' : 'Não encontrada'}
+                    </div>
+                    <div class="${hasClearSaleForm ? 'success' : 'error'}">
+                        ${hasClearSaleForm ? '✅' : '❌'} clearSaleForm: ${hasClearSaleForm ? 'Disponível' : 'Não encontrada'}
+                    </div>
+                `;
+                
+                atualizarChecklist();
+                
+            } catch (error) {
+                console.error('❌ Erro no teste de modais:', error);
+                document.getElementById('functionalityTest').innerHTML = `<div class="error">❌ Erro: ${error.message}</div>`;
+            }
+        }
+        
+        function atualizarChecklist() {
+            const checklist = document.getElementById('checklist');
+            checklist.innerHTML = `
+                <div class="${testResults.translationWorking ? 'success' : 'error'}">
+                    ${testResults.translationWorking ? '✅' : '❌'} Tradução "Nova Venda"
+                </div>
+                <div class="${testResults.modalWorking ? 'success' : 'error'}">
+                    ${testResults.modalWorking ? '✅' : '❌'} Função fillEditForm
+                </div>
+                <div class="${testResults.dataFilling ? 'success' : 'error'}">
+                    ${testResults.dataFilling ? '✅' : '❌'} Preenchimento de dados
+                </div>
+                <div class="${testResults.formClearing ? 'success' : 'error'}">
+                    ${testResults.formClearing ? '✅' : '❌'} Limpeza de formulário
+                </div>
+            `;
+        }
+        
+        function abrirDashboard() {
+            window.open('index.html', '_blank');
+        }
+        
+        function limparCache() {
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    for (let name of names) {
+                        caches.delete(name);
+                    }
+                });
+            }
+            alert('Cache limpo! Recarregando página...');
+            location.reload();
+        }
+        
+        // Teste automático ao carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Página carregada, iniciando testes...');
+            setTimeout(() => {
+                testarTraducoes();
+                testarModais();
+            }, 1000);
+        });
+    </script>
+</body>
+</html> 

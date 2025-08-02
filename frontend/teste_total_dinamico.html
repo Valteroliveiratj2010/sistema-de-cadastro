@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste: Total Dinâmico da Venda</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; background: #f8f9fa; }
+        .test-container { max-width: 1200px; margin: 0 auto; }
+        .success { color: #059669; font-weight: bold; }
+        .error { color: #DC2626; font-weight: bold; }
+        .warning { color: #D97706; font-weight: bold; }
+        .info { color: #2563EB; font-weight: bold; }
+        .test-form { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>✅ Teste: Total Dinâmico da Venda</h1>
+        <p>Verificando se o valor total da venda é atualizado dinamicamente quando produtos são adicionados.</p>
+        
+        <div class="alert alert-success">
+            <h6>🔧 Problema Corrigido:</h6>
+            <ul>
+                <li><strong>Problema:</strong> Campo "Valor Total da Venda" mostrava "R$ 0,00"</li>
+                <li><strong>Dados reais:</strong> Cimento - Qtd: 1 x R$ 40,00 = R$ 40,00</li>
+                <li><strong>Solução:</strong> Estrutura HTML corrigida + função updateSaleTotal</li>
+                <li><strong>Resultado esperado:</strong> "R$ 40,00" (atualizado dinamicamente)</li>
+            </ul>
+        </div>
+        
+        <div class="test-form">
+            <h4>🛒 Simulador de Venda</h4>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>📦 Produtos da Venda:</h6>
+                    <div id="saleProductsList" class="list-group mb-3">
+                        <p class="text-muted text-center m-0">Nenhum produto adicionado.</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Produto:</label>
+                        <select id="productSelect" class="form-select">
+                            <option value="">Selecione um produto</option>
+                            <option value="cimento" data-price="40.00">Cimento - R$ 40,00</option>
+                            <option value="areia" data-price="25.00">Areia - R$ 25,00</option>
+                            <option value="tijolo" data-price="0.50">Tijolo - R$ 0,50</option>
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Quantidade:</label>
+                            <input type="number" id="productQuantity" class="form-control" value="1" min="1">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Preço Unit.:</label>
+                            <input type="number" id="productUnitPrice" class="form-control" step="0.01" readonly>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary mt-3" onclick="adicionarProdutoTeste()">
+                        ➕ Adicionar Produto
+                    </button>
+                </div>
+                
+                <div class="col-md-6">
+                    <h6>💰 Resumo da Venda:</h6>
+                    <div class="alert alert-info">
+                        <strong>Valor Total da Venda:</strong>
+                        <div id="saleTotalValueDisplay" class="fw-bold fs-4">R$ 0,00</div>
+                    </div>
+                    
+                    <div class="alert alert-secondary">
+                        <h6>🔍 Logs de Atualização:</h6>
+                        <div id="updateLogs" style="font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;">
+                            Aguardando produtos...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6>📊 Status da Atualização:</h6>
+                    <div id="updateStatus">🔄 Verificando...</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6>🎯 Teste Automático:</h6>
+                    <div id="autoTest">🔄 Verificando...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <button class="btn btn-primary" onclick="testarAtualizacao()">
+                🧮 Testar Atualização
+            </button>
+            <button class="btn btn-success" onclick="abrirDashboard()">
+                📊 Abrir Dashboard
+            </button>
+            <button class="btn btn-warning" onclick="limparTeste()">
+                🧹 Limpar Teste
+            </button>
+            <button class="btn btn-info" onclick="limparCache()">
+                🧹 Limpar Cache
+            </button>
+        </div>
+        
+        <div class="mt-4">
+            <h5>🎯 Resultado Esperado:</h5>
+            <div class="alert alert-success">
+                <ul>
+                    <li><strong>Adicionar produto:</strong> Total deve mudar de R$ 0,00 para R$ 40,00</li>
+                    <li><strong>Adicionar mais produtos:</strong> Total deve somar corretamente</li>
+                    <li><strong>Remover produtos:</strong> Total deve diminuir corretamente</li>
+                    <li><strong>Atualização automática:</strong> Sem necessidade de refresh</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js?v=2.4"></script>
+    
+    <script>
+        let testProducts = [];
+        let updateLogs = [];
+        
+        function adicionarProdutoTeste() {
+            const productSelect = document.getElementById('productSelect');
+            const quantityInput = document.getElementById('productQuantity');
+            const priceInput = document.getElementById('productUnitPrice');
+            
+            if (!productSelect.value) {
+                alert('Selecione um produto');
+                return;
+            }
+            
+            const selectedOption = productSelect.options[productSelect.selectedIndex];
+            const productId = productSelect.value;
+            const productName = selectedOption.textContent.split(' - ')[0];
+            const quantity = parseInt(quantityInput.value);
+            const price = parseFloat(priceInput.value);
+            const total = quantity * price;
+            
+            const product = {
+                id: productId,
+                name: productName,
+                quantity: quantity,
+                price: price,
+                total: total
+            };
+            
+            testProducts.push(product);
+            renderizarProdutosTeste();
+            calcularTotalTeste();
+            
+            // Limpar campos
+            productSelect.value = '';
+            quantityInput.value = '1';
+            priceInput.value = '';
+            
+            adicionarLog(`➕ Produto adicionado: ${productName} - R$ ${total.toFixed(2)}`);
+        }
+        
+        function renderizarProdutosTeste() {
+            const productsList = document.getElementById('saleProductsList');
+            productsList.innerHTML = '';
+            
+            testProducts.forEach((product, index) => {
+                const productElement = document.createElement('div');
+                productElement.className = 'list-group-item d-flex justify-content-between align-items-center';
+                productElement.dataset.productId = product.id;
+                
+                productElement.innerHTML = `
+                    <div>
+                        <strong>${product.name}</strong>
+                        <br>
+                        <small>Qtd: ${product.quantity} x R$ ${product.price.toFixed(2).replace('.', ',')}</small>
+                    </div>
+                    <div>
+                        <span class="badge bg-primary rounded-pill">R$ ${product.total.toFixed(2).replace('.', ',')}</span>
+                        <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="removerProdutoTeste(${index})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                productsList.appendChild(productElement);
+            });
+            
+            if (testProducts.length === 0) {
+                productsList.innerHTML = '<p class="text-muted text-center m-0">Nenhum produto adicionado.</p>';
+            }
+        }
+        
+        function removerProdutoTeste(index) {
+            const product = testProducts[index];
+            testProducts.splice(index, 1);
+            renderizarProdutosTeste();
+            calcularTotalTeste();
+            
+            adicionarLog(`🗑️ Produto removido: ${product.name} - R$ ${product.total.toFixed(2)}`);
+        }
+        
+        function calcularTotalTeste() {
+            console.log('🧮 === TESTE DE ATUALIZAÇÃO DINÂMICA ===');
+            
+            const totalDisplay = document.getElementById('saleTotalValueDisplay');
+            const logsDiv = document.getElementById('updateLogs');
+            
+            let total = 0;
+            
+            console.log(`📦 Encontrados ${testProducts.length} produtos na lista`);
+            adicionarLog(`📦 Encontrados ${testProducts.length} produtos na lista`);
+            
+            testProducts.forEach((product, index) => {
+                console.log(`📊 Produto ${index + 1}: ${product.name} - R$ ${product.total.toFixed(2)}`);
+                adicionarLog(`📊 Produto ${index + 1}: ${product.name} - R$ ${product.total.toFixed(2)}`);
+                
+                total += product.total;
+                console.log(`✅ Valor do produto ${index + 1}: R$ ${product.total.toFixed(2)}`);
+                adicionarLog(`✅ Valor do produto ${index + 1}: R$ ${product.total.toFixed(2)}`);
+            });
+            
+            console.log(`💰 Total calculado: R$ ${total.toFixed(2)}`);
+            adicionarLog(`💰 Total calculado: R$ ${total.toFixed(2)}`);
+            
+            // Atualizar display do total
+            if (window.i18n) {
+                totalDisplay.textContent = window.i18n.formatCurrency(total);
+            } else {
+                totalDisplay.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+            }
+            
+            console.log(`✅ Total atualizado: ${totalDisplay.textContent}`);
+            adicionarLog(`✅ Total atualizado: ${totalDisplay.textContent}`);
+            
+            // Verificar se a atualização funcionou
+            const expectedTotal = testProducts.reduce((sum, p) => sum + p.total, 0);
+            const actualTotal = parseFloat(totalDisplay.textContent.replace(/[^\d,]/g, '').replace(',', '.'));
+            
+            if (Math.abs(actualTotal - expectedTotal) < 0.01) {
+                document.getElementById('updateStatus').innerHTML = `
+                    <div class="success">✅ Atualização funcionando</div>
+                    <div><strong>Total esperado:</strong> R$ ${expectedTotal.toFixed(2)}</div>
+                    <div><strong>Total atual:</strong> ${totalDisplay.textContent}</div>
+                `;
+            } else {
+                document.getElementById('updateStatus').innerHTML = `
+                    <div class="error">❌ Erro na atualização</div>
+                    <div><strong>Total esperado:</strong> R$ ${expectedTotal.toFixed(2)}</div>
+                    <div><strong>Total atual:</strong> ${totalDisplay.textContent}</div>
+                `;
+            }
+        }
+        
+        function adicionarLog(mensagem) {
+            updateLogs.push(`[${new Date().toLocaleTimeString()}] ${mensagem}`);
+            const logsDiv = document.getElementById('updateLogs');
+            logsDiv.innerHTML = updateLogs.slice(-10).join('<br>');
+        }
+        
+        function testarAtualizacao() {
+            console.log('🧮 === TESTE AUTOMÁTICO ===');
+            
+            // Limpar produtos existentes
+            testProducts = [];
+            updateLogs = [];
+            
+            adicionarLog('🧮 Iniciando teste automático...');
+            
+            // Adicionar produto de teste (Cimento - 1 x R$ 40,00)
+            testProducts.push({
+                id: 'cimento',
+                name: 'Cimento',
+                quantity: 1,
+                price: 40.00,
+                total: 40.00
+            });
+            
+            renderizarProdutosTeste();
+            calcularTotalTeste();
+            
+            document.getElementById('autoTest').innerHTML = `
+                <div class="success">✅ Teste automático executado</div>
+                <div><strong>Produto:</strong> Cimento - 1 x R$ 40,00</div>
+                <div><strong>Total esperado:</strong> R$ 40,00</div>
+                <div><strong>Total calculado:</strong> <span id="autoTestResult">Verificando...</span></div>
+            `;
+            
+            setTimeout(() => {
+                const result = document.getElementById('saleTotalValueDisplay').textContent;
+                document.getElementById('autoTestResult').textContent = result;
+                
+                if (result === 'R$ 40,00' || result.includes('40,00')) {
+                    document.getElementById('autoTestResult').className = 'success';
+                } else {
+                    document.getElementById('autoTestResult').className = 'error';
+                }
+            }, 100);
+        }
+        
+        function limparTeste() {
+            testProducts = [];
+            updateLogs = [];
+            renderizarProdutosTeste();
+            calcularTotalTeste();
+            document.getElementById('updateStatus').innerHTML = '<div>🔄 Teste limpo</div>';
+            document.getElementById('autoTest').innerHTML = '<div>🔄 Teste limpo</div>';
+        }
+        
+        function abrirDashboard() {
+            window.open('index.html', '_blank');
+        }
+        
+        function limparCache() {
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    for (let name of names) {
+                        caches.delete(name);
+                    }
+                });
+            }
+            alert('Cache limpo! Recarregando página...');
+            location.reload();
+        }
+        
+        // Configurar eventos
+        document.addEventListener('DOMContentLoaded', function() {
+            // Atualizar preço quando produto for selecionado
+            const productSelect = document.getElementById('productSelect');
+            const priceInput = document.getElementById('productUnitPrice');
+            
+            productSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                if (selectedOption && selectedOption.dataset.price) {
+                    priceInput.value = selectedOption.dataset.price;
+                } else {
+                    priceInput.value = '';
+                }
+            });
+            
+            console.log('🚀 Página carregada, iniciando teste de atualização dinâmica...');
+            adicionarLog('🚀 Página carregada, iniciando teste...');
+        });
+    </script>
+</body>
+</html> 

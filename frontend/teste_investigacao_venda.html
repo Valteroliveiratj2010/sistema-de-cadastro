@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste: Investigação da Venda 18/07/2025</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; background: #f8f9fa; }
+        .test-container { max-width: 1200px; margin: 0 auto; }
+        .success { color: #059669; font-weight: bold; }
+        .error { color: #DC2626; font-weight: bold; }
+        .warning { color: #D97706; font-weight: bold; }
+        .info { color: #2563EB; font-weight: bold; }
+        .test-form { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card-status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .card-success { background: #d1fae5; border: 1px solid #10b981; }
+        .card-error { background: #fee2e2; border: 1px solid #ef4444; }
+        .card-warning { background: #fef3c7; border: 1px solid #f59e0b; }
+        .data-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        .data-table th, .data-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .data-table th { background-color: #f2f2f2; }
+        .target-sale { background-color: #fef3c7; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔍 Teste: Investigação da Venda 18/07/2025</h1>
+        <p>Investigando por que a venda com vencimento 18/07/2025 não aparece no card de vendas vencidas.</p>
+        
+        <div class="alert alert-warning">
+            <h6>🎯 Problema Identificado:</h6>
+            <ul>
+                <li><strong>Venda criada:</strong> Vencimento 18/07/2025, Status: Pendente</li>
+                <li><strong>Problema:</strong> Não aparece no card de vendas vencidas</li>
+                <li><strong>Data atual:</strong> Agosto 2025 (data passada)</li>
+                <li><strong>Status:</strong> Pendente (deveria aparecer como vencida)</li>
+            </ul>
+        </div>
+        
+        <div class="test-form">
+            <h4>🔍 Análise Detalhada</h4>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>📅 Verificação de Data</h6>
+                    <div id="dateCheckStatus">
+                        <div class="card-status card-warning">
+                            <strong>Status:</strong> <span id="dateCheckStatusText">🔄 Verificando...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <h6>📋 Verificação de Filtro</h6>
+                    <div id="filterCheckStatus">
+                        <div class="card-status card-warning">
+                            <strong>Status:</strong> <span id="filterCheckStatusText">🔄 Verificando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <h6>📊 Logs de Investigação:</h6>
+                <div id="investigationLogs" style="font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto; background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                    Aguardando carregamento...
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <h6>📋 Todas as Vendas da API:</h6>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Cliente</th>
+                            <th>Valor</th>
+                            <th>Vencimento</th>
+                            <th>Status</th>
+                            <th>Data Criação</th>
+                            <th>Classificação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="salesTable">
+                        <tr><td colspan="7">Aguardando dados...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6>📊 Status da Investigação:</h6>
+                    <div id="investigationStatus">🔄 Verificando...</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6>🎯 Resultado:</h6>
+                    <div id="investigationResult">🔄 Verificando...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <button class="btn btn-primary" onclick="investigarVenda()">
+                🔍 Investigar Venda
+            </button>
+            <button class="btn btn-success" onclick="abrirDashboard()">
+                📊 Abrir Dashboard
+            </button>
+            <button class="btn btn-warning" onclick="limparTeste()">
+                🧹 Limpar Teste
+            </button>
+        </div>
+        
+        <div class="mt-4">
+            <h5>🎯 Lógica Esperada:</h5>
+            <div class="alert alert-success">
+                <ul>
+                    <li><strong>Vencimento 18/07/2025:</strong> Data passada (Julho 2025)</li>
+                    <li><strong>Status Pendente:</strong> Não foi paga</li>
+                    <li><strong>Resultado esperado:</strong> Deve aparecer no card de vendas vencidas</li>
+                    <li><strong>Filtro:</strong> dueDate < hoje AND status !== 'pago'</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js?v=3.4"></script>
+    
+    <script>
+        let investigationLogs = [];
+        
+        function adicionarLog(mensagem) {
+            investigationLogs.push(mensagem);
+            const logsDiv = document.getElementById('investigationLogs');
+            logsDiv.innerHTML = investigationLogs.slice(-20).join('<br>');
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        function atualizarStatus(cardId, status, tipo = 'warning') {
+            const element = document.getElementById(cardId);
+            if (element) {
+                element.textContent = status;
+                element.className = `card-status card-${tipo}`;
+            }
+        }
+        
+        async function investigarVenda() {
+            console.log('🔍 === INVESTIGAÇÃO DA VENDA 18/07/2025 ===');
+            adicionarLog('🔍 Iniciando investigação da venda 18/07/2025...');
+            
+            try {
+                // Carregar todas as vendas da API
+                adicionarLog('📊 Carregando vendas da API...');
+                const salesResponse = await api.get('/sales', { limit: 1000 });
+                adicionarLog(`📊 Resposta da API: ${JSON.stringify(salesResponse).substring(0, 200)}...`);
+                
+                if (salesResponse && (salesResponse.sales || salesResponse.data || Array.isArray(salesResponse))) {
+                    const sales = salesResponse.sales || salesResponse.data || salesResponse;
+                    adicionarLog(`📋 ${sales.length} vendas carregadas da API`);
+                    
+                    // Verificar data atual
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    adicionarLog(`📅 Data atual: ${today.toISOString().split('T')[0]}`);
+                    
+                    // Procurar pela venda com vencimento 18/07/2025
+                    const targetSale = sales.find(sale => {
+                        const dueDate = sale.vencimento || sale.dueDate || sale.dataVencimento || sale.due_date;
+                        return dueDate && dueDate.includes('2025-07-18');
+                    });
+                    
+                    if (targetSale) {
+                        adicionarLog(`🎯 Venda encontrada: ID ${targetSale.id}`);
+                        adicionarLog(`📅 Vencimento: ${targetSale.vencimento || targetSale.dueDate || targetSale.dataVencimento || targetSale.due_date}`);
+                        adicionarLog(`📋 Status: ${targetSale.status || targetSale.situacao || targetSale.estado}`);
+                        
+                        // Aplicar lógica de filtro
+                        const dueDate = targetSale.vencimento || targetSale.dueDate || targetSale.dataVencimento || targetSale.due_date;
+                        const status = targetSale.status || targetSale.situacao || targetSale.estado;
+                        
+                        if (dueDate) {
+                            const dueDateObj = new Date(dueDate);
+                            dueDateObj.setHours(0, 0, 0, 0);
+                            
+                            const isOverdue = dueDateObj < today && status !== 'pago' && status !== 'paid' && status !== 'Pago';
+                            adicionarLog(`🔍 Análise: dueDate=${dueDate}, dueDateObj=${dueDateObj.toISOString().split('T')[0]}, today=${today.toISOString().split('T')[0]}`);
+                            adicionarLog(`🔍 Resultado: dueDateObj < today = ${dueDateObj < today}, status !== 'pago' = ${status !== 'pago' && status !== 'paid' && status !== 'Pago'}`);
+                            adicionarLog(`🔍 isOverdue = ${isOverdue}`);
+                            
+                            if (isOverdue) {
+                                atualizarStatus('dateCheckStatusText', '✅ Data passada - deveria aparecer', 'success');
+                                atualizarStatus('filterCheckStatusText', '✅ Filtro correto - deveria aparecer', 'success');
+                            } else {
+                                atualizarStatus('dateCheckStatusText', '❌ Problema na data', 'error');
+                                atualizarStatus('filterCheckStatusText', '❌ Problema no filtro', 'error');
+                            }
+                        } else {
+                            adicionarLog('❌ Venda não tem campo de vencimento');
+                            atualizarStatus('dateCheckStatusText', '❌ Sem campo de vencimento', 'error');
+                        }
+                    } else {
+                        adicionarLog('❌ Venda com vencimento 18/07/2025 não encontrada');
+                        atualizarStatus('dateCheckStatusText', '❌ Venda não encontrada', 'error');
+                    }
+                    
+                    // Mostrar todas as vendas na tabela
+                    const tableBody = document.getElementById('salesTable');
+                    tableBody.innerHTML = '';
+                    
+                    sales.forEach(sale => {
+                        const row = document.createElement('tr');
+                        const dueDate = sale.vencimento || sale.dueDate || sale.dataVencimento || sale.due_date;
+                        const status = sale.status || sale.situacao || sale.estado;
+                        const createdAt = sale.createdAt || sale.dataCriacao || sale.created_at || sale.data;
+                        
+                        // Verificar se é a venda alvo
+                        const isTarget = dueDate && dueDate.includes('2025-07-18');
+                        if (isTarget) {
+                            row.className = 'target-sale';
+                        }
+                        
+                        // Aplicar lógica de classificação
+                        let classification = 'Não classificada';
+                        if (dueDate) {
+                            const dueDateObj = new Date(dueDate);
+                            dueDateObj.setHours(0, 0, 0, 0);
+                            const isOverdue = dueDateObj < today && status !== 'pago' && status !== 'paid' && status !== 'Pago';
+                            classification = isOverdue ? 'Vencida' : 'Próxima';
+                        } else if (status === 'Pendente' || status === 'pendente' || status === 'pending') {
+                            classification = 'Pendente';
+                        }
+                        
+                        row.innerHTML = `
+                            <td>${sale.id}</td>
+                            <td>${sale.cliente ? (typeof sale.cliente === 'object' ? sale.cliente.nome : sale.cliente) : 'N/A'}</td>
+                            <td>R$ ${(sale.valorTotal || sale.totalValue || sale.valor || 0).toFixed(2)}</td>
+                            <td>${dueDate || 'N/A'}</td>
+                            <td>${status || 'N/A'}</td>
+                            <td>${createdAt || 'N/A'}</td>
+                            <td>${classification}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                    
+                    // Atualizar status da investigação
+                    const targetFound = targetSale !== undefined;
+                    const shouldAppear = targetSale && dueDate && isOverdue;
+                    
+                    document.getElementById('investigationStatus').innerHTML = `
+                        <div class="${targetFound ? 'success' : 'error'}">${targetFound ? '✅' : '❌'} Venda encontrada</div>
+                        <div><strong>Vencimento:</strong> ${targetSale ? (targetSale.vencimento || targetSale.dueDate || targetSale.dataVencimento || targetSale.due_date) : 'N/A'}</div>
+                        <div><strong>Status:</strong> ${targetSale ? (targetSale.status || targetSale.situacao || targetSale.estado) : 'N/A'}</div>
+                    `;
+                    
+                    if (shouldAppear) {
+                        document.getElementById('investigationResult').innerHTML = `
+                            <div class="success">✅ Venda deveria aparecer no card</div>
+                            <div><strong>Problema:</strong> Possível bug na lógica de filtro</div>
+                            <div><strong>Solução:</strong> Verificar implementação do filtro</div>
+                        `;
+                        adicionarLog('✅ Venda deveria aparecer no card de vendas vencidas');
+                    } else {
+                        document.getElementById('investigationResult').innerHTML = `
+                            <div class="error">❌ Venda não deveria aparecer</div>
+                            <div><strong>Motivo:</strong> Não atende aos critérios do filtro</div>
+                            <div><strong>Verificar:</strong> Data de vencimento e status</div>
+                        `;
+                        adicionarLog('❌ Venda não atende aos critérios do filtro');
+                    }
+                    
+                } else {
+                    adicionarLog('❌ Resposta inválida da API');
+                    atualizarStatus('dateCheckStatusText', '❌ Erro na API', 'error');
+                }
+                
+                adicionarLog('✅ Investigação concluída');
+                
+            } catch (error) {
+                console.error('❌ Erro na investigação:', error);
+                adicionarLog(`❌ Erro na investigação: ${error.message}`);
+                
+                document.getElementById('investigationStatus').innerHTML = `
+                    <div class="error">❌ Erro na investigação</div>
+                    <div><strong>Erro:</strong> ${error.message}</div>
+                `;
+            }
+        }
+        
+        function limparTeste() {
+            investigationLogs = [];
+            document.getElementById('investigationLogs').innerHTML = 'Aguardando carregamento...';
+            document.getElementById('salesTable').innerHTML = '<tr><td colspan="7">Aguardando dados...</td></tr>';
+            
+            // Resetar status dos cards
+            const statusElements = [
+                'dateCheckStatusText', 'filterCheckStatusText'
+            ];
+            
+            statusElements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = '🔄 Verificando...';
+                    element.className = 'card-status card-warning';
+                }
+            });
+            
+            document.getElementById('investigationStatus').innerHTML = '<div>🔄 Teste limpo</div>';
+            document.getElementById('investigationResult').innerHTML = '<div>🔄 Teste limpo</div>';
+        }
+        
+        function abrirDashboard() {
+            window.open('index.html', '_blank');
+        }
+        
+        // Configurar eventos
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Página carregada, iniciando investigação...');
+            adicionarLog('🚀 Página carregada, iniciando investigação...');
+            
+            // Executar investigação automática após 2 segundos
+            setTimeout(() => {
+                investigarVenda();
+            }, 2000);
+        });
+    </script>
+</body>
+</html> 

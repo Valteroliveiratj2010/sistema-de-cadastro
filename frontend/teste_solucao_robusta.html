@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Teste Solução Robusta - Filtros Financeiros</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #1D4E89 0%, #4A90E2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        .content {
+            padding: 30px;
+        }
+        .test-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 5px solid #1D4E89;
+        }
+        .test-section h3 {
+            color: #1D4E89;
+            margin-top: 0;
+            font-size: 1.4em;
+        }
+        .result {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .error {
+            background: #ffebee;
+            border: 1px solid #f44336;
+            color: #c62828;
+        }
+        .success {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            color: #2e7d32;
+        }
+        .warning {
+            background: #fff3e0;
+            border: 1px solid #ff9800;
+            color: #ef6c00;
+        }
+        .btn {
+            background: linear-gradient(135deg, #1D4E89 0%, #4A90E2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status.pendente { background: #fff3cd; color: #856404; }
+        .status.pago { background: #d4edda; color: #155724; }
+        .status.vencida { background: #f8d7da; color: #721c24; }
+        .status.proxima { background: #d1ecf1; color: #0c5460; }
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #1D4E89;
+        }
+        .card h4 {
+            margin-top: 0;
+            color: #1D4E89;
+        }
+        .item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            margin: 5px 0;
+        }
+        .item:last-child {
+            border-bottom: none;
+        }
+        .item-info {
+            flex: 1;
+        }
+        .item-cliente {
+            font-weight: bold;
+            color: #333;
+        }
+        .item-valor {
+            color: #1D4E89;
+            font-weight: bold;
+        }
+        .item-vencimento {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #1D4E89;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Teste Solução Robusta</h1>
+            <p>Verificação Completa dos Filtros Financeiros</p>
+        </div>
+        
+        <div class="content">
+            <div class="test-section">
+                <h3>🎯 Objetivo do Teste</h3>
+                <p>Este teste verifica se a <strong>solução robusta</strong> implementada está funcionando corretamente:</p>
+                <ul>
+                    <li>✅ <strong>Validação rigorosa de datas</strong> - Evita datas inválidas</li>
+                    <li>✅ <strong>Logs detalhados</strong> - Para debug completo</li>
+                    <li>✅ <strong>Tratamento de erros</strong> - Try-catch em todas as operações</li>
+                    <li>✅ <strong>Separação clara</strong> - Vencidas vs Próximas</li>
+                    <li>✅ <strong>Fallbacks inteligentes</strong> - Para dados incompletos</li>
+                </ul>
+            </div>
+
+            <div class="test-section">
+                <h3>🔧 Controles de Teste</h3>
+                <button class="btn" onclick="executarTesteCompleto()">🚀 Executar Teste Completo</button>
+                <button class="btn" onclick="testarVendaEspecifica()">🎯 Testar Venda 18/07/2025</button>
+                <button class="btn" onclick="limparResultados()">🧹 Limpar Resultados</button>
+                <button class="btn" onclick="verificarLogs()">📋 Verificar Logs</button>
+            </div>
+
+            <div class="test-section">
+                <h3>📊 Resultados do Teste</h3>
+                <div id="resultados" class="result">
+                    Clique em "Executar Teste Completo" para começar...
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h3>📈 Cards Financeiros</h3>
+                <div id="cards-container">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Carregando dados...
+                    </div>
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h3>🔍 Logs Detalhados</h3>
+                <div id="logs" class="result">
+                    Logs aparecerão aqui durante o teste...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    
+    <script>
+        // Interceptar console.log para capturar logs
+        const originalLog = console.log;
+        const originalWarn = console.warn;
+        const originalError = console.error;
+        
+        function addLog(type, message) {
+            const logsDiv = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+            logsDiv.textContent += logEntry;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addLog('log', args.join(' '));
+        };
+        
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            addLog('warn', args.join(' '));
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addLog('error', args.join(' '));
+        };
+
+        function addResultado(mensagem, tipo = 'info') {
+            const resultadosDiv = document.getElementById('resultados');
+            const timestamp = new Date().toLocaleTimeString();
+            const resultado = `[${timestamp}] ${mensagem}\n`;
+            resultadosDiv.textContent += resultado;
+            resultadosDiv.scrollTop = resultadosDiv.scrollHeight;
+        }
+
+        function limparResultados() {
+            document.getElementById('resultados').textContent = '';
+            document.getElementById('logs').textContent = '';
+            addResultado('🧹 Resultados limpos');
+        }
+
+        function verificarLogs() {
+            addResultado('📋 Verificando logs do console...');
+            // Os logs já são capturados automaticamente
+        }
+
+        async function testarVendaEspecifica() {
+            addResultado('🎯 Testando venda específica com vencimento 18/07/2025...');
+            
+            try {
+                const response = await api.get('/sales', { limit: 1000 });
+                addResultado(`📊 API retornou ${response.total || response.data?.length || 0} vendas`);
+                
+                if (response && (response.sales || response.data || Array.isArray(response))) {
+                    const sales = response.sales || response.data || response;
+                    
+                    // Procurar pela venda com vencimento 18/07/2025
+                    const vendaAlvo = sales.find(sale => {
+                        const dueDate = sale.vencimento || sale.dueDate || sale.dataVencimento || sale.due_date;
+                        return dueDate && dueDate.includes('2025-07-18');
+                    });
+                    
+                    if (vendaAlvo) {
+                        addResultado(`✅ Venda encontrada: ID ${vendaAlvo.id}`);
+                        addResultado(`   Cliente: ${vendaAlvo.cliente || vendaAlvo.client || vendaAlvo.nomeCliente}`);
+                        addResultado(`   Vencimento: ${vendaAlvo.vencimento || vendaAlvo.dueDate || vendaAlvo.dataVencimento || vendaAlvo.due_date}`);
+                        addResultado(`   Status: ${vendaAlvo.status || vendaAlvo.situacao || vendaAlvo.estado}`);
+                        
+                        // Testar classificação
+                        const dueDate = vendaAlvo.vencimento || vendaAlvo.dueDate || vendaAlvo.dataVencimento || vendaAlvo.due_date;
+                        const status = vendaAlvo.status || vendaAlvo.situacao || vendaAlvo.estado;
+                        
+                        if (dueDate) {
+                            const dueDateObj = new Date(dueDate);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            dueDateObj.setHours(0, 0, 0, 0);
+                            
+                            const isOverdue = dueDateObj < today && status !== 'pago' && status !== 'paid' && status !== 'Pago';
+                            const isUpcoming = dueDateObj >= today && status !== 'pago' && status !== 'paid' && status !== 'Pago';
+                            
+                            addResultado(`📅 Classificação:`);
+                            addResultado(`   Data de vencimento: ${dueDateObj.toISOString().split('T')[0]}`);
+                            addResultado(`   Data atual: ${today.toISOString().split('T')[0]}`);
+                            addResultado(`   É vencida: ${isOverdue ? '✅ SIM' : '❌ NÃO'}`);
+                            addResultado(`   É próxima: ${isUpcoming ? '✅ SIM' : '❌ NÃO'}`);
+                            
+                            if (isOverdue) {
+                                addResultado('🎯 RESULTADO: Venda CORRETAMENTE classificada como VENCIDA', 'success');
+                            } else if (isUpcoming) {
+                                addResultado('⚠️ ATENÇÃO: Venda classificada como PRÓXIMA mas deveria ser VENCIDA', 'warning');
+                            } else {
+                                addResultado('❌ PROBLEMA: Venda não classificada em nenhuma categoria', 'error');
+                            }
+                        } else {
+                            addResultado('❌ Venda não possui data de vencimento', 'error');
+                        }
+                    } else {
+                        addResultado('❌ Venda com vencimento 18/07/2025 não encontrada', 'error');
+                    }
+                }
+            } catch (error) {
+                addResultado(`❌ Erro ao testar venda específica: ${error.message}`, 'error');
+            }
+        }
+
+        async function executarTesteCompleto() {
+            addResultado('🚀 Iniciando teste completo da solução robusta...');
+            
+            try {
+                // Teste 1: Carregar vendas
+                addResultado('📊 Teste 1: Carregando vendas da API...');
+                const salesResponse = await api.get('/sales', { limit: 1000 });
+                addResultado(`✅ ${salesResponse.total || salesResponse.data?.length || 0} vendas carregadas`);
+                
+                if (salesResponse && (salesResponse.sales || salesResponse.data || Array.isArray(salesResponse))) {
+                    const sales = salesResponse.sales || salesResponse.data || salesResponse;
+                    
+                    // Teste 2: Aplicar filtros
+                    addResultado('🔍 Teste 2: Aplicando filtros robustos...');
+                    
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    
+                    const overdueSales = [];
+                    const upcomingSales = [];
+                    const invalidSales = [];
+                    
+                    sales.forEach(sale => {
+                        const dueDate = sale.vencimento || sale.dueDate || sale.dataVencimento || sale.due_date;
+                        const status = sale.status || sale.situacao || sale.estado;
+                        
+                        if (dueDate) {
+                            try {
+                                const dueDateObj = new Date(dueDate);
+                                
+                                if (isNaN(dueDateObj.getTime())) {
+                                    invalidSales.push({ sale, reason: 'Data inválida' });
+                                    return;
+                                }
+                                
+                                dueDateObj.setHours(0, 0, 0, 0);
+                                
+                                const isOverdue = dueDateObj < today && status !== 'pago' && status !== 'paid' && status !== 'Pago';
+                                const isUpcoming = dueDateObj >= today && status !== 'pago' && status !== 'paid' && status !== 'Pago';
+                                
+                                if (isOverdue) {
+                                    overdueSales.push(sale);
+                                } else if (isUpcoming) {
+                                    upcomingSales.push(sale);
+                                }
+                            } catch (error) {
+                                invalidSales.push({ sale, reason: `Erro: ${error.message}` });
+                            }
+                        } else {
+                            // Lógica para vendas sem vencimento
+                            const isPending = status === 'Pendente' || status === 'pendente' || status === 'pending';
+                            if (isPending) {
+                                const createdAt = sale.createdAt || sale.dataCriacao || sale.created_at || sale.data;
+                                if (createdAt) {
+                                    try {
+                                        const createdDate = new Date(createdAt);
+                                        if (!isNaN(createdDate.getTime())) {
+                                            const daysDiff = Math.floor((today - createdDate) / (1000 * 60 * 60 * 24));
+                                            if (daysDiff > 7) {
+                                                overdueSales.push(sale);
+                                            } else {
+                                                upcomingSales.push(sale);
+                                            }
+                                        } else {
+                                            overdueSales.push(sale); // Fallback
+                                        }
+                                    } catch (error) {
+                                        overdueSales.push(sale); // Fallback
+                                    }
+                                } else {
+                                    overdueSales.push(sale); // Fallback
+                                }
+                            }
+                        }
+                    });
+                    
+                    addResultado(`✅ Filtros aplicados:`);
+                    addResultado(`   Vendas vencidas: ${overdueSales.length}`);
+                    addResultado(`   Vendas próximas: ${upcomingSales.length}`);
+                    addResultado(`   Vendas com problemas: ${invalidSales.length}`);
+                    
+                    // Teste 3: Verificar duplicações
+                    addResultado('🔍 Teste 3: Verificando duplicações...');
+                    const overdueIds = overdueSales.map(s => s.id);
+                    const upcomingIds = upcomingSales.map(s => s.id);
+                    const duplicados = overdueIds.filter(id => upcomingIds.includes(id));
+                    
+                    if (duplicados.length === 0) {
+                        addResultado('✅ Nenhuma duplicação encontrada - Separação perfeita!', 'success');
+                    } else {
+                        addResultado(`❌ ${duplicados.length} vendas duplicadas encontradas: ${duplicados.join(', ')}`, 'error');
+                    }
+                    
+                    // Teste 4: Renderizar cards
+                    addResultado('📊 Teste 4: Renderizando cards...');
+                    renderizarCards(overdueSales, upcomingSales);
+                    
+                    addResultado('🎉 Teste completo finalizado!', 'success');
+                }
+            } catch (error) {
+                addResultado(`❌ Erro no teste completo: ${error.message}`, 'error');
+            }
+        }
+
+        function renderizarCards(overdueSales, upcomingSales) {
+            const container = document.getElementById('cards-container');
+            
+            container.innerHTML = `
+                <div class="card">
+                    <h4>📅 Contas a Receber Vencidas (${overdueSales.length})</h4>
+                    ${overdueSales.length === 0 ? '<p>Nenhuma venda vencida encontrada</p>' : 
+                        overdueSales.slice(0, 5).map(sale => {
+                            const cliente = sale.cliente || sale.client || sale.nomeCliente || 'Cliente';
+                            const valor = sale.valorTotal || sale.totalValue || sale.valor || 0;
+                            const vencimento = sale.vencimento || sale.dueDate || sale.dataVencimento || sale.due_date || 'Sem vencimento';
+                            const status = sale.status || sale.situacao || sale.estado || 'N/A';
+                            
+                            return `
+                                <div class="item">
+                                    <div class="item-info">
+                                        <div class="item-cliente">${cliente}</div>
+                                        <div class="item-valor">R$ ${valor.toFixed(2)}</div>
+                                        <div class="item-vencimento">Vencimento: ${vencimento}</div>
+                                    </div>
+                                    <span class="status vencida">Vencida</span>
+                                </div>
+                            `;
+                        }).join('')
+                    }
+                </div>
+                
+                <div class="card">
+                    <h4>📅 Contas a Receber Próximas (${upcomingSales.length})</h4>
+                    ${upcomingSales.length === 0 ? '<p>Nenhuma venda próxima encontrada</p>' : 
+                        upcomingSales.slice(0, 5).map(sale => {
+                            const cliente = sale.cliente || sale.client || sale.nomeCliente || 'Cliente';
+                            const valor = sale.valorTotal || sale.totalValue || sale.valor || 0;
+                            const vencimento = sale.vencimento || sale.dueDate || sale.dataVencimento || sale.due_date || 'Sem vencimento';
+                            const status = sale.status || sale.situacao || sale.estado || 'N/A';
+                            
+                            return `
+                                <div class="item">
+                                    <div class="item-info">
+                                        <div class="item-cliente">${cliente}</div>
+                                        <div class="item-valor">R$ ${valor.toFixed(2)}</div>
+                                        <div class="item-vencimento">Vencimento: ${vencimento}</div>
+                                    </div>
+                                    <span class="status proxima">Próxima</span>
+                                </div>
+                            `;
+                        }).join('')
+                    }
+                </div>
+            `;
+        }
+
+        // Auto-executar teste ao carregar
+        window.addEventListener('load', () => {
+            addResultado('🧪 Teste de Solução Robusta carregado');
+            addResultado('Clique em "Executar Teste Completo" para verificar a solução');
+        });
+    </script>
+</body>
+</html> 

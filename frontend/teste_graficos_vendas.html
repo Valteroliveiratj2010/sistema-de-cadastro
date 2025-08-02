@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste: Investigação dos Gráficos de Vendas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="style.css?v=2.0" rel="stylesheet">
+    <style>
+        body { padding: 20px; background: #f8f9fa; }
+        .test-container { max-width: 1200px; margin: 0 auto; }
+        .status-success { color: #059669; font-weight: bold; }
+        .status-error { color: #DC2626; font-weight: bold; }
+        .status-warning { color: #D97706; font-weight: bold; }
+        .chart-container { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔍 Teste: Investigação dos Gráficos de Vendas</h1>
+        <p>Investigando por que os gráficos não estão aparecendo mesmo com vendas realizadas.</p>
+        
+        <div class="alert alert-info">
+            <h6>📋 Problemas Possíveis:</h6>
+            <ul>
+                <li><strong>API não retorna dados de vendas</strong> para o gráfico</li>
+                <li><strong>Formato de dados incorreto</strong> na resposta da API</li>
+                <li><strong>Processamento de datas</strong> incorreto</li>
+                <li><strong>Elemento canvas</strong> não encontrado</li>
+                <li><strong>Chart.js</strong> não carregado</li>
+            </ul>
+        </div>
+        
+        <div class="chart-container">
+            <h4>📊 Gráfico de Teste</h4>
+            <canvas id="testChart" height="300"></canvas>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="alert alert-secondary">
+                    <h6>🌐 Dados da API Dashboard:</h6>
+                    <div id="apiData">🔄 Carregando...</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="alert alert-secondary">
+                    <h6>📈 Dados de Vendas:</h6>
+                    <div id="salesData">🔄 Carregando...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="alert alert-secondary">
+            <h6>🔍 Logs de Debug:</h6>
+            <div id="debugLogs">🔄 Iniciando investigação...</div>
+        </div>
+        
+        <div class="mt-4">
+            <button class="btn btn-primary" onclick="investigarGraficos()">
+                🔍 Investigar Gráficos
+            </button>
+            <button class="btn btn-success" onclick="testarDadosSimulados()">
+                🧪 Testar Dados Simulados
+            </button>
+            <button class="btn btn-warning" onclick="testarAPI()">
+                🌐 Testar API
+            </button>
+            <button class="btn btn-info" onclick="verificarElementos()">
+                🔍 Verificar Elementos
+            </button>
+        </div>
+        
+        <div class="mt-4">
+            <h5>📋 Instruções para Teste:</h5>
+            <div class="alert alert-warning">
+                <ol>
+                    <li><strong>Clique em "Investigação dos Gráficos"</strong> para análise completa</li>
+                    <li><strong>Verifique os logs de debug</strong> para identificar problemas</li>
+                    <li><strong>Teste com dados simulados</strong> para verificar se o gráfico funciona</li>
+                    <li><strong>Confirme se a API retorna dados</strong> de vendas</li>
+                    <li><strong>Verifique se o elemento canvas</strong> está presente</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/i18n/i18n.js"></script>
+    <script src="js/app.js?v=1.5"></script>
+    
+    <script>
+        let debugLogs = [];
+        
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            debugLogs.push({ message: logEntry, type });
+            console.log(logEntry);
+            updateDebugLogs();
+        }
+        
+        function updateDebugLogs() {
+            const container = document.getElementById('debugLogs');
+            let html = '<div style="max-height: 300px; overflow-y: auto;">';
+            
+            debugLogs.forEach(log => {
+                const color = log.type === 'error' ? 'red' : log.type === 'success' ? 'green' : log.type === 'warning' ? 'orange' : 'black';
+                html += `<div style="color: ${color}; font-family: monospace; font-size: 12px; margin: 2px 0;">${log.message}</div>`;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        async function investigarGraficos() {
+            addLog('🔍 Iniciando investigação dos gráficos...', 'info');
+            
+            // 1. Verificar se Chart.js está carregado
+            if (typeof Chart === 'undefined') {
+                addLog('❌ Chart.js não está carregado!', 'error');
+                return;
+            } else {
+                addLog('✅ Chart.js carregado com sucesso', 'success');
+            }
+            
+            // 2. Verificar elemento canvas
+            const canvas = document.getElementById('testChart');
+            if (!canvas) {
+                addLog('❌ Elemento canvas não encontrado!', 'error');
+                return;
+            } else {
+                addLog('✅ Elemento canvas encontrado', 'success');
+            }
+            
+            // 3. Testar API dashboard
+            try {
+                addLog('🌐 Testando API dashboard...', 'info');
+                const response = await api.get('/dashboard/stats');
+                addLog(`📊 Resposta da API: ${JSON.stringify(response).substring(0, 200)}...`, 'info');
+                
+                document.getElementById('apiData').innerHTML = `<pre>${JSON.stringify(response, null, 2)}</pre>`;
+                
+                // 4. Verificar dados de vendas
+                if (response && response.sales) {
+                    addLog(`✅ Dados de vendas encontrados: ${response.sales.length} registros`, 'success');
+                    document.getElementById('salesData').innerHTML = `<pre>${JSON.stringify(response.sales, null, 2)}</pre>`;
+                } else if (response && response.vendas) {
+                    addLog(`✅ Dados de vendas encontrados: ${response.vendas.length} registros`, 'success');
+                    document.getElementById('salesData').innerHTML = `<pre>${JSON.stringify(response.vendas, null, 2)}</pre>`;
+                } else {
+                    addLog('⚠️ Nenhum dado de vendas encontrado na API', 'warning');
+                    document.getElementById('salesData').innerHTML = '<div class="text-warning">Nenhum dado de vendas encontrado</div>';
+                }
+                
+                // 5. Testar renderização do gráfico
+                testarRenderizacaoGrafico(response);
+                
+            } catch (error) {
+                addLog(`❌ Erro na API: ${error.message}`, 'error');
+                document.getElementById('apiData').innerHTML = `<div class="text-danger">Erro: ${error.message}</div>`;
+            }
+        }
+        
+        function testarRenderizacaoGrafico(data) {
+            addLog('📈 Testando renderização do gráfico...', 'info');
+            
+            try {
+                // Destruir gráfico existente
+                if (window.testChart) {
+                    window.testChart.destroy();
+                }
+                
+                // Processar dados
+                const currentYear = new Date().getFullYear();
+                const previousYear = currentYear - 1;
+                let salesCurrentYear = new Array(12).fill(0);
+                let salesPreviousYear = new Array(12).fill(0);
+                
+                if (data && data.sales && Array.isArray(data.sales)) {
+                    addLog(`📊 Processando ${data.sales.length} vendas...`, 'info');
+                    
+                    data.sales.forEach((sale, index) => {
+                        const saleDate = new Date(sale.date || sale.createdAt || sale.data_venda);
+                        const saleYear = saleDate.getFullYear();
+                        const saleMonth = saleDate.getMonth();
+                        const saleValue = parseFloat(sale.total || sale.valor_total || sale.amount || 0);
+                        
+                        addLog(`Venda ${index + 1}: Data=${saleDate.toLocaleDateString()}, Valor=${saleValue}`, 'info');
+                        
+                        if (saleYear === currentYear) {
+                            salesCurrentYear[saleMonth] += saleValue;
+                        } else if (saleYear === previousYear) {
+                            salesPreviousYear[saleMonth] += saleValue;
+                        }
+                    });
+                } else if (data && data.vendas && Array.isArray(data.vendas)) {
+                    addLog(`📊 Processando ${data.vendas.length} vendas...`, 'info');
+                    
+                    data.vendas.forEach((sale, index) => {
+                        const saleDate = new Date(sale.date || sale.createdAt || sale.data_venda);
+                        const saleYear = saleDate.getFullYear();
+                        const saleMonth = saleDate.getMonth();
+                        const saleValue = parseFloat(sale.total || sale.valor_total || sale.amount || 0);
+                        
+                        addLog(`Venda ${index + 1}: Data=${saleDate.toLocaleDateString()}, Valor=${saleValue}`, 'info');
+                        
+                        if (saleYear === currentYear) {
+                            salesCurrentYear[saleMonth] += saleValue;
+                        } else if (saleYear === previousYear) {
+                            salesPreviousYear[saleMonth] += saleValue;
+                        }
+                    });
+                }
+                
+                addLog(`📈 Dados processados - Ano atual: ${salesCurrentYear.join(', ')}`, 'info');
+                addLog(`📈 Dados processados - Ano anterior: ${salesPreviousYear.join(', ')}`, 'info');
+                
+                // Criar gráfico
+                const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                
+                window.testChart = new Chart(document.getElementById('testChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: `Vendas ${previousYear}`,
+                            data: salesPreviousYear,
+                            backgroundColor: '#1D4E89',
+                            borderColor: '#1D4E89',
+                            borderWidth: 2,
+                            borderRadius: 8,
+                        }, {
+                            label: `Vendas ${currentYear}`,
+                            data: salesCurrentYear,
+                            backgroundColor: '#4A90E2',
+                            borderColor: '#4A90E2',
+                            borderWidth: 2,
+                            borderRadius: 8,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return 'R$ ' + value.toFixed(2);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                addLog('✅ Gráfico renderizado com sucesso!', 'success');
+                
+            } catch (error) {
+                addLog(`❌ Erro ao renderizar gráfico: ${error.message}`, 'error');
+            }
+        }
+        
+        function testarDadosSimulados() {
+            addLog('🧪 Testando com dados simulados...', 'info');
+            
+            const dadosSimulados = {
+                sales: [
+                    { date: '2024-01-15', total: 1500.50 },
+                    { date: '2024-02-20', total: 2300.75 },
+                    { date: '2024-03-10', total: 1800.25 },
+                    { date: '2024-04-05', total: 3200.00 },
+                    { date: '2024-05-12', total: 2800.30 },
+                    { date: '2024-06-18', total: 4100.80 },
+                    { date: '2024-07-22', total: 3600.45 },
+                    { date: '2024-08-08', total: 2900.60 },
+                    { date: '2024-09-14', total: 3800.90 },
+                    { date: '2024-10-25', total: 4200.15 },
+                    { date: '2024-11-30', total: 3500.70 },
+                    { date: '2024-12-03', total: 4800.40 },
+                    { date: '2023-01-10', total: 1200.00 },
+                    { date: '2023-02-15', total: 1800.00 },
+                    { date: '2023-03-20', total: 1600.00 }
+                ]
+            };
+            
+            document.getElementById('apiData').innerHTML = '<div class="text-success">Dados simulados aplicados</div>';
+            document.getElementById('salesData').innerHTML = `<pre>${JSON.stringify(dadosSimulados.sales, null, 2)}</pre>`;
+            
+            testarRenderizacaoGrafico(dadosSimulados);
+        }
+        
+        async function testarAPI() {
+            addLog('🌐 Testando APIs separadamente...', 'info');
+            
+            try {
+                // Testar API de vendas
+                addLog('📊 Testando API de vendas...', 'info');
+                const salesResponse = await api.get('/sales', { limit: 50 });
+                addLog(`📈 Resposta vendas: ${JSON.stringify(salesResponse).substring(0, 200)}...`, 'info');
+                
+                // Testar API dashboard
+                addLog('📊 Testando API dashboard...', 'info');
+                const dashboardResponse = await api.get('/dashboard/stats');
+                addLog(`📈 Resposta dashboard: ${JSON.stringify(dashboardResponse).substring(0, 200)}...`, 'info');
+                
+            } catch (error) {
+                addLog(`❌ Erro ao testar APIs: ${error.message}`, 'error');
+            }
+        }
+        
+        function verificarElementos() {
+            addLog('🔍 Verificando elementos do DOM...', 'info');
+            
+            const elementos = [
+                'salesChart',
+                'testChart',
+                'totalSales2024',
+                'growthRate'
+            ];
+            
+            elementos.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    addLog(`✅ Elemento ${id} encontrado`, 'success');
+                } else {
+                    addLog(`❌ Elemento ${id} NÃO encontrado`, 'error');
+                }
+            });
+            
+            // Verificar se Chart.js está disponível
+            if (typeof Chart !== 'undefined') {
+                addLog('✅ Chart.js disponível globalmente', 'success');
+            } else {
+                addLog('❌ Chart.js NÃO disponível globalmente', 'error');
+            }
+        }
+        
+        // Iniciar investigação automaticamente
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(investigarGraficos, 1000);
+        });
+    </script>
+</body>
+</html> 

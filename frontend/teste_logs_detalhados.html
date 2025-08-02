@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste: Logs Detalhados do Gráfico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; background: #f8f9fa; }
+        .test-container { max-width: 1200px; margin: 0 auto; }
+        .log-success { color: #059669; font-weight: bold; }
+        .log-error { color: #DC2626; font-weight: bold; }
+        .log-warning { color: #D97706; font-weight: bold; }
+        .log-info { color: #2563EB; font-weight: bold; }
+        .chart-test { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔍 Teste: Logs Detalhados do Gráfico</h1>
+        <p>Verificando se os logs detalhados estão funcionando e identificando o problema.</p>
+        
+        <div class="alert alert-info">
+            <h6>📋 Logs Adicionados:</h6>
+            <ul>
+                <li><strong>Dados recebidos:</strong> Tipo, tamanho e estrutura</li>
+                <li><strong>Processamento:</strong> Cada venda individualmente</li>
+                <li><strong>Datas e valores:</strong> Verificação de campos</li>
+                <li><strong>Anos e meses:</strong> Distribuição dos dados</li>
+                <li><strong>Totais:</strong> Somas por ano</li>
+            </ul>
+        </div>
+        
+        <div class="chart-test">
+            <h4>📊 Gráfico de Teste</h4>
+            <canvas id="testChart" height="300"></canvas>
+        </div>
+        
+        <div class="alert alert-secondary">
+            <h6>🔍 Console Logs (Abra o DevTools):</h6>
+            <div id="consoleInfo">
+                <p>Abra o DevTools (F12) e vá para a aba Console para ver os logs detalhados.</p>
+                <p>Os logs mostrarão exatamente o que está acontecendo com os dados.</p>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <button class="btn btn-primary" onclick="testarComDadosVazios()">
+                🧪 Testar Dados Vazios
+            </button>
+            <button class="btn btn-success" onclick="testarComDadosSimulados()">
+                🧪 Testar Dados Simulados
+            </button>
+            <button class="btn btn-warning" onclick="testarComDadosReais()">
+                🌐 Testar Dados Reais
+            </button>
+            <button class="btn btn-info" onclick="abrirDashboard()">
+                📊 Abrir Dashboard
+            </button>
+        </div>
+        
+        <div class="mt-4">
+            <h5>📋 O que procurar nos logs:</h5>
+            <div class="alert alert-warning">
+                <ol>
+                    <li><strong>🔍 === INÍCIO renderSalesChart ===</strong> - Início da função</li>
+                    <li><strong>📊 Dados recebidos:</strong> - O que está sendo passado</li>
+                    <li><strong>📊 Tipo dos dados:</strong> - Array, objeto, null, etc.</li>
+                    <li><strong>📊 Tamanho dos dados:</strong> - Quantos registros</li>
+                    <li><strong>📦 Processando venda X:</strong> - Cada venda individual</li>
+                    <li><strong>📅 Data, Ano, Mês, Valor:</strong> - Campos extraídos</li>
+                    <li><strong>✅ Adicionado ao ano:</strong> - Distribuição correta</li>
+                    <li><strong>📊 === DADOS PROCESSADOS ===</strong> - Resultado final</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <h5>🚨 Possíveis Problemas:</h5>
+            <div class="alert alert-danger">
+                <ul>
+                    <li><strong>Dados vazios:</strong> "Tamanho dos dados: 0"</li>
+                    <li><strong>Formato incorreto:</strong> "Tipo dos dados: object" mas não array</li>
+                    <li><strong>Campos faltando:</strong> "Data: Invalid Date"</li>
+                    <li><strong>Valores zero:</strong> "Valor: 0" para todas as vendas</li>
+                    <li><strong>Anos incorretos:</strong> Vendas em anos que não são atual/anterior</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/i18n/i18n.js"></script>
+    <script src="js/app.js?v=1.7"></script>
+    
+    <script>
+        function testarComDadosVazios() {
+            console.log('🧪 === TESTE COM DADOS VAZIOS ===');
+            console.log('Chamando renderSalesChart com array vazio...');
+            renderSalesChart([]);
+        }
+        
+        function testarComDadosSimulados() {
+            console.log('🧪 === TESTE COM DADOS SIMULADOS ===');
+            const dadosSimulados = [
+                { date: '2024-01-15', total: 1500.50 },
+                { date: '2024-02-20', total: 2300.75 },
+                { date: '2024-03-10', total: 1800.25 },
+                { date: '2024-04-05', total: 3200.00 },
+                { date: '2024-05-12', total: 2800.30 },
+                { date: '2024-06-18', total: 4100.80 },
+                { date: '2024-07-22', total: 3600.45 },
+                { date: '2024-08-08', total: 2900.60 },
+                { date: '2024-09-14', total: 3800.90 },
+                { date: '2024-10-25', total: 4200.15 },
+                { date: '2024-11-30', total: 3500.70 },
+                { date: '2024-12-03', total: 4800.40 }
+            ];
+            console.log('Chamando renderSalesChart com dados simulados...');
+            renderSalesChart(dadosSimulados);
+        }
+        
+        async function testarComDadosReais() {
+            console.log('🌐 === TESTE COM DADOS REAIS ===');
+            try {
+                console.log('Buscando dados da API...');
+                const response = await api.get('/dashboard/stats');
+                console.log('Resposta da API:', response);
+                
+                let salesData = null;
+                if (response && response.sales) {
+                    salesData = response.sales;
+                    console.log(`✅ Vendas encontradas no dashboard: ${salesData.length}`);
+                } else if (response && response.vendas) {
+                    salesData = response.vendas;
+                    console.log(`✅ Vendas encontradas no dashboard: ${salesData.length}`);
+                } else {
+                    console.log('⚠️ Nenhuma venda no dashboard, buscando separadamente...');
+                    const salesResponse = await api.get('/sales', { limit: 1000 });
+                    if (salesResponse && (salesResponse.sales || salesResponse.data || Array.isArray(salesResponse))) {
+                        salesData = salesResponse.sales || salesResponse.data || salesResponse;
+                        console.log(`✅ Vendas carregadas separadamente: ${salesData.length}`);
+                    } else {
+                        console.log('❌ Nenhuma venda encontrada');
+                        salesData = [];
+                    }
+                }
+                
+                console.log('Chamando renderSalesChart com dados reais...');
+                renderSalesChart(salesData);
+                
+            } catch (error) {
+                console.error('❌ Erro ao buscar dados reais:', error);
+            }
+        }
+        
+        function abrirDashboard() {
+            window.open('index.html', '_blank');
+        }
+        
+        // Teste automático ao carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Página carregada, aguardando 2 segundos...');
+            setTimeout(() => {
+                console.log('🧪 Iniciando teste automático...');
+                testarComDadosVazios();
+                
+                setTimeout(() => {
+                    console.log('🧪 Teste com dados simulados...');
+                    testarComDadosSimulados();
+                }, 3000);
+                
+                setTimeout(() => {
+                    console.log('🌐 Teste com dados reais...');
+                    testarComDadosReais();
+                }, 6000);
+            }, 2000);
+        });
+    </script>
+</body>
+</html> 

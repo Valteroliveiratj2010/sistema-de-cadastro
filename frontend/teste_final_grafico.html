@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Final: Gráfico com Dados Reais</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; background: #f8f9fa; }
+        .test-container { max-width: 1200px; margin: 0 auto; }
+        .chart-test { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .success { color: #059669; font-weight: bold; }
+        .error { color: #DC2626; font-weight: bold; }
+        .warning { color: #D97706; font-weight: bold; }
+        .info { color: #2563EB; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>✅ Teste Final: Gráfico com Dados Reais</h1>
+        <p>Verificando se o gráfico agora aparece corretamente com dados reais da API.</p>
+        
+        <div class="alert alert-success">
+            <h6>🔧 Problemas Corrigidos:</h6>
+            <ul>
+                <li><strong>Formato salesByMonth:</strong> ✅ Detectado e processado corretamente</li>
+                <li><strong>Recriação múltipla:</strong> ✅ Evitada - apenas atualiza traduções</li>
+                <li><strong>Dados vazios:</strong> ✅ Não mais passados para renderSalesChart</li>
+                <li><strong>Gráfico persistente:</strong> ✅ Mantém dados reais durante mudança de idioma</li>
+            </ul>
+        </div>
+        
+        <div class="chart-test">
+            <h4>📊 Gráfico Principal (Dados Reais)</h4>
+            <canvas id="salesChart" height="300"></canvas>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6>📊 Status da API:</h6>
+                    <div id="apiStatus">🔄 Verificando...</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6>📈 Status do Gráfico:</h6>
+                    <div id="chartStatus">🔄 Verificando...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="alert alert-secondary">
+            <h6>🔍 Logs de Console:</h6>
+            <div id="consoleInfo">
+                <p>Abra o DevTools (F12) e vá para a aba Console para ver os logs detalhados.</p>
+                <p>Procure por: "📊 Detectado formato salesByMonth, processando..." e "✅ Gráfico de vendas com dados reais renderizado com sucesso"</p>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <button class="btn btn-primary" onclick="testarGrafico()">
+                🔍 Testar Gráfico
+            </button>
+            <button class="btn btn-success" onclick="abrirDashboard()">
+                📊 Abrir Dashboard
+            </button>
+            <button class="btn btn-warning" onclick="testarMudancaIdioma()">
+                🌍 Testar Mudança de Idioma
+            </button>
+            <button class="btn btn-info" onclick="limparCache()">
+                🧹 Limpar Cache
+            </button>
+        </div>
+        
+        <div class="mt-4">
+            <h5>🎯 Resultado Esperado:</h5>
+            <div class="alert alert-success">
+                <ul>
+                    <li><strong>Gráfico visível:</strong> Barras mostrando valores reais (1500 e 400)</li>
+                    <li><strong>Dados corretos:</strong> Julho: R$ 1.500,00 e Agosto: R$ 400,00</li>
+                    <li><strong>Sem recriação:</strong> Gráfico não é destruído durante mudança de idioma</li>
+                    <li><strong>Logs limpos:</strong> Apenas uma renderização inicial com dados reais</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <h5>📋 Checklist de Verificação:</h5>
+            <div class="alert alert-warning">
+                <div id="checklist">
+                    <div>🔄 Verificando...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/i18n/i18n.js"></script>
+    <script src="js/app.js?v=1.9"></script>
+    
+    <script>
+        let testResults = {
+            apiWorking: false,
+            chartRendered: false,
+            dataProcessed: false,
+            noMultipleRenders: false
+        };
+        
+        async function testarGrafico() {
+            console.log('🔍 === TESTE FINAL DO GRÁFICO ===');
+            
+            try {
+                // 1. Verificar API
+                console.log('🌐 Testando API...');
+                const response = await api.get('/dashboard/stats');
+                console.log('📊 Resposta da API:', response);
+                
+                if (response && response.salesByMonth) {
+                    testResults.apiWorking = true;
+                    document.getElementById('apiStatus').innerHTML = `
+                        <div class="success">✅ API funcionando</div>
+                        <div><strong>Dados salesByMonth:</strong> ${response.salesByMonth.length} registros</div>
+                        <div><strong>Dados com valores:</strong> ${response.salesByMonth.filter(item => item.total > 0).length} registros</div>
+                    `;
+                } else {
+                    document.getElementById('apiStatus').innerHTML = '<div class="error">❌ API não retornou dados salesByMonth</div>';
+                }
+                
+                // 2. Aguardar renderização do gráfico
+                console.log('⏳ Aguardando renderização do gráfico...');
+                setTimeout(() => {
+                    verificarGrafico();
+                }, 2000);
+                
+            } catch (error) {
+                console.error('❌ Erro no teste:', error);
+                document.getElementById('apiStatus').innerHTML = `<div class="error">❌ Erro: ${error.message}</div>`;
+            }
+        }
+        
+        function verificarGrafico() {
+            console.log('🔍 Verificando gráfico...');
+            
+            const canvas = document.getElementById('salesChart');
+            if (!canvas) {
+                document.getElementById('chartStatus').innerHTML = '<div class="error">❌ Canvas não encontrado</div>';
+                return;
+            }
+            
+            // Verificar se há dados no gráfico
+            const chart = Chart.getChart(canvas);
+            if (chart && chart.data && chart.data.datasets) {
+                const dataset1 = chart.data.datasets[0];
+                const dataset2 = chart.data.datasets[1];
+                
+                const hasData1 = dataset1.data.some(value => value > 0);
+                const hasData2 = dataset2.data.some(value => value > 0);
+                
+                if (hasData1 || hasData2) {
+                    testResults.chartRendered = true;
+                    testResults.dataProcessed = true;
+                    
+                    const maxValue1 = Math.max(...dataset1.data);
+                    const maxValue2 = Math.max(...dataset2.data);
+                    
+                    document.getElementById('chartStatus').innerHTML = `
+                        <div class="success">✅ Gráfico renderizado com dados</div>
+                        <div><strong>Dataset 1 (${dataset1.label}):</strong> Máximo R$ ${maxValue1.toFixed(2)}</div>
+                        <div><strong>Dataset 2 (${dataset2.label}):</strong> Máximo R$ ${maxValue2.toFixed(2)}</div>
+                        <div><strong>Total de barras com dados:</strong> ${dataset1.data.filter(v => v > 0).length + dataset2.data.filter(v => v > 0).length}</div>
+                    `;
+                } else {
+                    document.getElementById('chartStatus').innerHTML = '<div class="warning">⚠️ Gráfico renderizado mas sem dados</div>';
+                }
+            } else {
+                document.getElementById('chartStatus').innerHTML = '<div class="error">❌ Gráfico não encontrado</div>';
+            }
+            
+            atualizarChecklist();
+        }
+        
+        function testarMudancaIdioma() {
+            console.log('🌍 Testando mudança de idioma...');
+            
+            // Simular mudança de idioma
+            if (window.i18n) {
+                const currentLang = window.i18n.getCurrentLanguage();
+                const newLang = currentLang === 'pt' ? 'en' : 'pt';
+                
+                console.log(`🔄 Mudando idioma de ${currentLang} para ${newLang}`);
+                window.i18n.setLanguage(newLang);
+                
+                setTimeout(() => {
+                    verificarGrafico();
+                    console.log('✅ Mudança de idioma testada');
+                }, 1000);
+            }
+        }
+        
+        function atualizarChecklist() {
+            const checklist = document.getElementById('checklist');
+            checklist.innerHTML = `
+                <div class="${testResults.apiWorking ? 'success' : 'error'}">
+                    ${testResults.apiWorking ? '✅' : '❌'} API funcionando
+                </div>
+                <div class="${testResults.chartRendered ? 'success' : 'error'}">
+                    ${testResults.chartRendered ? '✅' : '❌'} Gráfico renderizado
+                </div>
+                <div class="${testResults.dataProcessed ? 'success' : 'error'}">
+                    ${testResults.dataProcessed ? '✅' : '❌'} Dados processados
+                </div>
+                <div class="${testResults.noMultipleRenders ? 'success' : 'warning'}">
+                    ${testResults.noMultipleRenders ? '✅' : '⚠️'} Sem recriações múltiplas
+                </div>
+            `;
+        }
+        
+        function abrirDashboard() {
+            window.open('index.html', '_blank');
+        }
+        
+        function limparCache() {
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    for (let name of names) {
+                        caches.delete(name);
+                    }
+                });
+            }
+            alert('Cache limpo! Recarregando página...');
+            location.reload();
+        }
+        
+        // Teste automático ao carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Página carregada, iniciando teste automático...');
+            setTimeout(testarGrafico, 1000);
+        });
+    </script>
+</body>
+</html> 

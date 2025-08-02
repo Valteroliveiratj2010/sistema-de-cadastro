@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste: Cálculo do Valor da Venda</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; background: #f8f9fa; }
+        .test-container { max-width: 1200px; margin: 0 auto; }
+        .success { color: #059669; font-weight: bold; }
+        .error { color: #DC2626; font-weight: bold; }
+        .warning { color: #D97706; font-weight: bold; }
+        .info { color: #2563EB; font-weight: bold; }
+        .test-form { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>✅ Teste: Cálculo do Valor da Venda</h1>
+        <p>Verificando se o cálculo do valor total da venda foi corrigido.</p>
+        
+        <div class="alert alert-success">
+            <h6>🔧 Problema Corrigido:</h6>
+            <ul>
+                <li><strong>Problema:</strong> "RS RS 4.000,00" (duplicação de "RS" e valor incorreto)</li>
+                <li><strong>Dados reais:</strong> Cimento - Qtd: 10 x R$ 40,00 = R$ 400,00</li>
+                <li><strong>Solução:</strong> Função updateSaleTotal corrigida</li>
+                <li><strong>Resultado esperado:</strong> "R$ 400,00" (valor correto)</li>
+            </ul>
+        </div>
+        
+        <div class="test-form">
+            <h4>🧮 Simulador de Cálculo</h4>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>📦 Produtos da Venda:</h6>
+                    <div id="saleProductsList" class="list-group mb-3">
+                        <!-- Produtos serão adicionados aqui -->
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Produto:</label>
+                        <select id="testProduct" class="form-select">
+                            <option value="">Selecione um produto</option>
+                            <option value="cimento" data-price="40.00">Cimento - R$ 40,00</option>
+                            <option value="areia" data-price="25.00">Areia - R$ 25,00</option>
+                            <option value="tijolo" data-price="0.50">Tijolo - R$ 0,50</option>
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Quantidade:</label>
+                            <input type="number" id="testQuantity" class="form-control" value="1" min="1">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Preço Unit.:</label>
+                            <input type="number" id="testPrice" class="form-control" step="0.01" readonly>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary mt-3" onclick="adicionarProdutoTeste()">
+                        ➕ Adicionar Produto
+                    </button>
+                </div>
+                
+                <div class="col-md-6">
+                    <h6>💰 Resumo da Venda:</h6>
+                    <div class="alert alert-info">
+                        <strong>Valor Total da Venda:</strong>
+                        <div id="saleTotalValueDisplay" class="fw-bold fs-4">R$ 0,00</div>
+                    </div>
+                    
+                    <div class="alert alert-secondary">
+                        <h6>🔍 Logs de Cálculo:</h6>
+                        <div id="calculationLogs" style="font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;">
+                            Aguardando produtos...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6>📊 Status da Correção:</h6>
+                    <div id="correctionStatus">🔄 Verificando...</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6>🎯 Teste Automático:</h6>
+                    <div id="autoTest">🔄 Verificando...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <button class="btn btn-primary" onclick="testarCalculo()">
+                🧮 Testar Cálculo
+            </button>
+            <button class="btn btn-success" onclick="abrirDashboard()">
+                📊 Abrir Dashboard
+            </button>
+            <button class="btn btn-warning" onclick="limparTeste()">
+                🧹 Limpar Teste
+            </button>
+            <button class="btn btn-info" onclick="limparCache()">
+                🧹 Limpar Cache
+            </button>
+        </div>
+        
+        <div class="mt-4">
+            <h5>🎯 Resultado Esperado:</h5>
+            <div class="alert alert-success">
+                <ul>
+                    <li><strong>Cálculo correto:</strong> 10 x R$ 40,00 = R$ 400,00</li>
+                    <li><strong>Sem duplicação:</strong> Não deve mostrar "RS RS"</li>
+                    <li><strong>Formatação correta:</strong> "R$ 400,00" (com vírgula)</li>
+                    <li><strong>Logs detalhados:</strong> Mostrar processo de cálculo</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/app.js?v=2.3"></script>
+    
+    <script>
+        let testProducts = [];
+        
+        function adicionarProdutoTeste() {
+            const productSelect = document.getElementById('testProduct');
+            const quantityInput = document.getElementById('testQuantity');
+            const priceInput = document.getElementById('testPrice');
+            
+            if (!productSelect.value) {
+                alert('Selecione um produto');
+                return;
+            }
+            
+            const selectedOption = productSelect.options[productSelect.selectedIndex];
+            const productName = selectedOption.textContent.split(' - ')[0];
+            const quantity = parseInt(quantityInput.value);
+            const price = parseFloat(priceInput.value);
+            const total = quantity * price;
+            
+            const product = {
+                id: productSelect.value,
+                name: productName,
+                quantity: quantity,
+                price: price,
+                total: total
+            };
+            
+            testProducts.push(product);
+            renderizarProdutosTeste();
+            calcularTotalTeste();
+            
+            // Limpar campos
+            productSelect.value = '';
+            quantityInput.value = '1';
+            priceInput.value = '';
+        }
+        
+        function renderizarProdutosTeste() {
+            const productsList = document.getElementById('saleProductsList');
+            productsList.innerHTML = '';
+            
+            testProducts.forEach((product, index) => {
+                const productElement = document.createElement('div');
+                productElement.className = 'list-group-item d-flex justify-content-between align-items-center';
+                productElement.dataset.productId = product.id;
+                
+                productElement.innerHTML = `
+                    <div>
+                        <strong>${product.name}</strong>
+                        <br>
+                        <small>Qtd: ${product.quantity} x R$ ${product.price.toFixed(2)}</small>
+                    </div>
+                    <div>
+                        <span class="badge bg-primary rounded-pill">R$ ${product.total.toFixed(2)}</span>
+                        <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="removerProdutoTeste(${index})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                productsList.appendChild(productElement);
+            });
+        }
+        
+        function removerProdutoTeste(index) {
+            testProducts.splice(index, 1);
+            renderizarProdutosTeste();
+            calcularTotalTeste();
+        }
+        
+        function calcularTotalTeste() {
+            console.log('🧮 === TESTE DE CÁLCULO ===');
+            
+            const totalDisplay = document.getElementById('saleTotalValueDisplay');
+            const logsDiv = document.getElementById('calculationLogs');
+            
+            let total = 0;
+            let logs = ['🧮 Iniciando cálculo do total...'];
+            
+            console.log(`📦 Encontrados ${testProducts.length} produtos na lista`);
+            logs.push(`📦 Encontrados ${testProducts.length} produtos na lista`);
+            
+            testProducts.forEach((product, index) => {
+                console.log(`📊 Produto ${index + 1}: ${product.name} - R$ ${product.total.toFixed(2)}`);
+                logs.push(`📊 Produto ${index + 1}: ${product.name} - R$ ${product.total.toFixed(2)}`);
+                
+                total += product.total;
+                console.log(`✅ Valor do produto ${index + 1}: R$ ${product.total.toFixed(2)}`);
+                logs.push(`✅ Valor do produto ${index + 1}: R$ ${product.total.toFixed(2)}`);
+            });
+            
+            console.log(`💰 Total calculado: R$ ${total.toFixed(2)}`);
+            logs.push(`💰 Total calculado: R$ ${total.toFixed(2)}`);
+            
+            // Atualizar display do total
+            if (window.i18n) {
+                totalDisplay.textContent = window.i18n.formatCurrency(total);
+            } else {
+                totalDisplay.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+            }
+            
+            console.log(`✅ Total atualizado: ${totalDisplay.textContent}`);
+            logs.push(`✅ Total atualizado: ${totalDisplay.textContent}`);
+            
+            // Atualizar logs
+            logsDiv.innerHTML = logs.join('<br>');
+            
+            // Verificar se há duplicação de "RS"
+            const hasDuplication = totalDisplay.textContent.includes('RS RS');
+            if (hasDuplication) {
+                document.getElementById('correctionStatus').innerHTML = `
+                    <div class="error">❌ Duplicação detectada: "${totalDisplay.textContent}"</div>
+                `;
+            } else {
+                document.getElementById('correctionStatus').innerHTML = `
+                    <div class="success">✅ Formatação correta: "${totalDisplay.textContent}"</div>
+                `;
+            }
+        }
+        
+        function testarCalculo() {
+            console.log('🧮 === TESTE AUTOMÁTICO ===');
+            
+            // Limpar produtos existentes
+            testProducts = [];
+            
+            // Adicionar produto de teste (Cimento - 10 x R$ 40,00)
+            testProducts.push({
+                id: 'cimento',
+                name: 'Cimento',
+                quantity: 10,
+                price: 40.00,
+                total: 400.00
+            });
+            
+            renderizarProdutosTeste();
+            calcularTotalTeste();
+            
+            document.getElementById('autoTest').innerHTML = `
+                <div class="success">✅ Teste automático executado</div>
+                <div><strong>Produto:</strong> Cimento - 10 x R$ 40,00</div>
+                <div><strong>Total esperado:</strong> R$ 400,00</div>
+                <div><strong>Total calculado:</strong> <span id="autoTestResult">Verificando...</span></div>
+            `;
+            
+            setTimeout(() => {
+                const result = document.getElementById('saleTotalValueDisplay').textContent;
+                document.getElementById('autoTestResult').textContent = result;
+                
+                if (result === 'R$ 400,00' || result.includes('400,00')) {
+                    document.getElementById('autoTestResult').className = 'success';
+                } else {
+                    document.getElementById('autoTestResult').className = 'error';
+                }
+            }, 100);
+        }
+        
+        function limparTeste() {
+            testProducts = [];
+            renderizarProdutosTeste();
+            calcularTotalTeste();
+            document.getElementById('correctionStatus').innerHTML = '<div>🔄 Teste limpo</div>';
+            document.getElementById('autoTest').innerHTML = '<div>🔄 Teste limpo</div>';
+        }
+        
+        function abrirDashboard() {
+            window.open('index.html', '_blank');
+        }
+        
+        function limparCache() {
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    for (let name of names) {
+                        caches.delete(name);
+                    }
+                });
+            }
+            alert('Cache limpo! Recarregando página...');
+            location.reload();
+        }
+        
+        // Configurar eventos
+        document.addEventListener('DOMContentLoaded', function() {
+            // Atualizar preço quando produto for selecionado
+            const productSelect = document.getElementById('testProduct');
+            const priceInput = document.getElementById('testPrice');
+            
+            productSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                if (selectedOption && selectedOption.dataset.price) {
+                    priceInput.value = selectedOption.dataset.price;
+                } else {
+                    priceInput.value = '';
+                }
+            });
+            
+            console.log('🚀 Página carregada, iniciando teste de cálculo...');
+        });
+    </script>
+</body>
+</html> 

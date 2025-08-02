@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Final: Alertas Completos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>🎯 Teste Final: Alertas Completos</h1>
+        <p>Este teste verifica todas as correções implementadas nos alertas de estoque.</p>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>✅ Correções Implementadas</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-success">
+                            <h6>🔧 Visibilidade dos Botões</h6>
+                            <ul class="mb-0">
+                                <li>✅ Botão "Ver" sempre visível</li>
+                                <li>✅ Botão "X" sempre visível</li>
+                                <li>✅ Hover com efeito visual</li>
+                                <li>✅ Fundo branco semi-transparente</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <h6>🌍 Internacionalização</h6>
+                            <ul class="mb-0">
+                                <li>✅ Botões traduzidos (Ver/View/Ver)</li>
+                                <li>✅ Modal traduzido</li>
+                                <li>✅ Tabelas traduzidas</li>
+                                <li>✅ Mensagens de alerta traduzidas</li>
+                                <li>✅ "Última atualização" traduzido</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <h6>🔔 Persistência</h6>
+                            <ul class="mb-0">
+                                <li>✅ Warning persiste (não desaparece)</li>
+                                <li>✅ Crítico persiste (não desaparece)</li>
+                                <li>✅ Info desaparece automaticamente</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>🧪 Testes</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-warning mb-2 w-100" onclick="testWarningAlert()">
+                            <i class="bi bi-exclamation-triangle"></i> Testar Alerta Warning
+                        </button>
+                        <button class="btn btn-danger mb-2 w-100" onclick="testCriticalAlert()">
+                            <i class="bi bi-exclamation-circle"></i> Testar Alerta Crítico
+                        </button>
+                        <button class="btn btn-info mb-2 w-100" onclick="testInfoAlert()">
+                            <i class="bi bi-info-circle"></i> Testar Alerta Info
+                        </button>
+                        <button class="btn btn-secondary w-100" onclick="clearAllNotifications()">
+                            <i class="bi bi-trash"></i> Limpar Todas
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5>🌍 Teste de Idioma</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="btn-group w-100" role="group">
+                            <button class="btn btn-outline-primary" onclick="changeLanguage('pt')">🇧🇷 PT</button>
+                            <button class="btn btn-outline-primary" onclick="changeLanguage('en')">🇺🇸 EN</button>
+                            <button class="btn btn-outline-primary" onclick="changeLanguage('es')">🇪🇸 ES</button>
+                        </div>
+                        <p class="mt-2 mb-0 text-center">
+                            <small>Idioma: <span id="currentLanguage" class="badge bg-primary">pt</span></small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>📊 Log de Eventos</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="log" style="height: 300px; overflow-y: auto; background: #f8f9fa; padding: 10px; font-family: monospace; font-size: 12px;">
+                            <div>🔄 Aguardando testes...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <h6>📋 Instruções de Teste:</h6>
+                    <ol class="mb-0">
+                        <li><strong>Teste de Visibilidade:</strong> Clique em "Testar Alerta Warning" e verifique se os botões "Ver" e "X" estão sempre visíveis</li>
+                        <li><strong>Teste de Persistência:</strong> Aguarde 5 segundos e verifique se o alerta warning não desapareceu</li>
+                        <li><strong>Teste de Internacionalização:</strong> Mude o idioma e verifique se os textos são traduzidos</li>
+                        <li><strong>Teste do Modal:</strong> Clique em "Ver" e verifique se o modal está traduzido</li>
+                        <li><strong>Teste de Info:</strong> Clique em "Testar Alerta Info" e verifique se desaparece automaticamente</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/i18n/translations.js"></script>
+    <script src="js/i18n/i18n.js"></script>
+    <script src="js/stock-notifications.js"></script>
+    
+    <script>
+        // Função para adicionar log
+        function addLog(message) {
+            const log = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // Inicializar sistema
+        let stockNotificationManager;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('🚀 Inicializando sistema completo...');
+            
+            // Inicializar i18n
+            if (window.i18n) {
+                window.i18n.init();
+                addLog('✅ Sistema i18n inicializado');
+            }
+            
+            // Inicializar notificações
+            stockNotificationManager = new StockNotificationManager();
+            stockNotificationManager.init();
+            
+            addLog('✅ Sistema de notificações inicializado');
+            addLog('🎯 Todos os testes estão prontos para execução');
+        });
+
+        // Teste de alerta warning
+        function testWarningAlert() {
+            addLog('🧪 Testando alerta warning...');
+            stockNotificationManager.showToastNotification(
+                '1 produto(s) com estoque baixo. Clique para ver detalhes.',
+                'warning',
+                true
+            );
+            addLog('⚠️ Alerta warning criado - deve persistir e ter botões visíveis');
+        }
+
+        // Teste de alerta crítico
+        function testCriticalAlert() {
+            addLog('🧪 Testando alerta crítico...');
+            stockNotificationManager.showToastNotification(
+                '2 produto(s) com estoque crítico! Clique para ver detalhes.',
+                'error',
+                true
+            );
+            addLog('🚨 Alerta crítico criado - deve persistir e ter botões visíveis');
+        }
+
+        // Teste de alerta info
+        function testInfoAlert() {
+            addLog('🧪 Testando alerta info...');
+            stockNotificationManager.showToastNotification(
+                'Informação: Sistema funcionando normalmente.',
+                'info',
+                false
+            );
+            addLog('ℹ️ Alerta info criado - deve desaparecer em 5 segundos');
+        }
+
+        // Limpar todas as notificações
+        function clearAllNotifications() {
+            addLog('🧹 Limpando todas as notificações...');
+            stockNotificationManager.clearOldNotifications();
+            addLog('✅ Notificações limpas');
+        }
+
+        // Mudar idioma
+        function changeLanguage(lang) {
+            addLog(`🌍 Mudando idioma para: ${lang}`);
+            if (window.i18n) {
+                window.i18n.setLanguage(lang);
+                document.getElementById('currentLanguage').textContent = lang;
+                addLog(`✅ Idioma alterado para: ${lang}`);
+                addLog('📋 Notificações existentes devem ser atualizadas automaticamente');
+            }
+        }
+
+        // Monitorar mudanças nas notificações
+        setInterval(() => {
+            const container = document.getElementById('stock-notifications-container');
+            if (container) {
+                const notifications = container.querySelectorAll('.stock-notification');
+                if (notifications.length > 0) {
+                    addLog(`📊 Notificações ativas: ${notifications.length}`);
+                    notifications.forEach((notification, index) => {
+                        const type = notification.classList.contains('stock-notification-warning') ? 'warning' :
+                                   notification.classList.contains('stock-notification-error') ? 'error' :
+                                   notification.classList.contains('stock-notification-success') ? 'success' : 'info';
+                        const actionable = notification.classList.contains('stock-notification-actionable') ? '✅' : '❌';
+                        const buttons = notification.querySelectorAll('.stock-notification-actions .btn');
+                        const buttonsVisible = buttons.length > 0 ? '✅' : '❌';
+                        addLog(`  ${index + 1}. ${type} ${actionable} (${notification.id}) - Botões: ${buttonsVisible}`);
+                    });
+                }
+            }
+        }, 10000);
+    </script>
+</body>
+</html> 

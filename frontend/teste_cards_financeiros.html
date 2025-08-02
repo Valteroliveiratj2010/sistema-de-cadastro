@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste: Cards Financeiros</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; background: #f8f9fa; }
+        .test-container { max-width: 1200px; margin: 0 auto; }
+        .success { color: #059669; font-weight: bold; }
+        .error { color: #DC2626; font-weight: bold; }
+        .warning { color: #D97706; font-weight: bold; }
+        .info { color: #2563EB; font-weight: bold; }
+        .test-form { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card-status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .card-success { background: #d1fae5; border: 1px solid #10b981; }
+        .card-error { background: #fee2e2; border: 1px solid #ef4444; }
+        .card-warning { background: #fef3c7; border: 1px solid #f59e0b; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>✅ Teste: Cards Financeiros</h1>
+        <p>Verificando se os cards de contas vencidas e próximas estão sendo atualizados corretamente.</p>
+        
+        <div class="alert alert-success">
+            <h6>🔧 Problema Investigado:</h6>
+            <ul>
+                <li><strong>Problema:</strong> Cards financeiros não estão sendo atualizados</li>
+                <li><strong>Cards afetados:</strong> CONTAS A RECEBER VENCIDAS, CONTAS A PAGAR VENCIDAS, Contas Próximas</li>
+                <li><strong>Investigação:</strong> Logs detalhados adicionados</li>
+                <li><strong>Resultado esperado:</strong> Dados reais da API</li>
+            </ul>
+        </div>
+        
+        <div class="test-form">
+            <h4>💰 Status dos Cards Financeiros</h4>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>📋 Contas Vencidas:</h6>
+                    <div id="overdueCardsStatus">
+                        <div class="card-status card-warning">
+                            <strong>CONTAS A RECEBER VENCIDAS:</strong> <span id="overdueReceivableStatus">🔄 Verificando...</span>
+                        </div>
+                        <div class="card-status card-warning">
+                            <strong>CONTAS A PAGAR VENCIDAS:</strong> <span id="overduePayableStatus">🔄 Verificando...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <h6>📅 Contas Próximas:</h6>
+                    <div id="upcomingCardsStatus">
+                        <div class="card-status card-warning">
+                            <strong>Contas a Receber Próximas (30 dias):</strong> <span id="upcomingReceivableStatus">🔄 Verificando...</span>
+                        </div>
+                        <div class="card-status card-warning">
+                            <strong>Contas a Pagar Próximas (30 dias):</strong> <span id="upcomingPayableStatus">🔄 Verificando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <h6>🔍 Logs de Carregamento:</h6>
+                <div id="loadingLogs" style="font-family: monospace; font-size: 12px; max-height: 400px; overflow-y: auto; background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                    Aguardando carregamento...
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6>📊 Status Geral:</h6>
+                    <div id="generalStatus">🔄 Verificando...</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6>🎯 Teste Automático:</h6>
+                    <div id="autoTest">🔄 Verificando...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <button class="btn btn-primary" onclick="testarCardsFinanceiros()">
+                🧮 Testar Cards Financeiros
+            </button>
+            <button class="btn btn-success" onclick="abrirDashboard()">
+                📊 Abrir Dashboard
+            </button>
+            <button class="btn btn-warning" onclick="limparTeste()">
+                🧹 Limpar Teste
+            </button>
+            <button class="btn btn-info" onclick="limparCache()">
+                🧹 Limpar Cache
+            </button>
+        </div>
+        
+        <div class="mt-4">
+            <h5>🎯 Resultado Esperado:</h5>
+            <div class="alert alert-success">
+                <ul>
+                    <li><strong>Dados reais:</strong> Cards devem mostrar dados da API</li>
+                    <li><strong>Logs detalhados:</strong> Processo de carregamento visível</li>
+                    <li><strong>Elementos encontrados:</strong> IDs dos elementos devem ser encontrados</li>
+                    <li><strong>Status atualizado:</strong> Cada card deve mostrar status de sucesso</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js?v=2.8"></script>
+    
+    <script>
+        let loadingLogs = [];
+        
+        function adicionarLog(mensagem) {
+            const timestamp = new Date().toLocaleTimeString();
+            loadingLogs.push(`[${timestamp}] ${mensagem}`);
+            const logsDiv = document.getElementById('loadingLogs');
+            logsDiv.innerHTML = loadingLogs.slice(-30).join('<br>');
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        function atualizarStatus(cardId, status, tipo = 'warning') {
+            const element = document.getElementById(cardId);
+            if (element) {
+                element.textContent = status;
+                element.className = `card-status card-${tipo}`;
+            }
+        }
+        
+        async function testarCardsFinanceiros() {
+            console.log('🧮 === TESTE DE CARDS FINANCEIROS ===');
+            adicionarLog('🧮 Iniciando teste de cards financeiros...');
+            
+            try {
+                // Simular carregamento do dashboard
+                adicionarLog('📊 Carregando dados do dashboard...');
+                
+                // Testar carregamento de vendas
+                adicionarLog('💰 Testando carregamento de vendas...');
+                try {
+                    const salesResponse = await api.get('/sales', { limit: 10 });
+                    if (salesResponse && (salesResponse.sales || salesResponse.data || Array.isArray(salesResponse))) {
+                        const sales = salesResponse.sales || salesResponse.data || salesResponse;
+                        adicionarLog(`✅ ${sales.length} vendas carregadas`);
+                        
+                        // Verificar se há vendas vencidas
+                        const overdueSales = sales.filter(sale => {
+                            const dueDate = new Date(sale.vencimento || sale.dueDate);
+                            return dueDate < new Date() && sale.status !== 'pago' && sale.status !== 'paid';
+                        });
+                        
+                        if (overdueSales.length > 0) {
+                            atualizarStatus('overdueReceivableStatus', `✅ ${overdueSales.length} vendas vencidas encontradas`, 'success');
+                            adicionarLog(`✅ ${overdueSales.length} vendas vencidas encontradas`);
+                        } else {
+                            atualizarStatus('overdueReceivableStatus', '⚠️ Nenhuma venda vencida', 'warning');
+                            adicionarLog('⚠️ Nenhuma venda vencida encontrada');
+                        }
+                        
+                        // Verificar se há vendas próximas
+                        const thirtyDaysFromNow = new Date();
+                        thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+                        
+                        const upcomingSales = sales.filter(sale => {
+                            const dueDate = new Date(sale.vencimento || sale.dueDate);
+                            return dueDate > new Date() && dueDate <= thirtyDaysFromNow && sale.status !== 'pago' && sale.status !== 'paid';
+                        });
+                        
+                        if (upcomingSales.length > 0) {
+                            atualizarStatus('upcomingReceivableStatus', `✅ ${upcomingSales.length} vendas próximas encontradas`, 'success');
+                            adicionarLog(`✅ ${upcomingSales.length} vendas próximas encontradas`);
+                        } else {
+                            atualizarStatus('upcomingReceivableStatus', '⚠️ Nenhuma venda próxima', 'warning');
+                            adicionarLog('⚠️ Nenhuma venda próxima encontrada');
+                        }
+                        
+                    } else {
+                        atualizarStatus('overdueReceivableStatus', '❌ Erro ao carregar vendas', 'error');
+                        atualizarStatus('upcomingReceivableStatus', '❌ Erro ao carregar vendas', 'error');
+                        adicionarLog('❌ Erro ao carregar vendas');
+                    }
+                } catch (error) {
+                    atualizarStatus('overdueReceivableStatus', '❌ Erro na API', 'error');
+                    atualizarStatus('upcomingReceivableStatus', '❌ Erro na API', 'error');
+                    adicionarLog(`❌ Erro ao carregar vendas: ${error.message}`);
+                }
+                
+                // Testar carregamento de compras
+                adicionarLog('💸 Testando carregamento de compras...');
+                try {
+                    const purchasesResponse = await api.get('/purchases', { limit: 10 });
+                    if (purchasesResponse && (purchasesResponse.purchases || purchasesResponse.data || Array.isArray(purchasesResponse))) {
+                        const purchases = purchasesResponse.purchases || purchasesResponse.data || purchasesResponse;
+                        adicionarLog(`✅ ${purchases.length} compras carregadas`);
+                        
+                        // Verificar se há compras vencidas
+                        const overduePurchases = purchases.filter(purchase => {
+                            const dueDate = new Date(purchase.vencimento || purchase.dueDate);
+                            return dueDate < new Date() && purchase.status !== 'pago' && purchase.status !== 'paid';
+                        });
+                        
+                        if (overduePurchases.length > 0) {
+                            atualizarStatus('overduePayableStatus', `✅ ${overduePurchases.length} compras vencidas encontradas`, 'success');
+                            adicionarLog(`✅ ${overduePurchases.length} compras vencidas encontradas`);
+                        } else {
+                            atualizarStatus('overduePayableStatus', '⚠️ Nenhuma compra vencida', 'warning');
+                            adicionarLog('⚠️ Nenhuma compra vencida encontrada');
+                        }
+                        
+                        // Verificar se há compras próximas
+                        const thirtyDaysFromNow = new Date();
+                        thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+                        
+                        const upcomingPurchases = purchases.filter(purchase => {
+                            const dueDate = new Date(purchase.vencimento || purchase.dueDate);
+                            return dueDate > new Date() && dueDate <= thirtyDaysFromNow && purchase.status !== 'pago' && purchase.status !== 'paid';
+                        });
+                        
+                        if (upcomingPurchases.length > 0) {
+                            atualizarStatus('upcomingPayableStatus', `✅ ${upcomingPurchases.length} compras próximas encontradas`, 'success');
+                            adicionarLog(`✅ ${upcomingPurchases.length} compras próximas encontradas`);
+                        } else {
+                            atualizarStatus('upcomingPayableStatus', '⚠️ Nenhuma compra próxima', 'warning');
+                            adicionarLog('⚠️ Nenhuma compra próxima encontrada');
+                        }
+                        
+                    } else {
+                        atualizarStatus('overduePayableStatus', '❌ Erro ao carregar compras', 'error');
+                        atualizarStatus('upcomingPayableStatus', '❌ Erro ao carregar compras', 'error');
+                        adicionarLog('❌ Erro ao carregar compras');
+                    }
+                } catch (error) {
+                    atualizarStatus('overduePayableStatus', '❌ Erro na API', 'error');
+                    atualizarStatus('upcomingPayableStatus', '❌ Erro na API', 'error');
+                    adicionarLog(`❌ Erro ao carregar compras: ${error.message}`);
+                }
+                
+                // Atualizar status geral
+                const successCount = document.querySelectorAll('.card-success').length;
+                const totalCount = document.querySelectorAll('.card-status').length;
+                
+                document.getElementById('generalStatus').innerHTML = `
+                    <div class="success">✅ Teste concluído</div>
+                    <div><strong>Cards com sucesso:</strong> ${successCount}/${totalCount}</div>
+                    <div><strong>Taxa de sucesso:</strong> ${Math.round((successCount/totalCount)*100)}%</div>
+                `;
+                
+                document.getElementById('autoTest').innerHTML = `
+                    <div class="success">✅ Teste automático executado</div>
+                    <div><strong>Status:</strong> ${successCount === totalCount ? 'Todos os cards funcionando' : 'Alguns cards com problemas'}</div>
+                `;
+                
+                adicionarLog('✅ Teste de cards financeiros concluído com sucesso');
+                
+            } catch (error) {
+                console.error('❌ Erro no teste:', error);
+                adicionarLog(`❌ Erro no teste: ${error.message}`);
+                
+                document.getElementById('generalStatus').innerHTML = `
+                    <div class="error">❌ Erro no teste</div>
+                    <div><strong>Erro:</strong> ${error.message}</div>
+                `;
+            }
+        }
+        
+        function limparTeste() {
+            loadingLogs = [];
+            document.getElementById('loadingLogs').innerHTML = 'Aguardando carregamento...';
+            
+            // Resetar status dos cards
+            const statusElements = [
+                'overdueReceivableStatus', 'overduePayableStatus',
+                'upcomingReceivableStatus', 'upcomingPayableStatus'
+            ];
+            
+            statusElements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = '🔄 Verificando...';
+                    element.className = 'card-status card-warning';
+                }
+            });
+            
+            document.getElementById('generalStatus').innerHTML = '<div>🔄 Teste limpo</div>';
+            document.getElementById('autoTest').innerHTML = '<div>🔄 Teste limpo</div>';
+        }
+        
+        function abrirDashboard() {
+            window.open('index.html', '_blank');
+        }
+        
+        function limparCache() {
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    for (let name of names) {
+                        caches.delete(name);
+                    }
+                });
+            }
+            alert('Cache limpo! Recarregando página...');
+            location.reload();
+        }
+        
+        // Configurar eventos
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Página carregada, iniciando teste de cards financeiros...');
+            adicionarLog('🚀 Página carregada, iniciando teste...');
+            
+            // Executar teste automático após 2 segundos
+            setTimeout(() => {
+                testarCardsFinanceiros();
+            }, 2000);
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste: Cores Harmoniosas do Gráfico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>🎨 Teste: Cores Harmoniosas do Gráfico</h1>
+        <p>Este teste verifica se as cores do gráfico estão harmoniosas com a paleta do sistema.</p>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>🎨 Paleta de Cores do Sistema</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div style="width: 30px; height: 30px; background-color: #1D4E89; border-radius: 4px; margin-right: 10px;"></div>
+                                    <span><strong>Primary:</strong> #1D4E89</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <div style="width: 30px; height: 30px; background-color: #2A6FA8; border-radius: 4px; margin-right: 10px;"></div>
+                                    <span><strong>Primary Light:</strong> #2A6FA8</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <div style="width: 30px; height: 30px; background-color: #4A90E2; border-radius: 4px; margin-right: 10px;"></div>
+                                    <span><strong>Info:</strong> #4A90E2</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div style="width: 30px; height: 30px; background-color: #2E8B57; border-radius: 4px; margin-right: 10px;"></div>
+                                    <span><strong>Success:</strong> #2E8B57</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <div style="width: 30px; height: 30px; background-color: #EAB308; border-radius: 4px; margin-right: 10px;"></div>
+                                    <span><strong>Warning:</strong> #EAB308</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <div style="width: 30px; height: 30px; background-color: #D64550; border-radius: 4px; margin-right: 10px;"></div>
+                                    <span><strong>Danger:</strong> #D64550</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5>📊 Cores do Gráfico</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <h6>✅ Cores Harmoniosas Implementadas:</h6>
+                            <ul class="mb-0">
+                                <li><strong>Dataset 1:</strong> Azul escuro (#1D4E89) - Primary Color</li>
+                                <li><strong>Dataset 2:</strong> Azul info (#4A90E2) - Info Color</li>
+                                <li><strong>Tooltip:</strong> Azul escuro com transparência</li>
+                                <li><strong>Grid:</strong> Azul escuro com baixa transparência</li>
+                                <li><strong>Bordas:</strong> Cores correspondentes aos datasets</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>🧪 Teste do Gráfico</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary mb-2 w-100" onclick="testChartWithData()">
+                            <i class="bi bi-bar-chart"></i> Testar Gráfico com Dados
+                        </button>
+                        <button class="btn btn-secondary w-100" onclick="testEmptyChart()">
+                            <i class="bi bi-bar-chart-line"></i> Testar Gráfico Vazio
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5>🔍 Verificações</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-success">
+                            <h6>✅ Verificações de Harmonia:</h6>
+                            <ul class="mb-0">
+                                <li>As cores do gráfico combinam com a sidebar</li>
+                                <li>Os gradientes são suaves e elegantes</li>
+                                <li>O tooltip usa a cor primária do sistema</li>
+                                <li>O grid é sutil e não interfere na leitura</li>
+                                <li>As bordas são consistentes com os datasets</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>📈 Gráfico de Teste</h5>
+                    </div>
+                    <div class="card-body">
+                        <div style="height: 400px; position: relative;">
+                            <canvas id="testChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="alert alert-success">
+                    <h6>🎉 Harmonia de Cores Concluída!</h6>
+                    <p class="mb-0">
+                        <strong>Status:</strong> ✅ O gráfico agora usa a paleta de cores do sistema.<br>
+                        <strong>Resultado:</strong> Visual mais coeso e profissional.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/i18n/translations.js"></script>
+    <script src="js/i18n/i18n.js"></script>
+    <script src="js/app.js"></script>
+    
+    <script>
+        let testChart = null;
+
+        // Teste do gráfico com dados
+        function testChartWithData() {
+            const ctx = document.getElementById('testChart');
+            if (!ctx) return;
+
+            if (testChart) {
+                testChart.destroy();
+            }
+
+            // Obter ano atual e anterior dinamicamente
+            const currentYear = new Date().getFullYear();
+            const previousYear = currentYear - 1;
+
+            // Criar gradientes harmoniosos com a paleta do sistema
+            const gradient1 = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+            gradient1.addColorStop(0, 'rgba(29, 78, 137, 0.9)'); // var(--primary-color) - azul escuro
+            gradient1.addColorStop(0.5, 'rgba(29, 78, 137, 0.6)'); // Meio do gradiente
+            gradient1.addColorStop(1, 'rgba(29, 78, 137, 0.15)'); // Base mais suave
+
+            const gradient2 = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+            gradient2.addColorStop(0, 'rgba(74, 144, 226, 0.9)'); // var(--info-color) - azul info
+            gradient2.addColorStop(0.5, 'rgba(74, 144, 226, 0.6)'); // Meio do gradiente
+            gradient2.addColorStop(1, 'rgba(74, 144, 226, 0.15)'); // Base mais suave
+
+            testChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                    datasets: [{
+                        label: `Vendas ${previousYear} (R$)`,
+                        data: [45, 52, 38, 67, 89, 76, 94, 82, 71, 88, 95, 78],
+                        backgroundColor: gradient1,
+                        borderColor: '#1D4E89', // var(--primary-color)
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }, {
+                        label: `Vendas ${currentYear} (R$)`,
+                        data: [52, 58, 45, 72, 95, 82, 102, 88, 78, 95, 105, 85],
+                        backgroundColor: gradient2,
+                        borderColor: '#4A90E2', // var(--info-color)
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart'
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    family: 'Inter, sans-serif',
+                                    size: 12,
+                                    weight: '600'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(29, 78, 137, 0.95)', // var(--primary-color)
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#1D4E89', // var(--primary-color)
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            displayColors: true
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 120,
+                            grid: {
+                                color: 'rgba(29, 78, 137, 0.08)', // var(--primary-color) com transparência
+                                drawBorder: false
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return 'R$ ' + value.toFixed(0) + 'K';
+                                },
+                                font: {
+                                    family: 'Inter, sans-serif',
+                                    size: 11
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    family: 'Inter, sans-serif',
+                                    size: 11,
+                                    weight: '600'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            console.log('✅ Gráfico com dados criado usando a paleta harmoniosa');
+        }
+
+        // Teste do gráfico vazio
+        function testEmptyChart() {
+            const ctx = document.getElementById('testChart');
+            if (!ctx) return;
+
+            if (testChart) {
+                testChart.destroy();
+            }
+
+            // Obter ano atual e anterior dinamicamente
+            const currentYear = new Date().getFullYear();
+            const previousYear = currentYear - 1;
+
+            // Criar gradientes harmoniosos para gráfico vazio com a paleta do sistema
+            const gradient1 = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+            gradient1.addColorStop(0, 'rgba(29, 78, 137, 0.6)'); // var(--primary-color) - azul escuro
+            gradient1.addColorStop(0.5, 'rgba(29, 78, 137, 0.4)'); // Meio do gradiente
+            gradient1.addColorStop(1, 'rgba(29, 78, 137, 0.1)'); // Base mais suave
+
+            const gradient2 = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+            gradient2.addColorStop(0, 'rgba(74, 144, 226, 0.6)'); // var(--info-color) - azul info
+            gradient2.addColorStop(0.5, 'rgba(74, 144, 226, 0.4)'); // Meio do gradiente
+            gradient2.addColorStop(1, 'rgba(74, 144, 226, 0.1)'); // Base mais suave
+
+            testChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                    datasets: [{
+                        label: `Vendas ${previousYear} (R$)`,
+                        data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        backgroundColor: gradient1,
+                        borderColor: '#1D4E89', // var(--primary-color)
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }, {
+                        label: `Vendas ${currentYear} (R$)`,
+                        data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        backgroundColor: gradient2,
+                        borderColor: '#4A90E2', // var(--info-color)
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart'
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    family: 'Inter, sans-serif',
+                                    size: 12,
+                                    weight: '600'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(29, 78, 137, 0.95)', // var(--primary-color)
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#1D4E89', // var(--primary-color)
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            displayColors: true
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: {
+                                color: 'rgba(29, 78, 137, 0.08)', // var(--primary-color) com transparência
+                                drawBorder: false
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return 'R$ ' + value.toFixed(0) + 'K';
+                                },
+                                font: {
+                                    family: 'Inter, sans-serif',
+                                    size: 11
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    family: 'Inter, sans-serif',
+                                    size: 11,
+                                    weight: '600'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            console.log('✅ Gráfico vazio criado usando a paleta harmoniosa');
+        }
+
+        // Inicializar com gráfico de dados
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Inicializando teste de cores harmoniosas...');
+            testChartWithData();
+        });
+    </script>
+</body>
+</html> 

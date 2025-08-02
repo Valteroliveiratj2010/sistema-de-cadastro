@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Final: Correções de Internacionalização</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>🎯 Teste Final: Correções de Internacionalização</h1>
+        <p>Este teste verifica as correções finais da fase de internacionalização.</p>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>✅ Correções Implementadas</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-success">
+                            <h6>🔧 Correção da Duplicidade</h6>
+                            <ul class="mb-0">
+                                <li>✅ "Clique para ver detalhes" aparece apenas uma vez</li>
+                                <li>✅ Mensagens limpas e sem repetição</li>
+                                <li>✅ Tradução dinâmica da frase final</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <h6>🌍 Tradução do Botão</h6>
+                            <ul class="mb-0">
+                                <li>✅ Botão "Alertas de Estoque" traduzido</li>
+                                <li>✅ Atributo `data-i18n` adicionado</li>
+                                <li>✅ Funciona em PT/EN/ES</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <h6>📋 Mensagens de Teste</h6>
+                            <ul class="mb-0">
+                                <li>✅ Crítico: "2 produto(s) com estoque crítico! Clique para ver detalhes."</li>
+                                <li>✅ Warning: "1 produto(s) com estoque baixo. Clique para ver detalhes."</li>
+                                <li>❌ Antes: "2 produto(s) com estoque crítico! Clique para ver detalhes.Clique para ver detalhes."</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>🧪 Testes</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-warning mb-2 w-100" onclick="testWarningAlert()">
+                            <i class="bi bi-exclamation-triangle"></i> Testar Alerta Warning
+                        </button>
+                        <button class="btn btn-danger mb-2 w-100" onclick="testCriticalAlert()">
+                            <i class="bi bi-exclamation-circle"></i> Testar Alerta Crítico
+                        </button>
+                        <button class="btn btn-secondary w-100" onclick="clearAllNotifications()">
+                            <i class="bi bi-trash"></i> Limpar Todas
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5>🌍 Teste de Idioma</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="btn-group w-100" role="group">
+                            <button class="btn btn-outline-primary" onclick="changeLanguage('pt')">🇧🇷 PT</button>
+                            <button class="btn btn-outline-primary" onclick="changeLanguage('en')">🇺🇸 EN</button>
+                            <button class="btn btn-outline-primary" onclick="changeLanguage('es')">🇪🇸 ES</button>
+                        </div>
+                        <p class="mt-2 mb-0 text-center">
+                            <small>Idioma: <span id="currentLanguage" class="badge bg-primary">pt</span></small>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5>🔍 Verificações</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="verifications">
+                            <div class="alert alert-info">
+                                <strong>Verificação 1:</strong> Clique em "Testar Alerta Warning" e verifique se a mensagem não tem duplicidade
+                            </div>
+                            <div class="alert alert-info">
+                                <strong>Verificação 2:</strong> Mude o idioma e verifique se a mensagem é traduzida corretamente
+                            </div>
+                            <div class="alert alert-info">
+                                <strong>Verificação 3:</strong> Verifique se o botão "Alertas de Estoque" é traduzido no dashboard
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>📊 Log de Eventos</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="log" style="height: 300px; overflow-y: auto; background: #f8f9fa; padding: 10px; font-family: monospace; font-size: 12px;">
+                            <div>🔄 Aguardando testes...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="alert alert-success">
+                    <h6>🎉 Fase de Internacionalização Concluída!</h6>
+                    <p class="mb-0">
+                        <strong>Status:</strong> ✅ Todos os pontos de internacionalização foram implementados e corrigidos.<br>
+                        <strong>Próximo passo:</strong> Fazer commit das correções finais.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/i18n/translations.js"></script>
+    <script src="js/i18n/i18n.js"></script>
+    <script src="js/stock-notifications.js"></script>
+    
+    <script>
+        // Função para adicionar log
+        function addLog(message) {
+            const log = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // Inicializar sistema
+        let stockNotificationManager;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('🚀 Inicializando sistema para teste final...');
+            
+            // Inicializar i18n
+            if (window.i18n) {
+                window.i18n.init();
+                addLog('✅ Sistema i18n inicializado');
+            }
+            
+            // Inicializar notificações
+            stockNotificationManager = new StockNotificationManager();
+            stockNotificationManager.init();
+            
+            addLog('✅ Sistema de notificações inicializado');
+            addLog('🎯 Teste final: Verificando correções de duplicidade e tradução');
+        });
+
+        // Teste de alerta warning
+        function testWarningAlert() {
+            addLog('🧪 Testando alerta warning...');
+            stockNotificationManager.showToastNotification(
+                '1 produto(s) com estoque baixo. Clique para ver detalhes.',
+                'warning',
+                true
+            );
+            addLog('⚠️ Alerta warning criado - verificar se não há duplicidade na mensagem');
+        }
+
+        // Teste de alerta crítico
+        function testCriticalAlert() {
+            addLog('🧪 Testando alerta crítico...');
+            stockNotificationManager.showToastNotification(
+                '2 produto(s) com estoque crítico! Clique para ver detalhes.',
+                'error',
+                true
+            );
+            addLog('🚨 Alerta crítico criado - verificar se não há duplicidade na mensagem');
+        }
+
+        // Limpar todas as notificações
+        function clearAllNotifications() {
+            addLog('🧹 Limpando todas as notificações...');
+            stockNotificationManager.clearOldNotifications();
+            addLog('✅ Notificações limpas');
+        }
+
+        // Mudar idioma
+        function changeLanguage(lang) {
+            addLog(`🌍 Mudando idioma para: ${lang}`);
+            if (window.i18n) {
+                window.i18n.setLanguage(lang);
+                document.getElementById('currentLanguage').textContent = lang;
+                addLog(`✅ Idioma alterado para: ${lang}`);
+                addLog('📋 Verificar se as mensagens são traduzidas corretamente');
+            }
+        }
+
+        // Monitorar mudanças nas notificações
+        setInterval(() => {
+            const container = document.getElementById('stock-notifications-container');
+            if (container) {
+                const notifications = container.querySelectorAll('.stock-notification');
+                if (notifications.length > 0) {
+                    addLog(`📊 Notificações ativas: ${notifications.length}`);
+                    notifications.forEach((notification, index) => {
+                        const message = notification.querySelector('.stock-notification-message');
+                        if (message) {
+                            addLog(`  ${index + 1}. Mensagem: "${message.textContent.trim()}"`);
+                        }
+                    });
+                }
+            }
+        }, 8000);
+    </script>
+</body>
+</html> 

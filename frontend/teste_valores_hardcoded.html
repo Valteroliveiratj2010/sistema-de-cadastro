@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste: Valores Hardcoded Removidos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="style.css?v=2.0" rel="stylesheet">
+    <style>
+        body { padding: 20px; background: #f8f9fa; }
+        .test-container { max-width: 800px; margin: 0 auto; }
+        .status-success { color: #059669; font-weight: bold; }
+        .status-error { color: #DC2626; font-weight: bold; }
+        .status-warning { color: #D97706; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔍 Teste: Valores Hardcoded Removidos</h1>
+        <p>Verificando se os valores hardcoded (como "R$ 3,83") foram removidos do HTML.</p>
+        
+        <div class="alert alert-info">
+            <h6>📋 Problema Identificado e Corrigido:</h6>
+            <ul>
+                <li><strong>Problema:</strong> Valores como "R$ 3,83" estavam hardcoded no HTML</li>
+                <li><strong>Origem:</strong> HTML estático com valores de exemplo</li>
+                <li><strong>Solução:</strong> Removidos valores hardcoded, deixando "R$ 0,00"</li>
+                <li><strong>Resultado:</strong> JavaScript agora preenche com dados reais da API</li>
+            </ul>
+        </div>
+        
+        <div class="alert alert-success">
+            <h6>✅ Valores Corrigidos:</h6>
+            <ul>
+                <li><strong>Total a Receber:</strong> R$ 13,00 → R$ 0,00</li>
+                <li><strong>Total a Pagar:</strong> R$ 13,00 → R$ 0,00</li>
+                <li><strong>Lucro:</strong> R$ 11,50 → R$ 0,00</li>
+                <li><strong>Valor do Pedido:</strong> R$ 3,83 → R$ 0,00</li>
+                <li><strong>Ticket Médio:</strong> R$ 3,83 → R$ 0,00</li>
+            </ul>
+        </div>
+        
+        <div class="mt-4">
+            <h4>📊 Verificação dos KPIs:</h4>
+            <div id="kpiVerification" class="alert alert-secondary">
+                <div>🔄 Verificando valores dos KPIs...</div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <button class="btn btn-primary" onclick="verificarValores()">
+                🔍 Verificar Valores
+            </button>
+            <button class="btn btn-success" onclick="abrirDashboard()">
+                📊 Abrir Dashboard
+            </button>
+            <button class="btn btn-warning" onclick="limparCache()">
+                🧹 Limpar Cache
+            </button>
+        </div>
+        
+        <div class="mt-4">
+            <h5>📋 Instruções para Teste:</h5>
+            <div class="alert alert-warning">
+                <ol>
+                    <li><strong>Verifique se não há mais valores hardcoded</strong> como "R$ 3,83"</li>
+                    <li><strong>Confirme se todos os KPIs mostram "R$ 0,00"</strong> quando não há dados</li>
+                    <li><strong>Teste no dashboard real</strong> se os valores são preenchidos pela API</li>
+                    <li><strong>Se houver dados reais:</strong> Os valores devem vir da API</li>
+                    <li><strong>Se não houver dados:</strong> Deve mostrar "R$ 0,00" ou "0"</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <h5>🎯 Teste de Simulação:</h5>
+            <div class="row">
+                <div class="col-md-3">
+                    <button class="btn btn-outline-primary" onclick="simularDados()">
+                        Simular Dados da API
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-outline-warning" onclick="limparDados()">
+                        Limpar Dados
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-outline-info" onclick="testarAPI()">
+                        Testar API Real
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-outline-success" onclick="verificarHTML()">
+                        Verificar HTML
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/i18n/i18n.js"></script>
+    <script src="js/app.js?v=1.5"></script>
+    
+    <script>
+        function verificarValores() {
+            console.log('🔍 Verificando valores dos KPIs...');
+            
+            const kpis = [
+                'totalClients', 'salesThisMonth', 'totalReceivable', 
+                'totalAccountsPayable', 'profit', 'orderValue', 
+                'averageTicket', 'overdueSales'
+            ];
+            
+            let results = '<h6>🔍 Resultado da Verificação:</h6>';
+            let problemas = 0;
+            let sucessos = 0;
+            
+            kpis.forEach(id => {
+                const element = document.getElementById(id);
+                const valueElement = element ? element.querySelector('.fs-2') : null;
+                const value = valueElement ? valueElement.textContent : 'N/A';
+                
+                // Verificar se tem valores hardcoded problemáticos
+                const valoresProblema = ['R$ 3,83', 'R$ 11,50', 'R$ 13,00', 'R$ 893K', '+12.8%'];
+                const temProblema = valoresProblema.some(problema => value.includes(problema));
+                
+                if (temProblema) {
+                    problemas++;
+                    results += `<div class="status-error">❌ ${id}: ${value} (VALOR HARCODED)</div>`;
+                } else {
+                    sucessos++;
+                    results += `<div class="status-success">✅ ${id}: ${value}</div>`;
+                }
+            });
+            
+            if (problemas === 0) {
+                results += '<div class="alert alert-success mt-3"><strong>🎉 SUCESSO!</strong> Todos os valores hardcoded foram removidos!</div>';
+            } else {
+                results += `<div class="alert alert-danger mt-3"><strong>⚠️ ATENÇÃO!</strong> ${problemas} valores hardcoded ainda encontrados.</div>`;
+            }
+            
+            document.getElementById('kpiVerification').innerHTML = results;
+        }
+        
+        function simularDados() {
+            console.log('🧪 Simulando dados da API...');
+            
+            const dadosSimulados = {
+                totalClients: 1250,
+                salesThisMonth: 15250.75,
+                totalReceivable: 8500.50,
+                totalAccountsPayable: 3200.25,
+                overdueSales: 1200.00,
+                orderValue: 450.80,
+                averageTicket: 125.30
+            };
+            
+            // Aplicar dados simulados
+            Object.entries(dadosSimulados).forEach(([id, value]) => {
+                updateKPICard(id, value);
+            });
+            
+            alert('Dados simulados aplicados! Verifique se os KPIs mostram valores diferentes de zero.');
+        }
+        
+        function limparDados() {
+            console.log('🧹 Limpando dados...');
+            
+            const kpis = [
+                'totalClients', 'salesThisMonth', 'totalReceivable', 
+                'totalAccountsPayable', 'profit', 'orderValue', 
+                'averageTicket', 'overdueSales'
+            ];
+            
+            kpis.forEach(id => {
+                if (id === 'totalClients') {
+                    updateKPICard(id, 0);
+                } else {
+                    updateKPICard(id, 0);
+                }
+            });
+            
+            alert('Dados limpos! Todos os KPIs devem mostrar zero.');
+        }
+        
+        async function testarAPI() {
+            console.log('🌐 Testando API real...');
+            
+            try {
+                const response = await api.get('/dashboard/stats');
+                console.log('📊 Resposta da API:', response);
+                
+                if (response && Object.keys(response).length > 0) {
+                    alert('✅ API retornou dados! Verifique se os KPIs foram atualizados.');
+                } else {
+                    alert('⚠️ API retornou dados vazios. KPIs devem mostrar zero.');
+                }
+            } catch (error) {
+                console.error('❌ Erro na API:', error);
+                alert('❌ Erro ao acessar API: ' + error.message);
+            }
+        }
+        
+        function verificarHTML() {
+            console.log('🔍 Verificando HTML...');
+            
+            // Verificar se há valores hardcoded no HTML
+            const htmlContent = document.documentElement.outerHTML;
+            const valoresProblema = ['R$ 3,83', 'R$ 11,50', 'R$ 13,00'];
+            const problemas = valoresProblema.filter(valor => htmlContent.includes(valor));
+            
+            if (problemas.length > 0) {
+                alert('⚠️ Valores hardcoded encontrados no HTML: ' + problemas.join(', '));
+            } else {
+                alert('✅ Nenhum valor hardcoded encontrado no HTML!');
+            }
+        }
+        
+        function abrirDashboard() {
+            window.open('index.html', '_blank');
+        }
+        
+        function limparCache() {
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    for (let name of names) {
+                        caches.delete(name);
+                    }
+                });
+            }
+            alert('Cache limpo! Recarregando página...');
+            location.reload();
+        }
+        
+        // Verificar automaticamente ao carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(verificarValores, 1000);
+        });
+    </script>
+</body>
+</html> 
