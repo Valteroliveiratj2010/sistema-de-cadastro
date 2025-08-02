@@ -244,7 +244,8 @@ h1, h2, h3, h4, h5, h6 {
     overflow: hidden;
 }
 
-.kpi-card::before {
+/* Removendo o ::before conflitante do estilo geral */
+/* .kpi-card::before {
     content: '';
     position: absolute;
     top: 0;
@@ -252,7 +253,7 @@ h1, h2, h3, h4, h5, h6 {
     right: 0;
     height: 4px;
     background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-}
+} */
 
 .kpi-card:hover {
     transform: translateY(-5px);
@@ -1363,11 +1364,11 @@ body .modal-backdrop {
     top: 0;
     left: 0;
     bottom: 0;
-    width: 8px !important;
-    background: linear-gradient(180deg, #1D4E89, #2A6FA8) !important;
+    width: 6px !important;
+    background: #1D4E89 !important;
     opacity: 1 !important;
     transition: all 0.3s ease;
-    border-radius: 0 2px 2px 0;
+    border-radius: 0 3px 3px 0;
     z-index: 10;
 }
 
@@ -1389,34 +1390,34 @@ body .modal-backdrop {
 
 #dashboardSection .kpi-card:hover::before {
     opacity: 1;
-    width: 10px !important;
+    width: 8px !important;
 }
 
 /* Bordas coloridas específicas por categoria - FORÇADAS */
 #dashboardSection .kpi-card.kpi-danger::before {
-    background: linear-gradient(180deg, #DC2626, #EF4444) !important;
-    width: 8px !important;
+    background: #DC2626 !important;
+    width: 6px !important;
 }
 
 #dashboardSection .kpi-card.kpi-success::before {
-    background: linear-gradient(180deg, #059669, #10B981) !important;
-    width: 8px !important;
+    background: #059669 !important;
+    width: 6px !important;
 }
 
 #dashboardSection .kpi-card.kpi-info::before {
-    background: linear-gradient(180deg, #2563EB, #3B82F6) !important;
-    width: 8px !important;
+    background: #2563EB !important;
+    width: 6px !important;
 }
 
 #dashboardSection .kpi-card.kpi-warning::before {
-    background: linear-gradient(180deg, #D97706, #F59E0B) !important;
-    width: 8px !important;
+    background: #D97706 !important;
+    width: 6px !important;
 }
 
 /* Borda para cards com cor primária (azul) - FORÇADA */
 #dashboardSection .kpi-card:not(.kpi-danger):not(.kpi-success):not(.kpi-info):not(.kpi-warning)::before {
-    background: linear-gradient(180deg, #1D4E89, #2A6FA8) !important;
-    width: 8px !important;
+    background: #1D4E89 !important;
+    width: 6px !important;
 }
 
 #dashboardSection .kpi-card .fs-1 {
@@ -2058,12 +2059,27 @@ thead th,
     display: flex;
     gap: 5px;
     flex-shrink: 0;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
     .stock-notification-actions .btn {
         padding: 0.25rem 0.5rem;
         font-size: 0.8rem;
         border-radius: 5px;
+        opacity: 1 !important;
+        visibility: visible !important;
+        background-color: rgba(255, 255, 255, 0.9) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        color: #333 !important;
+        transition: all 0.2s ease;
+    }
+    
+    .stock-notification-actions .btn:hover {
+        background-color: rgba(255, 255, 255, 1) !important;
+        border-color: rgba(255, 255, 255, 0.5) !important;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
     
     .stock-notification-actionable {
@@ -2162,11 +2178,16 @@ thead th,
 /* ================================ */
 
 .elegant-chart-container {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 3px solid #1D4E89;
     border-radius: 15px;
     padding: 25px;
-    color: white;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    color: #1D4E89;
+    box-shadow: 
+        0 20px 40px rgba(29, 78, 137, 0.15),
+        0 8px 16px rgba(29, 78, 137, 0.1),
+        0 4px 8px rgba(29, 78, 137, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
     position: relative;
     overflow: hidden;
 }
@@ -2178,8 +2199,9 @@ thead th,
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(29, 78, 137, 0.02) 0%, rgba(42, 111, 168, 0.02) 100%);
     pointer-events: none;
+    box-shadow: inset 0 2px 4px rgba(29, 78, 137, 0.05);
 }
 
 .elegant-fade-in {
@@ -2224,19 +2246,29 @@ thead th,
 }
 
 .elegant-stat-item {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(10px);
+    background: rgba(29, 78, 137, 0.1);
+    backdrop-filter: blur(15px);
     border-radius: 12px;
     padding: 20px;
     text-align: center;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(29, 78, 137, 0.2);
     transition: all 0.3s ease;
+    box-shadow: 
+        0 12px 24px rgba(29, 78, 137, 0.15),
+        0 6px 12px rgba(29, 78, 137, 0.1),
+        0 2px 4px rgba(29, 78, 137, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .elegant-stat-item:hover {
-    transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.25);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    transform: translateY(-8px);
+    background: rgba(29, 78, 137, 0.15);
+    box-shadow: 
+        0 20px 40px rgba(29, 78, 137, 0.25),
+        0 12px 24px rgba(29, 78, 137, 0.15),
+        0 6px 12px rgba(29, 78, 137, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    border-color: rgba(29, 78, 137, 0.3);
 }
 
 .elegant-stat-value {

@@ -246,141 +246,46 @@ class I18nManager {
 
     // Atualizar gráfico de vendas
     updateSalesChart() {
-        try {
-            console.log('🔄 Iniciando atualização do gráfico de vendas...');
-            
-            // Primeiro, tentar recriar o gráfico diretamente
-            if (window.renderSalesChart) {
-                console.log('🔄 Chamando renderSalesChart para recriar o gráfico...');
-                // Passar dados mock para recriar o gráfico
-                window.renderSalesChart({});
-                return;
-            }
-            
-            // Se não conseguir recriar, tentar atualizar o gráfico existente
-            if (!window.state || !window.state.charts || !window.state.charts.has('salesChart')) {
-                console.log('⚠️ Gráfico de vendas não encontrado no estado');
-                return;
-            }
-
-            const chart = window.state.charts.get('salesChart');
-            if (!chart) {
-                console.log('⚠️ Instância do gráfico não encontrada');
-                return;
-            }
-
-            // Destruir gráfico atual
-            chart.destroy();
-            console.log('🗑️ Gráfico anterior destruído');
-            
-            // Remover do estado
-            window.state.charts.delete('salesChart');
-            
-            // Limpar o canvas
-            const ctx = document.getElementById('salesChart');
-            if (ctx) {
-                const context = ctx.getContext('2d');
-                context.clearRect(0, 0, ctx.width, ctx.height);
-                console.log('🧹 Canvas limpo');
-            }
-
-            // Recriar o gráfico com dados mock e traduções atualizadas
-            const currentYear = new Date().getFullYear();
-            const previousYear = currentYear - 1;
-            const currencySymbol = this.formatCurrency(0).replace('0,00', '');
-            
-            // Dados mock
-            const salesPreviousYear = [5, 8, 12, 15, 18, 22, 25, 28, 30, 35, 40, 45];
-            const salesCurrentYear = [8, 12, 15, 18, 22, 25, 28, 32, 35, 38, 42, 48];
-            
-            // Meses traduzidos
-            const months = [
-                this.t('jan'), this.t('feb'), this.t('mar'), 
-                this.t('apr'), this.t('may'), this.t('jun'),
-                this.t('jul'), this.t('aug'), this.t('sep'),
-                this.t('oct'), this.t('nov'), this.t('dec')
-            ];
-
-            if (ctx) {
-                const newChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: months,
-                        datasets: [{
-                            label: `${this.t('sales')} ${previousYear} (${currencySymbol})`,
-                            data: salesPreviousYear,
-                            backgroundColor: '#1D4E89',
-                            borderColor: '#1D4E89',
-                            borderWidth: 1,
-                            borderRadius: 4,
-                            borderSkipped: false,
-                        }, {
-                            label: `${this.t('sales')} ${currentYear} (${currencySymbol})`,
-                            data: salesCurrentYear,
-                            backgroundColor: '#2A6FA8',
-                            borderColor: '#2A6FA8',
-                            borderWidth: 1,
-                            borderRadius: 4,
-                            borderSkipped: false,
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'top',
-                                labels: {
-                                    usePointStyle: true,
-                                    padding: 20,
-                                    font: {
-                                        family: 'Inter, sans-serif',
-                                        size: 12
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                max: 50,
-                                grid: {
-                                    color: 'rgba(0, 0, 0, 0.05)',
-                                    drawBorder: false
-                                },
-                                ticks: {
-                                    callback: (value) => {
-                                        return this.formatCurrency(value);
-                                    },
-                                    font: {
-                                        family: 'Inter, sans-serif',
-                                        size: 11
-                                    }
-                                }
-                            },
-                            x: {
-                                grid: {
-                                    display: false
-                                },
-                                ticks: {
-                                    font: {
-                                        family: 'Inter, sans-serif',
-                                        size: 11
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-                
-                // Atualizar o estado
-                window.state.charts.set('salesChart', newChart);
-                console.log('✅ Gráfico de vendas recriado com traduções atualizadas');
-            }
-
-        } catch (error) {
-            console.warn('⚠️ Erro ao atualizar gráfico de vendas:', error);
+        console.log('🔄 Iniciando atualização do gráfico de vendas...');
+        
+        // Verificar se existe um gráfico ativo
+        if (!window.state || !window.state.charts || !window.state.charts.has('salesChart')) {
+            console.log('⚠️ Gráfico de vendas não encontrado no estado');
+            return;
         }
+
+        const chart = window.state.charts.get('salesChart');
+        if (!chart) {
+            console.log('⚠️ Instância do gráfico não encontrada');
+            return;
+        }
+
+        console.log('🔄 Atualizando traduções do gráfico existente...');
+        
+        // Atualizar apenas as traduções do gráfico existente
+        const currentYear = new Date().getFullYear();
+        const previousYear = currentYear - 1;
+        const currencySymbol = this.formatCurrency(0).replace('0,00', '');
+        
+        // Meses traduzidos
+        const months = [
+            this.t('jan'), this.t('feb'), this.t('mar'), 
+            this.t('apr'), this.t('may'), this.t('jun'),
+            this.t('jul'), this.t('aug'), this.t('sep'),
+            this.t('oct'), this.t('nov'), this.t('dec')
+        ];
+
+        // Atualizar labels e legendas
+        chart.data.labels = months;
+        chart.data.datasets[0].label = `${this.t('sales')} ${previousYear} (${currencySymbol})`;
+        chart.data.datasets[1].label = `${this.t('sales')} ${currentYear} (${currencySymbol})`;
+        
+        // Atualizar anos dinâmicos
+        this.updateDynamicYears();
+        
+        // Atualizar o gráfico
+        chart.update();
+        console.log('✅ Gráfico atualizado com novas traduções');
     }
 
     // Atualizar elemento específico

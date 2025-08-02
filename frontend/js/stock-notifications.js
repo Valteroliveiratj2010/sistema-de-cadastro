@@ -287,16 +287,20 @@ class StockNotificationManager {
         let type = 'info';
         
         if (criticalAlerts.length > 0) {
-            message += `${criticalAlerts.length} produto(s) com estoque crítico! `;
+            const criticalMessage = window.i18n ? window.i18n.t('stockAlertCriticalMessage') : 'produto(s) com estoque crítico!';
+            message += `${criticalAlerts.length} ${criticalMessage}`;
             type = 'error';
         }
         
         if (warningAlerts.length > 0) {
-            message += `${warningAlerts.length} produto(s) com estoque baixo. `;
+            const warningMessage = window.i18n ? window.i18n.t('stockAlertWarningMessage') : 'produto(s) com estoque baixo.';
+            message += `${warningAlerts.length} ${warningMessage}`;
             if (type === 'info') type = 'warning';
         }
         
-        message += 'Clique para ver detalhes.';
+        // Adicionar "Clique para ver detalhes" apenas uma vez no final
+        const clickMessage = window.i18n ? window.i18n.t('clickToSeeDetails') : 'Clique para ver detalhes.';
+        message += ` ${clickMessage}`;
         
         console.log(`🔔 Mensagem da notificação: "${message}"`);
         console.log(`🔔 Tipo da notificação: ${type}`);
@@ -325,8 +329,8 @@ class StockNotificationManager {
         notification.id = notificationId;
         notification.className = `stock-notification stock-notification-${type}`;
         
-        // Adicionar classe actionable para notificações críticas
-        if (type === 'critical' || type === 'error') {
+        // Adicionar classe actionable para notificações críticas e de aviso
+        if (type === 'critical' || type === 'error' || type === 'warning') {
             notification.classList.add('stock-notification-actionable');
         }
         notification.innerHTML = `
@@ -338,7 +342,7 @@ class StockNotificationManager {
                     ${message}
                 </div>
                 <div class="stock-notification-actions">
-                    ${isActionable ? '<button class="btn btn-sm btn-outline-light" onclick="stockNotificationManager.showAlertsModal()">Ver</button>' : ''}
+                    ${isActionable ? `<button class="btn btn-sm btn-outline-light" onclick="stockNotificationManager.showAlertsModal()">${window.i18n ? window.i18n.t('viewDetails') : 'Ver'}</button>` : ''}
                     <button class="btn btn-sm btn-outline-light" onclick="stockNotificationManager.dismissNotification('${notificationId}')">
                         <i class="bi bi-x"></i>
                     </button>
@@ -356,12 +360,12 @@ class StockNotificationManager {
         // Adicionar à lista de notificações ativas
         this.activeNotifications.add(notificationId);
         
-        // Para alertas críticos, manter a notificação até que o usuário feche ou o estoque seja reposto
-        if (type === 'critical' || type === 'error') {
-            // Não auto-remover alertas críticos
-            console.log('🔔 Notificação crítica - não será auto-removida');
+        // Para alertas críticos e de aviso, manter a notificação até que o usuário feche ou o estoque seja reposto
+        if (type === 'critical' || type === 'error' || type === 'warning') {
+            // Não auto-remover alertas críticos e de aviso
+            console.log(`🔔 Notificação ${type} - não será auto-removida`);
         } else {
-            // Auto-remover apenas notificações não críticas
+            // Auto-remover apenas notificações informativas
             setTimeout(() => {
                 this.dismissNotification(notificationId);
             }, this.settings.notificationDuration);
@@ -454,16 +458,17 @@ class StockNotificationManager {
         this.activeNotifications.forEach(notificationId => {
             const notification = document.getElementById(notificationId);
             if (notification) {
-                // Verificar se é uma notificação crítica
+                // Verificar se é uma notificação crítica ou de aviso
                 const isCritical = notification.classList.contains('stock-notification-error') || 
                                   notification.classList.contains('stock-notification-critical');
+                const isWarning = notification.classList.contains('stock-notification-warning');
                 
-                // Só remover se não for crítica e não for acionável
-                if (!isCritical && !notification.classList.contains('stock-notification-actionable')) {
+                // Só remover se não for crítica, não for de aviso e não for acionável
+                if (!isCritical && !isWarning && !notification.classList.contains('stock-notification-actionable')) {
                     console.log('🗑️ Removendo notificação não crítica:', notificationId);
                     this.dismissNotification(notificationId);
                 } else {
-                    console.log('🔒 Mantendo notificação crítica:', notificationId);
+                    console.log(`🔒 Mantendo notificação ${isCritical ? 'crítica' : isWarning ? 'de aviso' : 'acionável'}:`, notificationId);
                 }
             }
         });
@@ -489,22 +494,22 @@ class StockNotificationManager {
                         <div class="modal-header">
                             <h5 class="modal-title">
                                 <i class="bi bi-exclamation-triangle me-2"></i>
-                                Alertas de Estoque Ativos
+                                ${window.i18n ? window.i18n.t('stockAlertModalTitle') : 'Alertas de Estoque Ativos'}
                             </h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body" id="stockAlertsModalContent">
                             <div class="text-center">
                                 <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Carregando...</span>
+                                    <span class="visually-hidden">${window.i18n ? window.i18n.t('loading') : 'Carregando...'}</span>
                                 </div>
-                                <p class="mt-2">Carregando dados de estoque...</p>
+                                <p class="mt-2">${window.i18n ? window.i18n.t('stockAlertModalLoading') : 'Carregando dados de estoque...'}</p>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${window.i18n ? window.i18n.t('stockAlertModalClose') : 'Fechar'}</button>
                             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#stockSettingsModal">
-                                Configurações
+                                ${window.i18n ? window.i18n.t('stockAlertModalSettings') : 'Configurações'}
                             </button>
                         </div>
                     </div>
@@ -565,10 +570,10 @@ class StockNotificationManager {
                 content.innerHTML = `
                     <div class="text-center">
                         <i class="bi bi-check-circle text-success fs-1"></i>
-                        <h5 class="mt-3">Nenhum Alerta Ativo</h5>
-                        <p class="text-muted">Todos os produtos estão com estoque adequado.</p>
+                        <h5 class="mt-3">${window.i18n ? window.i18n.t('noActiveAlerts') : 'Nenhum Alerta Ativo'}</h5>
+                        <p class="text-muted">${window.i18n ? window.i18n.t('allProductsAdequateStock') : 'Todos os produtos estão com estoque adequado.'}</p>
                         <div class="mt-3">
-                            <small class="text-muted">Última atualização: ${new Date().toLocaleString()}</small>
+                            <small class="text-muted">${window.i18n ? window.i18n.t('lastUpdate') : 'Última atualização'}: ${new Date().toLocaleString()}</small>
                         </div>
                     </div>
                 `;
@@ -581,7 +586,7 @@ class StockNotificationManager {
             // Adicionar timestamp de atualização
             const timestampDiv = document.createElement('div');
             timestampDiv.className = 'text-center mt-3';
-            timestampDiv.innerHTML = `<small class="text-muted">Última atualização: ${new Date().toLocaleString()}</small>`;
+            timestampDiv.innerHTML = `<small class="text-muted">${window.i18n ? window.i18n.t('lastUpdate') : 'Última atualização'}: ${new Date().toLocaleString()}</small>`;
             content.appendChild(timestampDiv);
             
         } catch (error) {
@@ -590,10 +595,10 @@ class StockNotificationManager {
             content.innerHTML = `
                 <div class="text-center">
                     <i class="bi bi-exclamation-triangle text-warning fs-1"></i>
-                    <h5 class="mt-3">Erro ao Carregar Dados</h5>
-                    <p class="text-muted">Não foi possível carregar os dados de estoque.</p>
+                    <h5 class="mt-3">${window.i18n ? window.i18n.t('errorLoadingData') : 'Erro ao Carregar Dados'}</h5>
+                    <p class="text-muted">${window.i18n ? window.i18n.t('couldNotLoadStockData') : 'Não foi possível carregar os dados de estoque.'}</p>
                     <button class="btn btn-primary" onclick="stockNotificationManager.showAlertsModal()">
-                        Tentar Novamente
+                        ${window.i18n ? window.i18n.t('tryAgain') : 'Tentar Novamente'}
                     </button>
                 </div>
             `;
@@ -655,7 +660,7 @@ class StockNotificationManager {
      */
     generateAlertsContent() {
         if (this.alerts.length === 0) {
-            return '<p class="text-muted">Nenhum alerta ativo no momento.</p>';
+            return `<p class="text-muted">${window.i18n ? window.i18n.t('stockAlertModalNoAlerts') : 'Nenhum alerta ativo no momento.'}</p>`;
         }
         
         const criticalAlerts = this.alerts.filter(alert => alert.type === 'critical');
@@ -681,7 +686,7 @@ class StockNotificationManager {
      */
     generateAlertsContentFromData(freshAlerts) {
         if (freshAlerts.length === 0) {
-            return '<p class="text-muted">Nenhum alerta ativo no momento.</p>';
+            return `<p class="text-muted">${window.i18n ? window.i18n.t('stockAlertModalNoAlerts') : 'Nenhum alerta ativo no momento.'}</p>`;
         }
         
         const criticalAlerts = freshAlerts.filter(alert => alert.type === 'critical');
@@ -709,7 +714,9 @@ class StockNotificationManager {
         const isCritical = type === 'critical';
         const alertClass = isCritical ? 'danger' : 'warning';
         const icon = isCritical ? 'exclamation-circle' : 'exclamation-triangle';
-        const title = isCritical ? 'Estoque Crítico' : 'Estoque Baixo';
+        const title = isCritical ? 
+            (window.i18n ? window.i18n.t('stockAlertModalCriticalTitle') : 'Estoque Crítico') : 
+            (window.i18n ? window.i18n.t('stockAlertModalWarningTitle') : 'Estoque Baixo');
 
         return `
             <div class="alert alert-${alertClass} border-${alertClass} mb-3">
@@ -722,9 +729,9 @@ class StockNotificationManager {
                     <table class="table table-sm table-borderless mb-0">
                         <thead>
                             <tr>
-                                <th>Produto</th>
-                                <th>Estoque Atual</th>
-                                <th>Limite</th>
+                                <th>${window.i18n ? window.i18n.t('stockAlertModalProductName') : 'Produto'}</th>
+                                <th>${window.i18n ? window.i18n.t('stockAlertModalCurrentStock') : 'Estoque Atual'}</th>
+                                <th>${window.i18n ? window.i18n.t('stockAlertModalStockLimit') : 'Limite'}</th>
                             </tr>
                         </thead>
                         <tbody>

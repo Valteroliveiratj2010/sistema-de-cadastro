@@ -22,15 +22,28 @@ class Utils {
     static formatDate(date, options = {}) {
         if (!date) return '';
         
-        const defaultOptions = {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        };
-        
-        const mergedOptions = { ...defaultOptions, ...options };
-        
-        return new Intl.DateTimeFormat('pt-BR', mergedOptions).format(new Date(date));
+        try {
+            const dateObj = new Date(date);
+            
+            // Verificar se a data é válida
+            if (isNaN(dateObj.getTime())) {
+                console.warn('⚠️ Data inválida recebida:', date);
+                return 'Data inválida';
+            }
+            
+            const defaultOptions = {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            };
+            
+            const mergedOptions = { ...defaultOptions, ...options };
+            
+            return new Intl.DateTimeFormat('pt-BR', mergedOptions).format(dateObj);
+        } catch (error) {
+            console.error('❌ Erro ao formatar data:', date, error);
+            return 'Data inválida';
+        }
     }
 
     /**

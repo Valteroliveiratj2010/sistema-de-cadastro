@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Alerta Warning Persistente</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>🧪 Teste: Alerta Warning Persistente</h1>
+        <p>Este teste verifica se os alertas warning agora persistem corretamente.</p>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Testes de Notificação</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-warning mb-2" onclick="testWarningAlert()">
+                            <i class="bi bi-exclamation-triangle"></i> Testar Alerta Warning
+                        </button>
+                        <br>
+                        <button class="btn btn-danger mb-2" onclick="testCriticalAlert()">
+                            <i class="bi bi-exclamation-circle"></i> Testar Alerta Crítico
+                        </button>
+                        <br>
+                        <button class="btn btn-info mb-2" onclick="testInfoAlert()">
+                            <i class="bi bi-info-circle"></i> Testar Alerta Info
+                        </button>
+                        <br>
+                        <button class="btn btn-success mb-2" onclick="testSuccessAlert()">
+                            <i class="bi bi-check-circle"></i> Testar Alerta Success
+                        </button>
+                        <br>
+                        <button class="btn btn-secondary" onclick="clearAllNotifications()">
+                            <i class="bi bi-trash"></i> Limpar Todas
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Log de Eventos</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="log" style="height: 300px; overflow-y: auto; background: #f8f9fa; padding: 10px; font-family: monospace; font-size: 12px;">
+                            <div>🔄 Aguardando testes...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/stock-notifications.js"></script>
+    
+    <script>
+        // Função para adicionar log
+        function addLog(message) {
+            const log = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // Inicializar sistema de notificações
+        let stockNotificationManager;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('🚀 Inicializando sistema de notificações...');
+            
+            stockNotificationManager = new StockNotificationManager();
+            stockNotificationManager.init();
+            
+            addLog('✅ Sistema inicializado');
+            addLog('📋 Alertas warning agora devem persistir (não desaparecer automaticamente)');
+        });
+
+        // Teste de alerta warning
+        function testWarningAlert() {
+            addLog('🧪 Testando alerta warning...');
+            stockNotificationManager.showToastNotification(
+                '1 produto(s) com estoque baixo. Clique para ver detalhes.',
+                'warning',
+                true
+            );
+            addLog('⚠️ Alerta warning criado - deve persistir');
+        }
+
+        // Teste de alerta crítico
+        function testCriticalAlert() {
+            addLog('🧪 Testando alerta crítico...');
+            stockNotificationManager.showToastNotification(
+                '2 produto(s) com estoque crítico! Clique para ver detalhes.',
+                'error',
+                true
+            );
+            addLog('🚨 Alerta crítico criado - deve persistir');
+        }
+
+        // Teste de alerta info
+        function testInfoAlert() {
+            addLog('🧪 Testando alerta info...');
+            stockNotificationManager.showToastNotification(
+                'Informação: Sistema funcionando normalmente.',
+                'info',
+                false
+            );
+            addLog('ℹ️ Alerta info criado - deve desaparecer em 5 segundos');
+        }
+
+        // Teste de alerta success
+        function testSuccessAlert() {
+            addLog('🧪 Testando alerta success...');
+            stockNotificationManager.showToastNotification(
+                'Sucesso: Produto atualizado com sucesso!',
+                'success',
+                false
+            );
+            addLog('✅ Alerta success criado - deve desaparecer em 5 segundos');
+        }
+
+        // Limpar todas as notificações
+        function clearAllNotifications() {
+            addLog('🧹 Limpando todas as notificações...');
+            stockNotificationManager.clearOldNotifications();
+            addLog('✅ Notificações limpas');
+        }
+
+        // Monitorar mudanças nas notificações
+        setInterval(() => {
+            const container = document.getElementById('stock-notifications-container');
+            if (container) {
+                const notifications = container.querySelectorAll('.stock-notification');
+                if (notifications.length > 0) {
+                    addLog(`📊 Notificações ativas: ${notifications.length}`);
+                    notifications.forEach((notification, index) => {
+                        const type = notification.classList.contains('stock-notification-warning') ? 'warning' :
+                                   notification.classList.contains('stock-notification-error') ? 'error' :
+                                   notification.classList.contains('stock-notification-success') ? 'success' : 'info';
+                        const actionable = notification.classList.contains('stock-notification-actionable') ? '✅' : '❌';
+                        addLog(`  ${index + 1}. ${type} ${actionable} (${notification.id})`);
+                    });
+                }
+            }
+        }, 3000);
+    </script>
+</body>
+</html> 
