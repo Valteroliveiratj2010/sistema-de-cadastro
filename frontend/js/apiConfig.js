@@ -1,4 +1,5 @@
 // Configuração da API - Detecta automaticamente ambiente local vs produção
+// Versão: 2025-08-02 - Corrigido para Railway
 const isLocalhost = window.location.hostname === 'localhost' || 
                    window.location.hostname === '127.0.0.1' || 
                    window.location.hostname === '';
