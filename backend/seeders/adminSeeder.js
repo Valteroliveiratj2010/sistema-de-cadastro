@@ -57,10 +57,12 @@ async function runAdminSeeder() {
     }
     process.exit(1); // Ainda encerra para garantir que o deploy falhe se o seeder falhar criticamente
   } finally {
-    if (sequelizeInstance) {
-      await sequelizeInstance.close();
-      console.log('Conexão com o banco de dados para o seeder fechada.');
-    }
+    // NÃO fechar a conexão aqui, pois o servidor principal ainda precisa dela
+    // if (sequelizeInstance) {
+    //   await sequelizeInstance.close();
+    //   console.log('Conexão com o banco de dados para o seeder fechada.');
+    // }
+    console.log('✅ Seeder de admin concluído. Conexão mantida para o servidor.');
   }
 }
 
