@@ -85,6 +85,7 @@ h1, h2, h3, h4, h5, h6 {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow-y: auto;
     overflow-x: hidden;
+    max-height: 100vh;
 }
 
 .sidebar-title {
@@ -97,6 +98,7 @@ h1, h2, h3, h4, h5, h6 {
     overflow: hidden;
     text-overflow: ellipsis;
     padding: 0 0.5rem;
+    flex-shrink: 0;
 }
 
 .sidebar .nav-link {
@@ -123,6 +125,17 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 1.1rem;
     width: 20px;
     text-align: center;
+}
+
+.sidebar .nav {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.sidebar .nav.flex-column {
+    gap: 0.25rem;
 }
 
 /* Botão toggle para mobile */
