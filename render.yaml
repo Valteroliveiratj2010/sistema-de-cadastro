@@ -3,8 +3,8 @@ services:
     name: sistema-de-cadastro
     env: node
     plan: free
-    buildCommand: npm install --omit=dev
-    startCommand: node server.js
+    buildCommand: npm install
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
@@ -22,5 +22,5 @@ services:
         value: admin123
       - key: ADMIN_EMAIL
         value: admin@gestorpro.com
-    healthCheckPath: /
+    healthCheckPath: /health
     autoDeploy: true 
