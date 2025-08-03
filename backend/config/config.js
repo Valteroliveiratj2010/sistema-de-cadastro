@@ -43,25 +43,9 @@ module.exports = {
     }
   },
   production: {
-    username: process.env.PGUSER || 'postgres',
-    password: process.env.PGPASSWORD || 'gestor_pro_password',
-    database: process.env.PGDATABASE || 'gestor_pro',
-    host: process.env.PGHOST || 'localhost',
-    port: process.env.PGPORT || 5432,
-    dialect: 'postgres',
-    dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false
-      }
-    },
+    dialect: 'sqlite',
+    storage: './database.sqlite',
     logging: false,
-    pool: {
-      max: 10,
-      min: 2,
-      acquire: 30000,
-      idle: 10000
-    },
     define: {
       timestamps: true,
       underscored: true,

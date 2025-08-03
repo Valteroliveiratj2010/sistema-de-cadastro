@@ -16,15 +16,16 @@ console.log(`[DATABASE_DEBUG] Configuração carregada:`, {
 let sequelize;
 
 // Lógica de inicialização do Sequelize simplificada
-// Sempre usa a configuração direta do config.js
+// Usa a configuração do config.js diretamente
 sequelize = new Sequelize(
-  config.database,
+  config.database || config.storage,
   config.username,
   config.password,
   {
     host: config.host,
     port: config.port,
     dialect: config.dialect,
+    storage: config.storage, // Para SQLite
     logging: config.logging || false,
     dialectOptions: config.dialectOptions || {},
     seederStorage: config.seederStorage,
