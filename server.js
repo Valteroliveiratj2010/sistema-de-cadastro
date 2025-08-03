@@ -21,7 +21,13 @@ const corsOptions = {
             return callback(null, true);
         }
         
-        // Permitir URLs do Vercel em produção
+        // Permitir URLs do Railway em produção
+        if (process.env.NODE_ENV === 'production' && /^https:\/\/sistema-de-cadastro.*\.up\.railway\.app$/.test(origin)) {
+            console.log(`[CORS] Permitindo origem Railway: ${origin}`);
+            return callback(null, true);
+        }
+        
+        // Permitir URLs do Vercel em produção (mantido para compatibilidade)
         if (process.env.NODE_ENV === 'production' && /^https:\/\/sistema-de-cadastro.*\.vercel\.app$/.test(origin)) {
             console.log(`[CORS] Permitindo origem Vercel: ${origin}`);
             return callback(null, true);
