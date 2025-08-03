@@ -318,6 +318,45 @@ app.post('/api/sales', authMiddleware, function(req, res) {
     });
 });
 
+app.delete('/api/sales/:id', authMiddleware, function(req, res) {
+    const id = parseInt(req.params.id);
+    const saleIndex = sales.findIndex(s => s.id === id);
+    
+    if (saleIndex === -1) {
+        return res.status(404).json({
+            success: false,
+            message: 'Venda não encontrada'
+        });
+    }
+    
+    sales.splice(saleIndex, 1);
+    
+    res.json({
+        success: true,
+        message: 'Venda removida com sucesso'
+    });
+});
+
+app.put('/api/sales/:id', authMiddleware, function(req, res) {
+    const id = parseInt(req.params.id);
+    const saleIndex = sales.findIndex(s => s.id === id);
+    
+    if (saleIndex === -1) {
+        return res.status(404).json({
+            success: false,
+            message: 'Venda não encontrada'
+        });
+    }
+    
+    sales[saleIndex] = { ...sales[saleIndex], ...req.body };
+    
+    res.json({
+        success: true,
+        message: 'Venda atualizada com sucesso',
+        data: sales[saleIndex]
+    });
+});
+
 // --- ROTAS BÁSICAS ---
 app.get('/', function(req, res) {
     res.sendFile(path.join(frontendPath, 'index.html'));
