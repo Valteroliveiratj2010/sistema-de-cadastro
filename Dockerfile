@@ -57,12 +57,12 @@ RUN chown -R nodejs:nodejs /app
 # Mudar para usuário não-root
 USER nodejs
 
-# Expor porta
-EXPOSE 3000
+# Expor porta (Railway usa a porta definida em PORT)
+EXPOSE 8080
 
-# Health check
+# Health check (usar a porta correta)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+  CMD node -e "require('http').get('http://localhost:8080/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
 # Comando de inicialização
 CMD ["npm", "start"] 

@@ -112,6 +112,16 @@ app.get('/login', (req, res) => {
     res.sendFile(path.join(frontendPath, 'login.html'));
 });
 
+// --- ROTA DE HEALTH CHECK ---
+app.get('/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'OK', 
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development',
+        port: process.env.PORT || 3000
+    });
+});
+
 // --- INICIALIZAÇÃO DO SERVIDOR ---
 // Render irá fornecer process.env.PORT automaticamente em produção.
 const port = process.env.PORT || 3000;

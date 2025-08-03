@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Acesso - Sistema de Cadastro</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Teste de Acesso</h1>
+        <p>Sistema de Cadastro - Gestor PRO</p>
+        
+        <div id="status" class="status success">
+            ✅ Página de teste carregada com sucesso!
+        </div>
+        
+        <div>
+            <a href="login.html" class="btn">🔑 Ir para Login</a>
+            <a href="index.html" class="btn">🏠 Ir para Dashboard</a>
+        </div>
+        
+        <div style="margin-top: 30px; font-size: 14px; color: #666;">
+            <p><strong>Informações do Sistema:</strong></p>
+            <p>• Data/Hora: <span id="datetime"></span></p>
+            <p>• User Agent: <span id="useragent"></span></p>
+            <p>• URL Atual: <span id="currenturl"></span></p>
+        </div>
+    </div>
+
+    <script>
+        // Preencher informações do sistema
+        document.getElementById('datetime').textContent = new Date().toLocaleString('pt-BR');
+        document.getElementById('useragent').textContent = navigator.userAgent.substring(0, 50) + '...';
+        document.getElementById('currenturl').textContent = window.location.href;
+        
+        // Testar acesso aos arquivos principais
+        async function testarArquivos() {
+            const arquivos = ['login.html', 'index.html', 'style.css', 'js/api.js'];
+            const statusDiv = document.getElementById('status');
+            
+            for (const arquivo of arquivos) {
+                try {
+                    const response = await fetch(arquivo, { method: 'HEAD' });
+                    console.log(`✅ ${arquivo}: ${response.status}`);
+                } catch (error) {
+                    console.log(`❌ ${arquivo}: ${error.message}`);
+                }
+            }
+        }
+        
+        // Executar teste após carregar a página
+        window.addEventListener('load', testarArquivos);
+    </script>
+</body>
+</html> 
