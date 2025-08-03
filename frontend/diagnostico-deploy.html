@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico de Deploy - Sistema de Cadastro</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #123C66 0%, #1D4E89 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .content {
+            padding: 30px;
+        }
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 4px solid #007bff;
+        }
+        .status-success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        .status-error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .status-warning {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px 5px;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .log {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Diagnóstico de Deploy</h1>
+            <p>Sistema de Cadastro - Gestor PRO</p>
+        </div>
+        
+        <div class="content">
+            <div class="status-card">
+                <h3>📊 Status Geral</h3>
+                <div id="generalStatus">Verificando...</div>
+            </div>
+            
+            <div class="grid">
+                <div class="status-card">
+                    <h4>🌐 Frontend</h4>
+                    <div id="frontendStatus">Verificando...</div>
+                    <a href="index.html" class="btn">Testar Dashboard</a>
+                    <a href="login.html" class="btn">Testar Login</a>
+                </div>
+                
+                <div class="status-card">
+                    <h4>⚙️ Backend</h4>
+                    <div id="backendStatus">Verificando...</div>
+                    <a href="/api/health" class="btn">Testar API</a>
+                    <a href="/health" class="btn">Health Check</a>
+                </div>
+                
+                <div class="status-card">
+                    <h4>📁 Arquivos</h4>
+                    <div id="filesStatus">Verificando...</div>
+                    <a href="teste-acesso.html" class="btn">Página de Teste</a>
+                </div>
+                
+                <div class="status-card">
+                    <h4>🔗 URLs</h4>
+                    <div id="urlsStatus">Verificando...</div>
+                    <a href="https://sistema-de-cadastro-backend.onrender.com/api/health" class="btn btn-success" target="_blank">Backend Render</a>
+                </div>
+            </div>
+            
+            <div class="status-card">
+                <h3>📋 Logs de Diagnóstico</h3>
+                <div class="log" id="diagnosticLog">Iniciando diagnóstico...</div>
+            </div>
+            
+            <div class="status-card">
+                <h3>🛠️ Ações</h3>
+                <button onclick="runFullDiagnostic()" class="btn">🔄 Executar Diagnóstico Completo</button>
+                <button onclick="clearLog()" class="btn btn-danger">🗑️ Limpar Log</button>
+                <button onclick="testAllEndpoints()" class="btn btn-success">🧪 Testar Todos os Endpoints</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const log = document.getElementById('diagnosticLog');
+        const generalStatus = document.getElementById('generalStatus');
+        const frontendStatus = document.getElementById('frontendStatus');
+        const backendStatus = document.getElementById('backendStatus');
+        const filesStatus = document.getElementById('filesStatus');
+        const urlsStatus = document.getElementById('urlsStatus');
+        
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('pt-BR');
+            const logEntry = `[${timestamp}] ${message}\n`;
+            log.textContent += logEntry;
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function updateStatus(element, message, type = 'info') {
+            element.innerHTML = message;
+            element.className = `status-${type}`;
+        }
+        
+        async function testEndpoint(url, name) {
+            try {
+                addLog(`Testando ${name}: ${url}`);
+                const response = await fetch(url, { method: 'HEAD' });
+                addLog(`✅ ${name}: ${response.status} ${response.statusText}`);
+                return { success: true, status: response.status };
+            } catch (error) {
+                addLog(`❌ ${name}: ${error.message}`);
+                return { success: false, error: error.message };
+            }
+        }
+        
+        async function runFullDiagnostic() {
+            addLog('🚀 Iniciando diagnóstico completo...');
+            
+            // Testar arquivos locais
+            const localFiles = [
+                { url: 'index.html', name: 'Dashboard' },
+                { url: 'login.html', name: 'Login' },
+                { url: 'style.css', name: 'CSS Principal' },
+                { url: 'js/api.js', name: 'API JS' },
+                { url: 'teste-acesso.html', name: 'Página de Teste' }
+            ];
+            
+            addLog('📁 Testando arquivos locais...');
+            let localSuccess = 0;
+            for (const file of localFiles) {
+                const result = await testEndpoint(file.url, file.name);
+                if (result.success) localSuccess++;
+            }
+            
+            // Testar endpoints da API
+            addLog('⚙️ Testando endpoints da API...');
+            const apiEndpoints = [
+                { url: '/health', name: 'Health Check' },
+                { url: '/api/health', name: 'API Health' }
+            ];
+            
+            let apiSuccess = 0;
+            for (const endpoint of apiEndpoints) {
+                const result = await testEndpoint(endpoint.url, endpoint.name);
+                if (result.success) apiSuccess++;
+            }
+            
+            // Testar backend externo
+            addLog('🌐 Testando backend externo...');
+            const backendResult = await testEndpoint('https://sistema-de-cadastro-backend.onrender.com/api/health', 'Backend Render');
+            
+            // Atualizar status
+            updateStatus(frontendStatus, `${localSuccess}/${localFiles.length} arquivos acessíveis`, localSuccess === localFiles.length ? 'success' : 'warning');
+            updateStatus(backendStatus, `${apiSuccess}/${apiEndpoints.length} endpoints funcionando`, apiSuccess === apiEndpoints.length ? 'success' : 'warning');
+            updateStatus(urlsStatus, backendResult.success ? 'Backend acessível' : 'Backend inacessível', backendResult.success ? 'success' : 'error');
+            
+            const totalSuccess = localSuccess + apiSuccess + (backendResult.success ? 1 : 0);
+            const totalTests = localFiles.length + apiEndpoints.length + 1;
+            
+            updateStatus(generalStatus, `${totalSuccess}/${totalTests} testes passaram`, totalSuccess === totalTests ? 'success' : 'warning');
+            
+            addLog(`✅ Diagnóstico completo finalizado: ${totalSuccess}/${totalTests} testes passaram`);
+        }
+        
+        async function testAllEndpoints() {
+            addLog('🧪 Testando todos os endpoints...');
+            
+            const endpoints = [
+                '/',
+                '/login',
+                '/health',
+                '/api/health',
+                'index.html',
+                'login.html',
+                'teste-acesso.html'
+            ];
+            
+            for (const endpoint of endpoints) {
+                await testEndpoint(endpoint, endpoint);
+            }
+            
+            addLog('✅ Teste de endpoints finalizado');
+        }
+        
+        function clearLog() {
+            log.textContent = 'Log limpo...\n';
+        }
+        
+        // Executar diagnóstico inicial
+        window.addEventListener('load', () => {
+            addLog('📱 Página carregada');
+            addLog(`🌍 URL atual: ${window.location.href}`);
+            addLog(`📱 User Agent: ${navigator.userAgent.substring(0, 50)}...`);
+            addLog(`⏰ Data/Hora: ${new Date().toLocaleString('pt-BR')}`);
+            
+            setTimeout(runFullDiagnostic, 1000);
+        });
+    </script>
+</body>
+</html> 
