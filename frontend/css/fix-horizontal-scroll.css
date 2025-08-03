@@ -1,0 +1,255 @@
+/* ========================================
+   CORREÇÃO DEFINITIVA PARA SCROLL HORIZONTAL
+   ======================================== */
+
+/* RESET COMPLETO - FORÇAR COMPORTAMENTO CORRETO */
+* {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+html, body {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* CONTAINER PRINCIPAL */
+#app-container {
+    display: flex !important;
+    min-height: 100vh !important;
+    position: relative !important;
+    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+}
+
+/* SIDEBAR - LARGURA FIXA APENAS EM DESKTOP */
+.sidebar {
+    width: 280px !important;
+    max-width: 280px !important;
+    min-width: 280px !important;
+    background: linear-gradient(135deg, #123C66 0%, #1D4E89 100%) !important;
+    color: #ffffff !important;
+    padding: 2rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    position: fixed !important;
+    height: 100vh !important;
+    left: 0 !important;
+    top: 0 !important;
+    z-index: 2000 !important;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+/* CONTEÚDO PRINCIPAL - CALCULAR LARGURA DINAMICAMENTE */
+.main-content {
+    flex: 1 !important;
+    margin-left: 280px !important;
+    transition: margin-left 0.3s ease !important;
+    overflow-x: hidden !important;
+    width: calc(100vw - 280px) !important;
+    max-width: calc(100vw - 280px) !important;
+}
+
+/* WRAPPER DE CONTEÚDO */
+.content-wrapper {
+    padding: 2rem !important;
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+    overflow-x: hidden !important;
+    width: 100% !important;
+}
+
+/* ========================================
+   RESPONSIVIDADE - MOBILE/TABLET
+   ======================================== */
+
+/* TABLET E MOBILE - SIDEBAR OVERLAY */
+@media (max-width: 991.98px) {
+    .sidebar {
+        width: 280px !important;
+        max-width: 280px !important;
+        min-width: 280px !important;
+        transform: translateX(-100%) !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        height: 100vh !important;
+        z-index: 2000 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        transition: transform 0.3s ease !important;
+    }
+    
+    .sidebar.active {
+        transform: translateX(0) !important;
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+    }
+    
+    .content-wrapper {
+        padding: 1.5rem !important;
+        overflow-x: hidden !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+/* MOBILE PEQUENO */
+@media (max-width: 767.98px) {
+    .sidebar {
+        width: 280px !important;
+        max-width: 280px !important;
+        min-width: 280px !important;
+    }
+    
+    .main-content {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+    }
+    
+    .content-wrapper {
+        padding: 1rem !important;
+        overflow-x: hidden !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+/* MOBILE MUITO PEQUENO */
+@media (max-width: 575.98px) {
+    .sidebar {
+        width: 280px !important;
+        max-width: 280px !important;
+        min-width: 280px !important;
+    }
+    
+    .main-content {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+    }
+    
+    .content-wrapper {
+        padding: 1rem !important;
+        overflow-x: hidden !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+/* ========================================
+   CORREÇÕES ESPECÍFICAS PARA ELEMENTOS PROBLEMÁTICOS
+   ======================================== */
+
+/* TABELAS - EVITAR OVERFLOW */
+.table-responsive {
+    overflow-x: auto !important;
+    max-width: 100% !important;
+}
+
+.table {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+/* CARDS - EVITAR OVERFLOW */
+.card {
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+/* BOTÕES - EVITAR OVERFLOW */
+.btn {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+/* FORMULÁRIOS - EVITAR OVERFLOW */
+.form-control, .form-select {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+/* CONTAINERS - EVITAR OVERFLOW */
+.container, .container-fluid {
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+/* ROWS E COLS - EVITAR OVERFLOW */
+.row {
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+[class*="col-"] {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+/* ========================================
+   FORÇAR COMPORTAMENTO CORRETO EM TODOS OS ELEMENTOS
+   ======================================== */
+
+/* SELETOR UNIVERSAL PARA TODOS OS ELEMENTOS */
+* {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* ELEMENTOS ESPECÍFICOS QUE PODEM CAUSAR OVERFLOW */
+img, video, iframe, canvas, svg {
+    max-width: 100% !important;
+    height: auto !important;
+}
+
+/* TEXTOS LONGOS */
+p, h1, h2, h3, h4, h5, h6, span, div {
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    max-width: 100% !important;
+}
+
+/* ========================================
+   CORREÇÃO FINAL - GARANTIR QUE NÃO HÁ SCROLL HORIZONTAL
+   ======================================== */
+
+/* FORÇAR COMPORTAMENTO EM TODOS OS ELEMENTOS */
+html, body, #app-container, .main-content, .content-wrapper, .sidebar,
+.container, .container-fluid, .row, [class*="col-"], .card, .table,
+.btn, .form-control, .form-select, img, video, iframe, canvas, svg {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+}
+
+/* DESKTOP - LARGURA ESPECÍFICA */
+@media (min-width: 992px) {
+    .main-content {
+        width: calc(100vw - 280px) !important;
+        max-width: calc(100vw - 280px) !important;
+    }
+}
+
+/* MOBILE/TABLET - LARGURA TOTAL */
+@media (max-width: 991.98px) {
+    .main-content {
+        width: 100vw !important;
+        max-width: 100vw !important;
+    }
+} 
