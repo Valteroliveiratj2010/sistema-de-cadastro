@@ -18,6 +18,7 @@ router.post('/login', async (req, res) => {
 
   try {
     console.log(`[AUTH] Tentativa de login: ${username}`);
+    console.log(`[AUTH] Dados recebidos:`, { username, password: password ? '***' : 'undefined' });
 
     const user = await User.findOne({
       where: {
@@ -34,6 +35,13 @@ router.post('/login', async (req, res) => {
     }
 
     console.log(`[AUTH] Usuário '${user.username}' encontrado. Validando senha...`);
+    console.log(`[AUTH] Dados do usuário:`, { 
+      id: user.id, 
+      username: user.username, 
+      email: user.email,
+      role: user.role,
+      hasPassword: !!user.password 
+    });
 
     const isPasswordValid = await user.comparePassword(password);
 

@@ -63,14 +63,24 @@ async function initializeDatabase() {
 
     // Verificar se existe usuário admin
     const { User } = db;
-    const adminUser = await User.findOne({ where: { username: 'admin' } });
+    console.log('[DEBUG] Verificando usuário admin...');
+    
+    // Verificar tanto 'admin' quanto '19vsilva' (usuário criado pelo seeder)
+    const adminUser = await User.findOne({ 
+      where: { 
+        [db.Sequelize.Op.or]: [
+          { username: 'admin' },
+          { username: '19vsilva' }
+        ]
+      } 
+    });
     
     if (!adminUser) {
       console.log('⚠️ Usuário admin não encontrado. Criando...');
       // Executar seeder de admin
       require('./backend/seeders/adminSeeder');
     } else {
-      console.log('✅ Usuário admin já existe.');
+      console.log(`✅ Usuário admin encontrado: ${adminUser.username}`);
     }
 
   } catch (error) {
