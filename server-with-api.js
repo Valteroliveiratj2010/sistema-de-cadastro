@@ -87,6 +87,40 @@ let sales = [
     }
 ];
 
+let suppliers = [
+    {
+        id: 1,
+        nome: 'Fornecedor Teste',
+        email: 'fornecedor@email.com',
+        telefone: '11988888888',
+        cnpj: '12345678901234',
+        endereco: 'Rua Fornecedor, 123'
+    }
+];
+
+let purchases = [
+    {
+        id: 1,
+        fornecedorId: 1,
+        valorTotal: 500.00,
+        valorPago: 500.00,
+        status: 'Pago',
+        dataCompra: new Date().toISOString(),
+        dataVencimento: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    }
+];
+
+let users = [
+    {
+        id: 1,
+        username: 'admin',
+        email: 'admin@gestorpro.com',
+        role: 'admin',
+        nome: 'Administrador',
+        ativo: true
+    }
+];
+
 // --- ROTAS DE AUTENTICAÇÃO ---
 app.post('/api/auth/login', async function(req, res) {
     try {
@@ -396,6 +430,206 @@ app.put('/api/sales/:id', authMiddleware, function(req, res) {
     });
 });
 
+// --- ROTAS DE FORNECEDORES ---
+app.get('/api/suppliers', authMiddleware, function(req, res) {
+    console.log('[API] GET /api/suppliers');
+    res.json({
+        success: true,
+        data: suppliers
+    });
+});
+
+app.post('/api/suppliers', authMiddleware, function(req, res) {
+    console.log('[API] POST /api/suppliers', req.body);
+    
+    const newSupplier = {
+        id: suppliers.length + 1,
+        ...req.body,
+        createdAt: new Date().toISOString()
+    };
+    
+    suppliers.push(newSupplier);
+    
+    res.status(201).json({
+        success: true,
+        message: 'Fornecedor criado com sucesso',
+        data: newSupplier
+    });
+});
+
+app.put('/api/suppliers/:id', authMiddleware, function(req, res) {
+    const id = parseInt(req.params.id);
+    const supplierIndex = suppliers.findIndex(s => s.id === id);
+    
+    if (supplierIndex === -1) {
+        return res.status(404).json({
+            success: false,
+            message: 'Fornecedor não encontrado'
+        });
+    }
+    
+    suppliers[supplierIndex] = { ...suppliers[supplierIndex], ...req.body };
+    
+    res.json({
+        success: true,
+        message: 'Fornecedor atualizado com sucesso',
+        data: suppliers[supplierIndex]
+    });
+});
+
+app.delete('/api/suppliers/:id', authMiddleware, function(req, res) {
+    const id = parseInt(req.params.id);
+    const supplierIndex = suppliers.findIndex(s => s.id === id);
+    
+    if (supplierIndex === -1) {
+        return res.status(404).json({
+            success: false,
+            message: 'Fornecedor não encontrado'
+        });
+    }
+    
+    suppliers.splice(supplierIndex, 1);
+    
+    res.json({
+        success: true,
+        message: 'Fornecedor removido com sucesso'
+    });
+});
+
+// --- ROTAS DE COMPRAS ---
+app.get('/api/purchases', authMiddleware, function(req, res) {
+    console.log('[API] GET /api/purchases');
+    res.json({
+        success: true,
+        data: purchases
+    });
+});
+
+app.post('/api/purchases', authMiddleware, function(req, res) {
+    console.log('[API] POST /api/purchases', req.body);
+    
+    const newPurchase = {
+        id: purchases.length + 1,
+        ...req.body,
+        dataCompra: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+    };
+    
+    purchases.push(newPurchase);
+    
+    res.status(201).json({
+        success: true,
+        message: 'Compra criada com sucesso',
+        data: newPurchase
+    });
+});
+
+app.put('/api/purchases/:id', authMiddleware, function(req, res) {
+    const id = parseInt(req.params.id);
+    const purchaseIndex = purchases.findIndex(p => p.id === id);
+    
+    if (purchaseIndex === -1) {
+        return res.status(404).json({
+            success: false,
+            message: 'Compra não encontrada'
+        });
+    }
+    
+    purchases[purchaseIndex] = { ...purchases[purchaseIndex], ...req.body };
+    
+    res.json({
+        success: true,
+        message: 'Compra atualizada com sucesso',
+        data: purchases[purchaseIndex]
+    });
+});
+
+app.delete('/api/purchases/:id', authMiddleware, function(req, res) {
+    const id = parseInt(req.params.id);
+    const purchaseIndex = purchases.findIndex(p => p.id === id);
+    
+    if (purchaseIndex === -1) {
+        return res.status(404).json({
+            success: false,
+            message: 'Compra não encontrada'
+        });
+    }
+    
+    purchases.splice(purchaseIndex, 1);
+    
+    res.json({
+        success: true,
+        message: 'Compra removida com sucesso'
+    });
+});
+
+// --- ROTAS DE USUÁRIOS ---
+app.get('/api/users', authMiddleware, function(req, res) {
+    console.log('[API] GET /api/users');
+    res.json({
+        success: true,
+        data: users
+    });
+});
+
+app.post('/api/users', authMiddleware, function(req, res) {
+    console.log('[API] POST /api/users', req.body);
+    
+    const newUser = {
+        id: users.length + 1,
+        ...req.body,
+        ativo: true,
+        createdAt: new Date().toISOString()
+    };
+    
+    users.push(newUser);
+    
+    res.status(201).json({
+        success: true,
+        message: 'Usuário criado com sucesso',
+        data: newUser
+    });
+});
+
+app.put('/api/users/:id', authMiddleware, function(req, res) {
+    const id = parseInt(req.params.id);
+    const userIndex = users.findIndex(u => u.id === id);
+    
+    if (userIndex === -1) {
+        return res.status(404).json({
+            success: false,
+            message: 'Usuário não encontrado'
+        });
+    }
+    
+    users[userIndex] = { ...users[userIndex], ...req.body };
+    
+    res.json({
+        success: true,
+        message: 'Usuário atualizado com sucesso',
+        data: users[userIndex]
+    });
+});
+
+app.delete('/api/users/:id', authMiddleware, function(req, res) {
+    const id = parseInt(req.params.id);
+    const userIndex = users.findIndex(u => u.id === id);
+    
+    if (userIndex === -1) {
+        return res.status(404).json({
+            success: false,
+            message: 'Usuário não encontrado'
+        });
+    }
+    
+    users.splice(userIndex, 1);
+    
+    res.json({
+        success: true,
+        message: 'Usuário removido com sucesso'
+    });
+});
+
 // --- ROTAS BÁSICAS ---
 app.get('/', function(req, res) {
     res.sendFile(path.join(frontendPath, 'index.html'));
@@ -412,7 +646,7 @@ app.get('/health', function(req, res) {
         environment: process.env.NODE_ENV || 'development',
         port: process.env.PORT || 3000,
         message: 'Servidor com API funcionando',
-        features: ['login', 'clients', 'products', 'sales', 'health', 'static-files']
+        features: ['login', 'clients', 'products', 'sales', 'suppliers', 'purchases', 'users', 'health', 'static-files']
     });
 });
 
