@@ -291,6 +291,45 @@ app.post('/api/products', authMiddleware, function(req, res) {
     });
 });
 
+app.delete('/api/products/:id', authMiddleware, function(req, res) {
+    const id = parseInt(req.params.id);
+    const productIndex = products.findIndex(p => p.id === id);
+    
+    if (productIndex === -1) {
+        return res.status(404).json({
+            success: false,
+            message: 'Produto não encontrado'
+        });
+    }
+    
+    products.splice(productIndex, 1);
+    
+    res.json({
+        success: true,
+        message: 'Produto removido com sucesso'
+    });
+});
+
+app.put('/api/products/:id', authMiddleware, function(req, res) {
+    const id = parseInt(req.params.id);
+    const productIndex = products.findIndex(p => p.id === id);
+    
+    if (productIndex === -1) {
+        return res.status(404).json({
+            success: false,
+            message: 'Produto não encontrado'
+        });
+    }
+    
+    products[productIndex] = { ...products[productIndex], ...req.body };
+    
+    res.json({
+        success: true,
+        message: 'Produto atualizado com sucesso',
+        data: products[productIndex]
+    });
+});
+
 // --- ROTAS DE VENDAS ---
 app.get('/api/sales', authMiddleware, function(req, res) {
     console.log('[API] GET /api/sales');
