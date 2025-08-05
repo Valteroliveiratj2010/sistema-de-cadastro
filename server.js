@@ -46,8 +46,20 @@ async function initializeDatabase() {
         await sequelize.authenticate();
         console.log('✅ Conexão com o banco de dados estabelecida com sucesso.');
 
-        await sequelize.sync({ force: false });
-        console.log('✅ Modelos sincronizados com o banco de dados.');
+        // Verificar se as tabelas já existem antes de sincronizar
+        const [tables] = await sequelize.query(`
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public' AND table_name = 'Users'
+        `);
+        
+        if (tables.length === 0) {
+            console.log('📋 Tabelas não existem. Executando sincronização...');
+            await sequelize.sync({ force: false });
+            console.log('✅ Modelos sincronizados com o banco de dados.');
+        } else {
+            console.log('✅ Tabelas já existem. Pulando sincronização.');
+        }
 
         const { User } = db;
         const adminUser = await User.findOne({ 
