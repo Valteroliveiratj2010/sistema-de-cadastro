@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: sistema-de-cadastro
+    name: sistema-gestor-pro
     env: node
     plan: free
     buildCommand: npm install
@@ -11,7 +11,7 @@ services:
       - key: PORT
         value: 10000
       - key: JWT_SECRET
-        value: gestor_pro_jwt_secret_2024_production_secure
+        value: gestor_pro_jwt_secret_2024_production_secure_v2
       - key: JWT_EXPIRES_IN
         value: 24h
       - key: ENABLE_LOGGING
@@ -22,5 +22,18 @@ services:
         value: admin123
       - key: ADMIN_EMAIL
         value: admin@gestorpro.com
+      - key: DATABASE_URL
+        sync: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: 5432
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
     healthCheckPath: /health
-    autoDeploy: true 
+    autoDeploy: true
+    region: oregon 
