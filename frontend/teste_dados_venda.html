@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Dados da Venda</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>🧪 Teste - Dados da Venda</h1>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Teste de Dados</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary" onclick="testarDadosVenda()">
+                            Testar Dados da Venda
+                        </button>
+                        <button class="btn btn-success" onclick="testarDadosAPI()">
+                            Simular Dados da API
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Status do Teste</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="testStatus" class="alert alert-info">
+                            Aguardando teste...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5>Tabela de Vendas</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="salesTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Cliente</th>
+                                <th>Valor Total</th>
+                                <th>Data</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="bi bi-cart-check fs-1 d-block mb-2"></i>
+                                    Nenhuma venda registrada
+                                    <br>
+                                    <small>Clique em "Testar Dados da Venda" para ver os dados</small>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5>Logs de Debug</h5>
+            </div>
+            <div class="card-body">
+                <div id="debugLogs" class="bg-dark text-light p-3 rounded" style="height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+                    <div>🔄 Aguardando logs...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/apiConfig.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+    
+    <script>
+        // Interceptar console.log para mostrar no debug
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        function addToDebugLog(message, type = 'log') {
+            const debugLogs = document.getElementById('debugLogs');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#ff6b6b' : type === 'warn' ? '#ffd93d' : '#6bcf7f';
+            
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<span style="color: ${color}">[${timestamp}]</span> ${message}`;
+            debugLogs.appendChild(logEntry);
+            debugLogs.scrollTop = debugLogs.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addToDebugLog(args.join(' '), 'log');
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addToDebugLog(args.join(' '), 'error');
+        };
+        
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            addToDebugLog(args.join(' '), 'warn');
+        };
+        
+        // Função para testar dados da venda
+        function testarDadosVenda() {
+            console.log('🧪 Testando dados da venda...');
+            
+            const testStatus = document.getElementById('testStatus');
+            testStatus.className = 'alert alert-info';
+            testStatus.textContent = 'Testando dados da venda...';
+            
+            // Dados de teste com diferentes estruturas
+            const testData = {
+                success: true,
+                data: [
+                    {
+                        id: 1,
+                        client: { nome: 'João Silva' },
+                        valorTotal: 150.00,
+                        dataVenda: '2025-08-04',
+                        status: 'Pendente'
+                    },
+                    {
+                        id: 2,
+                        cliente: { nome: 'Maria Santos' },
+                        valorTotal: 250.50,
+                        data_venda: '2025-08-03',
+                        status: 'Pago'
+                    },
+                    {
+                        id: 3,
+                        clientName: 'Pedro Costa',
+                        valorTotal: 75.25,
+                        date: '2025-08-02',
+                        status: 'Concluída'
+                    },
+                    {
+                        id: 4,
+                        valorTotal: 100.00,
+                        createdAt: '2025-08-01',
+                        status: 'Cancelada'
+                    }
+                ]
+            };
+            
+            console.log('📦 Dados de teste:', testData);
+            
+            // Chamar renderSales
+            if (typeof renderSales === 'function') {
+                console.log('✅ Função renderSales encontrada, chamando...');
+                renderSales(testData);
+                testStatus.className = 'alert alert-success';
+                testStatus.textContent = 'Teste concluído! Verifique a tabela e os logs.';
+            } else {
+                console.error('❌ Função renderSales não encontrada!');
+                testStatus.className = 'alert alert-danger';
+                testStatus.textContent = 'Erro: Função renderSales não encontrada!';
+            }
+        }
+        
+        // Função para simular dados da API
+        function testarDadosAPI() {
+            console.log('🧪 Simulando dados da API...');
+            
+            const testStatus = document.getElementById('testStatus');
+            testStatus.className = 'alert alert-info';
+            testStatus.textContent = 'Simulando dados da API...';
+            
+            // Simular resposta da API
+            const apiResponse = {
+                success: true,
+                data: [
+                    {
+                        id: 1,
+                        clientId: 1,
+                        valorTotal: 150.00,
+                        dataVenda: '2025-08-04',
+                        status: 'Pendente',
+                        client: {
+                            id: 1,
+                            nome: 'João Silva',
+                            email: 'joao@email.com'
+                        }
+                    }
+                ]
+            };
+            
+            console.log('📦 Resposta simulada da API:', apiResponse);
+            
+            // Chamar renderSales
+            if (typeof renderSales === 'function') {
+                console.log('✅ Função renderSales encontrada, chamando...');
+                renderSales(apiResponse);
+                testStatus.className = 'alert alert-success';
+                testStatus.textContent = 'Simulação concluída! Verifique a tabela e os logs.';
+            } else {
+                console.error('❌ Função renderSales não encontrada!');
+                testStatus.className = 'alert alert-danger';
+                testStatus.textContent = 'Erro: Função renderSales não encontrada!';
+            }
+        }
+        
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Página de teste carregada');
+            console.log('🔍 Verificando funções disponíveis:');
+            console.log('  - renderSales:', typeof renderSales);
+            console.log('  - Utils.formatCurrency:', typeof Utils?.formatCurrency);
+            console.log('  - Utils.formatDate:', typeof Utils?.formatDate);
+            console.log('  - getStatusColor:', typeof getStatusColor);
+            console.log('  - getTranslatedStatus:', typeof getTranslatedStatus);
+            
+            const testStatus = document.getElementById('testStatus');
+            testStatus.className = 'alert alert-success';
+            testStatus.textContent = 'Página carregada! Clique em "Testar Dados da Venda" para começar.';
+        });
+    </script>
+</body>
+</html> 

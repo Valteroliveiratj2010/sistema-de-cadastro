@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Funções</title>
+</head>
+<body>
+    <h1>Teste de Funções</h1>
+    <div id="output"></div>
+
+    <!-- Carregar scripts na ordem correta -->
+    <script src="js/apiConfig.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js?v=3.11"></script>
+
+    <script>
+        function log(message) {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            output.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            console.log(message);
+        }
+
+        // Aguardar o carregamento completo
+        setTimeout(() => {
+            log('🔍 Verificando funções após carregamento...');
+            
+            // Verificar se as funções estão disponíveis
+            const functions = ['createClient', 'createProduct', 'createSale', 'createPurchase', 'createSupplier', 'createUser'];
+            
+            functions.forEach(funcName => {
+                if (window[funcName] && typeof window[funcName] === 'function') {
+                    log(`✅ ${funcName}: ${typeof window[funcName]}`);
+                } else {
+                    log(`❌ ${funcName}: ${typeof window[funcName]}`);
+                }
+            });
+            
+            // Teste específico do createProduct
+            if (window.createProduct) {
+                log('🎯 Testando createProduct...');
+                
+                const testData = {
+                    nome: 'Produto Teste',
+                    descricao: 'Descrição do produto',
+                    preco: 50.00,
+                    custo: 30.00,
+                    estoque: 100,
+                    sku: 'TEST001'
+                };
+                
+                window.createProduct(testData).then(result => {
+                    log('✅ createProduct executado com sucesso:');
+                    log(JSON.stringify(result, null, 2));
+                }).catch(error => {
+                    log('❌ Erro no createProduct:');
+                    log(error.message);
+                });
+            } else {
+                log('❌ createProduct não está disponível');
+            }
+            
+        }, 2000);
+    </script>
+</body>
+</html> 

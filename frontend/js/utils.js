@@ -5,30 +5,98 @@
 
 class Utils {
     /**
+     * Get current date in YYYY-MM-DD format (timezone-safe)
+     * This function solves the persistent date issue by using multiple fallback methods
+     */
+    static getCurrentDate() {
+        const now = new Date();
+        
+        // Method 1: Use Intl.DateTimeFormat (most reliable for timezone)
+        try {
+            const formatter = new Intl.DateTimeFormat('en-CA', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            });
+            const formatted = formatter.format(now);
+            if (formatted && formatted.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                console.log('📅 Data obtida via Intl.DateTimeFormat:', formatted);
+                return formatted;
+            }
+        } catch (error) {
+            console.warn('⚠️ Erro no Intl.DateTimeFormat, tentando método alternativo');
+        }
+        
+        // Method 2: Manual calculation with timezone offset
+        try {
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const manualDate = `${year}-${month}-${day}`;
+            console.log('📅 Data obtida via cálculo manual:', manualDate);
+            return manualDate;
+        } catch (error) {
+            console.warn('⚠️ Erro no cálculo manual, tentando método UTC');
+        }
+        
+        // Method 3: UTC with timezone offset correction
+        try {
+            const offset = now.getTimezoneOffset();
+            const utcDate = new Date(now.getTime() - (offset * 60000));
+            const utcFormatted = utcDate.toISOString().split('T')[0];
+            console.log('📅 Data obtida via UTC com offset:', utcFormatted);
+            return utcFormatted;
+        } catch (error) {
+            console.warn('⚠️ Erro no método UTC, usando fallback');
+        }
+        
+        // Method 4: Fallback - use today's date as string
+        const today = new Date();
+        const fallbackDate = today.toISOString().split('T')[0];
+        console.log('📅 Data obtida via fallback:', fallbackDate);
+        return fallbackDate;
+    }
+
+    /**
      * Format currency
      */
     static formatCurrency(value, currency = 'BRL') {
-        if (value === null || value === undefined) return 'R$ 0,00';
+        if (value === null || value === undefined || isNaN(value)) return 'R$ 0,00';
         
-        return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: currency
-        }).format(value);
+        try {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: currency
+            }).format(parseFloat(value));
+        } catch (error) {
+            console.error('❌ Erro ao formatar moeda:', value, error);
+            return 'R$ 0,00';
+        }
     }
 
     /**
      * Format date
      */
     static formatDate(date, options = {}) {
-        if (!date) return '';
+        if (!date || date === 'null' || date === 'undefined') return '';
         
         try {
-            const dateObj = new Date(date);
+            let dateObj;
+            
+            // Se a data já está no formato YYYY-MM-DD, vamos garantir que seja interpretada corretamente
+            if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                // Garantir que seja interpretada como YYYY-MM-DD
+                const [year, month, day] = date.split('-');
+                dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+            } else {
+                dateObj = new Date(date);
+            }
             
             // Verificar se a data é válida
             if (isNaN(dateObj.getTime())) {
                 console.warn('⚠️ Data inválida recebida:', date);
-                return 'Data inválida';
+                return '';
             }
             
             const defaultOptions = {
@@ -42,7 +110,7 @@ class Utils {
             return new Intl.DateTimeFormat('pt-BR', mergedOptions).format(dateObj);
         } catch (error) {
             console.error('❌ Erro ao formatar data:', date, error);
-            return 'Data inválida';
+            return '';
         }
     }
 
@@ -98,7 +166,7 @@ class Utils {
     }
 
     /**
-     * Generate random ID
+     * Generate unique ID
      */
     static generateId() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -132,13 +200,14 @@ class Utils {
                 inThrottle = true;
                 setTimeout(() => inThrottle = false, limit);
             }
-        };
+        }
     }
 
     /**
      * Show toast notification
      */
     static showToast(message, type = 'info', duration = 3000) {
+        // Check if Toastify is available
         if (typeof Toastify !== 'undefined') {
             Toastify({
                 text: message,
@@ -149,7 +218,7 @@ class Utils {
                 stopOnFocus: true
             }).showToast();
         } else {
-            // Fallback to alert if Toastify is not available
+            // Fallback to alert
             alert(message);
         }
     }
@@ -172,7 +241,7 @@ class Utils {
      */
     static showLoading(element = document.body) {
         const spinner = document.createElement('div');
-        spinner.className = 'loading-spinner';
+        spinner.id = 'loading-spinner';
         spinner.innerHTML = `
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Carregando...</span>
@@ -184,13 +253,12 @@ class Utils {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(0,0,0,0.5);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 9999;
         `;
-        
         element.appendChild(spinner);
         return spinner;
     }
@@ -284,6 +352,7 @@ class Utils {
      * Sanitize HTML
      */
     static sanitizeHTML(str) {
+        if (!str) return '';
         const div = document.createElement('div');
         div.textContent = str;
         return div.innerHTML;
@@ -293,9 +362,13 @@ class Utils {
      * Escape HTML
      */
     static escapeHTML(str) {
-        const div = document.createElement('div');
-        div.appendChild(document.createTextNode(str));
-        return div.innerHTML;
+        if (!str) return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
 
     /**
@@ -303,12 +376,21 @@ class Utils {
      */
     static async copyToClipboard(text) {
         try {
-            await navigator.clipboard.writeText(text);
-            this.showToast('Texto copiado para a área de transferência!', 'success');
-            return true;
-        } catch (err) {
-            console.error('Failed to copy text: ', err);
-            this.showToast('Erro ao copiar texto', 'error');
+            if (navigator.clipboard) {
+                await navigator.clipboard.writeText(text);
+                return true;
+            } else {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                return true;
+            }
+        } catch (error) {
+            console.error('Erro ao copiar para clipboard:', error);
             return false;
         }
     }
@@ -356,17 +438,15 @@ class Utils {
     }
 
     /**
-     * Retry function
+     * Retry function with exponential backoff
      */
     static async retry(fn, retries = 3, delay = 1000) {
         try {
             return await fn();
         } catch (error) {
-            if (retries > 0) {
-                await this.sleep(delay);
-                return this.retry(fn, retries - 1, delay * 2);
-            }
-            throw error;
+            if (retries === 0) throw error;
+            await this.sleep(delay);
+            return this.retry(fn, retries - 1, delay * 2);
         }
     }
 
@@ -410,14 +490,14 @@ class Utils {
     }
 
     /**
-     * Check if value is object
+     * Check if item is object
      */
     static isObject(item) {
-        return item && typeof item === 'object' && !Array.isArray(item);
+        return (item && typeof item === 'object' && !Array.isArray(item));
     }
 
     /**
-     * Get query parameters from URL
+     * Get query parameters
      */
     static getQueryParams() {
         const params = new URLSearchParams(window.location.search);
@@ -429,7 +509,7 @@ class Utils {
     }
 
     /**
-     * Set query parameters in URL
+     * Set query parameters
      */
     static setQueryParams(params) {
         const url = new URL(window.location);
@@ -440,7 +520,7 @@ class Utils {
     }
 
     /**
-     * Remove query parameters from URL
+     * Remove query parameters
      */
     static removeQueryParams(keys) {
         const url = new URL(window.location);
@@ -452,4 +532,8 @@ class Utils {
 }
 
 // Export for use in other modules
-window.Utils = Utils; 
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = Utils;
+} else {
+    window.Utils = Utils;
+} 

@@ -20,8 +20,7 @@ module.exports = (sequelize) => {
         telefone: {
             type: DataTypes.STRING,
             allowNull: true
-        },
-        // userId removido - não existe na tabela real
+        }
     }, {
         tableName: 'Clients', // Garante o nome exato da tabela no DB
         timestamps: true // Se quiser createdAt e updatedAt
@@ -29,7 +28,8 @@ module.exports = (sequelize) => {
 
     // Associações (declaradas fora do define)
     Client.associate = (models) => {
-        // Associação removida - userId não existe na tabela
+        // Um cliente pode ter muitas vendas
+        Client.hasMany(models.Sale, { foreignKey: 'clientId', as: 'sales' });
     };
 
     return Client;

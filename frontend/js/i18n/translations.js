@@ -102,6 +102,7 @@ const translations = {
         'cancelled': 'Cancelada',
         'paid': 'Pago',
         'unpaid': 'Não Pago',
+        'overdue': 'Vencido',
         'selectClient': 'Selecione um cliente',
         'selectProduct': 'Selecione um produto',
         'selectSupplier': 'Selecione um fornecedor',
@@ -207,6 +208,9 @@ const translations = {
         'pending': 'Pendente',
         'completed': 'Concluída',
         'cancelled': 'Cancelada',
+        'paid': 'Pago',
+        'unpaid': 'Não Pago',
+        'overdue': 'Vencido',
         'active': 'Ativo',
         'inactive': 'Inativo',
 

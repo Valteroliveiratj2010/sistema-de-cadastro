@@ -29,8 +29,8 @@ html, body {
 /* SIDEBAR - LARGURA FIXA APENAS EM DESKTOP */
 .sidebar {
     width: 280px !important;
-    max-width: 280px !important;
-    min-width: 280px !important;
+    max-width: 100vw !important;
+    min-width: 0 !important;
     background: linear-gradient(135deg, #123C66 0%, #1D4E89 100%) !important;
     color: #ffffff !important;
     padding: 2rem !important;
@@ -45,6 +45,39 @@ html, body {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
+    box-sizing: border-box !important;
+}
+
+/* TODOS OS ELEMENTOS DENTRO DA SIDEBAR */
+.sidebar * {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+}
+
+/* TÍTULO DA SIDEBAR */
+.sidebar-title {
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+}
+
+/* LINKS DA SIDEBAR */
+.sidebar .nav-link {
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+}
+
+/* NAVEGAÇÃO DA SIDEBAR */
+.sidebar .nav {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
 }
 
 /* CONTEÚDO PRINCIPAL - CALCULAR LARGURA DINAMICAMENTE */
@@ -73,9 +106,9 @@ html, body {
 /* TABLET E MOBILE - SIDEBAR OVERLAY */
 @media (max-width: 991.98px) {
     .sidebar {
-        width: 280px !important;
-        max-width: 280px !important;
-        min-width: 280px !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        min-width: 0 !important;
         transform: translateX(-100%) !important;
         position: fixed !important;
         top: 0 !important;
@@ -236,6 +269,98 @@ html, body, #app-container, .main-content, .content-wrapper, .sidebar,
 .btn, .form-control, .form-select, img, video, iframe, canvas, svg {
     overflow-x: hidden !important;
     max-width: 100vw !important;
+}
+
+/* ========================================
+   CORREÇÃO DE Z-INDEX PARA MODAIS
+   ======================================== */
+
+/* MODAIS - Z-INDEX ALTO PARA FICAR ACIMA DA SIDEBAR */
+.modal {
+    z-index: 3000 !important;
+}
+
+.modal-backdrop {
+    z-index: 2999 !important;
+}
+
+.modal-dialog {
+    z-index: 3001 !important;
+}
+
+/* SIDEBAR - Z-INDEX MENOR QUE OS MODAIS */
+.sidebar {
+    z-index: 2000 !important;
+}
+
+/* ========================================
+   CORREÇÃO DE LARGURA DOS MODAIS
+   ======================================== */
+
+/* FORÇAR LARGURA FIXA DOS MODAIS */
+.modal-dialog {
+    max-width: 600px !important;
+    width: 600px !important;
+    margin: 1.75rem auto !important;
+    min-width: 300px !important;
+}
+
+/* MODAIS SIMPLES - LARGURA FIXA */
+#clientModal .modal-dialog,
+#productModal .modal-dialog,
+#userModal .modal-dialog,
+#supplierModal .modal-dialog {
+    max-width: 400px !important;
+    width: 400px !important;
+    margin: 1.75rem auto !important;
+    min-width: 300px !important;
+}
+
+/* MODAIS COMPLEXOS - LARGURA FIXA */
+#saleModal .modal-dialog,
+#purchaseModal .modal-dialog {
+    max-width: 700px !important;
+    width: 700px !important;
+    margin: 1.75rem auto !important;
+    min-width: 500px !important;
+}
+
+/* MOBILE - LARGURAS MENORES */
+@media (max-width: 767.98px) {
+    #clientModal .modal-dialog,
+    #productModal .modal-dialog,
+    #userModal .modal-dialog,
+    #supplierModal .modal-dialog {
+        max-width: 380px !important;
+        width: 380px !important;
+        margin: 0.5rem auto !important;
+    }
+    
+    #saleModal .modal-dialog,
+    #purchaseModal .modal-dialog {
+        max-width: 600px !important;
+        width: 600px !important;
+        margin: 0.5rem auto !important;
+    }
+}
+
+/* MOBILE PEQUENO - LARGURAS AINDA MENORES */
+@media (max-width: 575.98px) {
+    #clientModal .modal-dialog,
+    #productModal .modal-dialog,
+    #userModal .modal-dialog,
+    #supplierModal .modal-dialog {
+        max-width: 350px !important;
+        width: 350px !important;
+        margin: 0.5rem auto !important;
+    }
+    
+    #saleModal .modal-dialog,
+    #purchaseModal .modal-dialog {
+        max-width: 500px !important;
+        width: 500px !important;
+        margin: 0.5rem auto !important;
+    }
 }
 
 /* DESKTOP - LARGURA ESPECÍFICA */

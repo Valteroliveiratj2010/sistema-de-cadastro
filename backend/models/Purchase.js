@@ -27,8 +27,8 @@ module.exports = (sequelize) => {
             type: DataTypes.DECIMAL(10, 2), 
             allowNull: false
         },
-        status: { // Status da compra (Ex: 'Pendente', 'Concluída', 'Cancelada')
-            type: DataTypes.ENUM('Pendente', 'Concluída', 'Cancelada'),
+        status: { // Status da compra (Ex: 'Pendente', 'Concluída', 'Cancelada', 'Vencida')
+            type: DataTypes.ENUM('Pendente', 'Concluída', 'Cancelada', 'Vencida'),
             allowNull: false,
             defaultValue: 'Concluída' // Assumimos que a compra é concluída ao ser registrada
         },

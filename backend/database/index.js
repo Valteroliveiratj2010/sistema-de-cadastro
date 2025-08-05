@@ -2,6 +2,9 @@ const { Sequelize, DataTypes } = require('sequelize'); // Incluir DataTypes aqui
 const fs = require('fs');
 const path = require('path');
 
+// Carregar variáveis de ambiente primeiro
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
 const env = process.env.NODE_ENV || 'development';
 console.log(`[DATABASE_DEBUG] Ambiente detectado: ${env}`);
 console.log(`[DATABASE_DEBUG] NODE_ENV: ${process.env.NODE_ENV}`);

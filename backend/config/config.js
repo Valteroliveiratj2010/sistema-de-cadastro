@@ -1,5 +1,6 @@
 // backend/config/config.js padrão Sequelize CLI + Railway integration
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 module.exports = {
   development: {
@@ -43,9 +44,19 @@ module.exports = {
     }
   },
   production: {
-    dialect: 'sqlite',
-    storage: './database.sqlite',
+    username: process.env.PGUSER || 'postgres',
+    password: process.env.PGPASSWORD || '123456',
+    database: process.env.PGDATABASE || 'gestor_pro_prod',
+    host: process.env.PGHOST || 'localhost',
+    port: process.env.PGPORT || 5432,
+    dialect: 'postgres',
     logging: false,
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    },
     define: {
       timestamps: true,
       underscored: true,

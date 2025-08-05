@@ -133,9 +133,9 @@ module.exports = {
       // Podemos fazer raw query ou subquery. Vamos usar raw para garantir compatibilidade:
 
       // Descobrir nomes reais de tabelas no DB
-      const saleProductTable = SaleProduct.getTableName();
-      const saleTable = Sale.getTableName();
-      const productTable = Product.getTableName();
+      const saleProductTable = 'SaleProducts';
+      const saleTable = 'Sales';
+      const productTable = 'Products';
 
       // A query: 
       // SELECT p.nome AS nome_produto, SUM(sp.quantidade) AS total_vendido
@@ -148,11 +148,13 @@ module.exports = {
       // LIMIT 5
 
       const query = `
-        SELECT p.nome AS nome_produto, SUM(sp.quantidade) AS total_vendido
-        FROM ${saleProductTable} sp
-        JOIN ${saleTable} s ON sp.saleId = s.id
-        JOIN ${productTable} p ON sp.productId = p.id
-        WHERE s.dataVenda >= :monthStart AND s.dataVenda < :nextMonthStart
+        SELECT p.nome AS nome_produto, 
+               COALESCE(SUM(sp.quantidade), 0) AS total_vendido,
+               COALESCE(SUM(sp.quantidade * sp."precoUnitario"), 0) AS total_valor
+        FROM "Products" p
+        LEFT JOIN "SaleProducts" sp ON p.id = sp."productId"
+        LEFT JOIN "Sales" s ON sp."saleId" = s.id 
+        WHERE (s."dataVenda" >= :monthStart AND s."dataVenda" < :nextMonthStart) OR s.id IS NULL
         GROUP BY p.id, p.nome
         ORDER BY total_vendido DESC
         LIMIT 5
@@ -166,7 +168,8 @@ module.exports = {
       // Converter total_vendido para número
       const data = rows.map(r => ({
         nome_produto: r.nome_produto,
-        total_vendido: parseInt(r.total_vendido, 10) || 0
+        total_vendido: parseInt(r.total_vendido, 10) || 0,
+        total_valor: parseFloat(r.total_valor) || 0
       }));
 
       return res.json(data);
@@ -188,9 +191,9 @@ module.exports = {
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
       const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-      const paymentTable = Payment.getTableName();
-      const saleTable = Sale.getTableName();
-      const clientTable = Client.getTableName();
+      const paymentTable = 'Payments';
+      const saleTable = 'Sales';
+      const clientTable = 'Clients';
 
       // Query: 
       // SELECT c.nome AS nome_cliente, SUM(p.valor) AS valor_gasto
@@ -202,11 +205,10 @@ module.exports = {
       // ORDER BY valor_gasto DESC
       // LIMIT 5
       const query = `
-        SELECT c.nome AS nome_cliente, SUM(p.valor) AS valor_gasto
-        FROM ${paymentTable} p
-        JOIN ${saleTable} s ON p.saleId = s.id
-        JOIN ${clientTable} c ON s.clientId = c.id
-        WHERE p.dataPagamento >= :monthStart AND p.dataPagamento < :nextMonthStart
+        SELECT c.nome AS nome_cliente, COALESCE(SUM(s."valorTotal"), 0) AS valor_gasto
+        FROM "Clients" c
+        INNER JOIN "Sales" s ON c.id = s."clientId"
+        WHERE s."dataVenda" >= :monthStart AND s."dataVenda" < :nextMonthStart
         GROUP BY c.id, c.nome
         ORDER BY valor_gasto DESC
         LIMIT 5

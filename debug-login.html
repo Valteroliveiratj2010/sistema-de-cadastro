@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Login</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .log { background: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace; font-size: 12px; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        button { padding: 8px 16px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug Login - Sistema de Cadastro</h1>
+        
+        <div>
+            <h3>📋 Credenciais de Teste:</h3>
+            <input type="text" id="username" value="admin" placeholder="Usuário">
+            <input type="password" id="password" value="admin123" placeholder="Senha">
+        </div>
+        
+        <div>
+            <h3>🧪 Testes:</h3>
+            <button onclick="testServerConnection()">🔗 Testar Conexão</button>
+            <button onclick="testHealthEndpoint()">🏥 Testar Health</button>
+            <button onclick="testLoginAPI()">🔐 Testar Login API</button>
+            <button onclick="testFrontendLogin()">🌐 Testar Login Frontend</button>
+            <button onclick="clearLogs()">🗑️ Limpar Logs</button>
+        </div>
+        
+        <div id="logs"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        let logs = [];
+        
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            logs.push(`[${timestamp}] ${message}`);
+            updateLogDisplay();
+        }
+        
+        function updateLogDisplay() {
+            const logsDiv = document.getElementById('logs');
+            logsDiv.innerHTML = logs.map(log => `<div class="log">${log}</div>`).join('');
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        function clearLogs() {
+            logs = [];
+            updateLogDisplay();
+        }
+        
+        async function testServerConnection() {
+            addLog('🔗 Testando conexão com servidor...', 'info');
+            
+            try {
+                const startTime = Date.now();
+                const response = await fetch('http://localhost:3000/health', {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                const endTime = Date.now();
+                
+                addLog(`✅ Servidor respondeu em ${endTime - startTime}ms`, 'success');
+                addLog(`📊 Status: ${response.status} ${response.statusText}`, 'info');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addLog(`📋 Dados: ${JSON.stringify(data, null, 2)}`, 'info');
+                }
+                
+            } catch (error) {
+                addLog(`❌ Erro de conexão: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testHealthEndpoint() {
+            addLog('🏥 Testando endpoint /health...', 'info');
+            
+            try {
+                const response = await fetch('http://localhost:3000/health');
+                const data = await response.json();
+                
+                addLog(`✅ Health OK - Status: ${response.status}`, 'success');
+                addLog(`📋 Features disponíveis: ${data.features.join(', ')}`, 'info');
+                addLog(`🌍 Ambiente: ${data.environment}`, 'info');
+                
+            } catch (error) {
+                addLog(`❌ Health Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testLoginAPI() {
+            addLog('🔐 Testando API de login...', 'info');
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            addLog(`📤 Enviando dados: username=${username}, password=${password}`, 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                addLog(`📡 Response Status: ${response.status} ${response.statusText}`, 'info');
+                addLog(`📡 Response Headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`, 'info');
+                
+                const data = await response.json();
+                addLog(`📋 Response Data: ${JSON.stringify(data, null, 2)}`, 'info');
+                
+                if (response.ok && data.success) {
+                    addLog(`✅ Login bem-sucedido! Token: ${data.token}`, 'success');
+                    
+                    // Testar rota protegida
+                    setTimeout(() => testProtectedRoute(data.token), 1000);
+                } else {
+                    addLog(`❌ Login falhou: ${data.message}`, 'error');
+                }
+                
+            } catch (error) {
+                addLog(`❌ Erro na requisição: ${error.message}`, 'error');
+                addLog(`🔍 Tipo de erro: ${error.constructor.name}`, 'error');
+            }
+        }
+        
+        async function testProtectedRoute(token) {
+            addLog('🔒 Testando rota protegida com token...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/clients`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                addLog(`📡 Protected Route Status: ${response.status}`, 'info');
+                
+                const data = await response.json();
+                addLog(`📋 Protected Route Data: ${JSON.stringify(data, null, 2)}`, 'info');
+                
+                if (response.ok) {
+                    addLog(`✅ Rota protegida funcionando!`, 'success');
+                } else {
+                    addLog(`❌ Rota protegida falhou: ${data.message}`, 'error');
+                }
+                
+            } catch (error) {
+                addLog(`❌ Erro na rota protegida: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testFrontendLogin() {
+            addLog('🌐 Testando login do frontend original...', 'info');
+            
+            try {
+                // Simular o que o frontend original faz
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                
+                addLog(`📤 Frontend enviando: ${JSON.stringify({ username, password })}`, 'info');
+                
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                addLog(`📡 Frontend Response: ${response.status}`, 'info');
+                
+                const data = await response.json();
+                addLog(`📋 Frontend Data: ${JSON.stringify(data)}`, 'info');
+                
+                if (data.success) {
+                    addLog(`✅ Frontend login OK!`, 'success');
+                    
+                    // Simular redirecionamento
+                    addLog(`🔄 Simulando redirecionamento para dashboard...`, 'info');
+                    setTimeout(() => {
+                        addLog(`🎯 Redirecionamento simulado - Login funcionando!`, 'success');
+                    }, 1000);
+                }
+                
+            } catch (error) {
+                addLog(`❌ Frontend error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-test ao carregar
+        window.onload = function() {
+            addLog('🚀 Debug iniciado - Sistema de Cadastro', 'info');
+            addLog('📋 Credenciais padrão: admin / admin123', 'info');
+            addLog('🔗 API Base: ' + API_BASE, 'info');
+            
+            // Teste automático de conexão
+            setTimeout(testServerConnection, 500);
+        };
+    </script>
+</body>
+</html> 

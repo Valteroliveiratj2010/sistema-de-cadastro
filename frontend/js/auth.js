@@ -99,6 +99,27 @@ class AuthService {
         localStorage.removeItem('user');
         localStorage.removeItem('authToken');
         
+        // Update UI to reflect logged out state
+        this.updateUI();
+        
+        // Redirect to login page
+        window.location.href = '/login.html';
+    }
+
+    /**
+     * Force clear all cached data and redirect to login
+     */
+    forceClearCache() {
+        console.log('🧹 Limpando cache e forçando novo login...');
+        this.currentUser = null;
+        this.isAuthenticated = false;
+        api.clearToken();
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Update UI to reflect logged out state
+        this.updateUI();
+        
         // Redirect to login page
         window.location.href = '/login.html';
     }

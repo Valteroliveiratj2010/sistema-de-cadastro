@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Dados Venda</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .debug-panel {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .data-structure {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+        }
+        .field-value {
+            margin: 2px 0;
+            padding: 2px 5px;
+            background: #e9ecef;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>🔍 Teste de Estrutura de Dados da Venda</h2>
+        
+        <div class="debug-panel">
+            <h5>Controles</h5>
+            <button class="btn btn-primary" onclick="testAPI()">Testar API</button>
+            <button class="btn btn-success" onclick="testFormFill()">Testar Preenchimento</button>
+            <button class="btn btn-info" onclick="openModal()">Abrir Modal</button>
+        </div>
+
+        <div class="debug-panel">
+            <h5>Dados da API</h5>
+            <div id="apiData">Aguardando...</div>
+        </div>
+
+        <div class="debug-panel">
+            <h5>Estrutura dos Dados</h5>
+            <div id="dataStructure">Aguardando...</div>
+        </div>
+
+        <div class="debug-panel">
+            <h5>Resultado do Preenchimento</h5>
+            <div id="fillResult">Aguardando...</div>
+        </div>
+
+        <!-- Modal de Venda -->
+        <div class="modal fade" id="saleModal" tabindex="-1" aria-labelledby="saleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" style="max-width: 600px !important; width: 600px !important;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="saleModalLabel">Editar Venda</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="saleForm" data-action="updateSale">
+                            <input type="hidden" id="saleId">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="saleClient" class="form-label">Cliente</label>
+                                    <select class="form-select" id="saleClient" name="clientId" required>
+                                        <option value="">Selecione um cliente</option>
+                                        <option value="1">VALTEMIR OLIVEIRA DA SILVA</option>
+                                        <option value="2">Outro Cliente</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="saleDate" class="form-label">Data da Venda</label>
+                                    <input type="date" class="form-control" id="saleDate" name="dataVenda" required>
+                                </div>
+                            </div>
+                            <div class="card mb-3">
+                                <div class="card-header">Produtos da Venda</div>
+                                <div class="card-body">
+                                    <div id="saleProductsList" class="mb-2" style="max-height: 150px; overflow-y: auto;">
+                                        <p class="text-muted text-center m-0">Nenhum produto adicionado.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="saleTotalValueDisplay" class="form-label">Valor Total da Venda</label>
+                                    <input type="text" class="form-control fw-bold" id="saleTotalValueDisplay" readonly value="R$ 0,00">
+                                    <input type="hidden" id="saleTotalValue" value="0">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="saleDueDate" class="form-label">Data de Vencimento</label>
+                                    <input type="date" class="form-control" id="saleDueDate">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="saleStatus" class="form-label">Status</label>
+                                    <select class="form-select" id="saleStatus" name="status">
+                                        <option value="Pendente">Pendente</option>
+                                        <option value="Pago">Pago</option>
+                                        <option value="Vencido">Vencido</option>
+                                        <option value="Cancelado">Cancelado</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-header">Pagamento Inicial</div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="salePaidValueInitial" class="form-label">Valor Pago</label>
+                                            <input type="number" step="0.01" class="form-control" id="salePaidValueInitial" value="0">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="paymentForma" class="form-label">Forma de Pagamento</label>
+                                            <select class="form-select" id="paymentForma">
+                                                <option value="Dinheiro">Dinheiro</option>
+                                                <option value="Cartão de Crédito">Cartão de Crédito</option>
+                                                <option value="Crediário">Crediário</option>
+                                                <option value="PIX">PIX</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" onclick="saveSale()">Salvar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let saleData = null;
+        let modal = null;
+
+        const api = {
+            baseURL: 'http://localhost:3000/api',
+            token: localStorage.getItem('authToken'),
+            
+            async get(endpoint, params = {}) {
+                const url = new URL(this.baseURL + endpoint);
+                Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${this.token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                return await response.json();
+            }
+        };
+
+        async function testAPI() {
+            console.log('🧪 TESTANDO API DE VENDAS');
+            document.getElementById('apiData').innerHTML = 'Testando API...';
+            
+            try {
+                // 1. Listar vendas
+                const salesResponse = await api.get('/sales');
+                console.log('Resposta da listagem:', salesResponse);
+                
+                if (salesResponse.success && salesResponse.data && salesResponse.data.length > 0) {
+                    const firstSale = salesResponse.data[0];
+                    console.log('Primeira venda:', firstSale);
+                    
+                    // 2. Buscar detalhes da venda
+                    const saleDetailResponse = await api.get(`/sales/${firstSale.id}`);
+                    console.log('Detalhes da venda:', saleDetailResponse);
+                    
+                    saleData = saleDetailResponse;
+                    
+                    // 3. Exibir dados
+                    document.getElementById('apiData').innerHTML = `
+                        <div class="data-structure">
+                            <strong>Resposta da API:</strong><br>
+                            <pre>${JSON.stringify(saleDetailResponse, null, 2)}</pre>
+                        </div>
+                    `;
+                    
+                    // 4. Analisar estrutura
+                    analyzeDataStructure(saleDetailResponse);
+                    
+                } else {
+                    document.getElementById('apiData').innerHTML = '❌ Nenhuma venda encontrada';
+                }
+                
+            } catch (error) {
+                console.error('Erro:', error);
+                document.getElementById('apiData').innerHTML = `❌ Erro: ${error.message}`;
+            }
+        }
+
+        function analyzeDataStructure(data) {
+            console.log('📊 Analisando estrutura dos dados:', data);
+            
+            const structure = {
+                'ID': data.id,
+                'Cliente': data.client ? `${data.client.id} - ${data.client.nome}` : 'N/A',
+                'Data da Venda': data.dataVenda,
+                'Valor Total': data.valorTotal,
+                'Valor Pago': data.valorPago,
+                'Status': data.status,
+                'Produtos': data.saleProducts ? `${data.saleProducts.length} produtos` : 'N/A',
+                'Pagamentos': data.payments ? `${data.payments.length} pagamentos` : 'N/A'
+            };
+            
+            let structureHtml = '<div class="data-structure">';
+            Object.keys(structure).forEach(key => {
+                structureHtml += `<div class="field-value"><strong>${key}:</strong> ${structure[key]}</div>`;
+            });
+            structureHtml += '</div>';
+            
+            // Detalhes dos produtos
+            if (data.saleProducts && data.saleProducts.length > 0) {
+                structureHtml += '<div class="data-structure"><strong>Produtos:</strong>';
+                data.saleProducts.forEach((product, index) => {
+                    structureHtml += `<div class="field-value">${index + 1}. ${product.Product?.nome || 'N/A'} - Qtd: ${product.quantidade} - Preço: R$ ${product.precoUnitario}</div>`;
+                });
+                structureHtml += '</div>';
+            }
+            
+            document.getElementById('dataStructure').innerHTML = structureHtml;
+        }
+
+        function testFormFill() {
+            if (!saleData) {
+                document.getElementById('fillResult').innerHTML = '❌ Nenhum dado disponível. Execute o teste da API primeiro.';
+                return;
+            }
+            
+            console.log('🎯 Testando preenchimento do formulário...');
+            document.getElementById('fillResult').innerHTML = 'Preenchendo formulário...';
+            
+            const results = [];
+            
+            // ID
+            const saleIdField = document.getElementById('saleId');
+            if (saleIdField) {
+                saleIdField.value = saleData.id;
+                saleIdField.disabled = false;
+                results.push(`✅ ID: ${saleIdField.value}`);
+            } else {
+                results.push('❌ Campo saleId não encontrado');
+            }
+            
+            // Cliente
+            const saleClientField = document.getElementById('saleClient');
+            if (saleClientField && saleData.client) {
+                saleClientField.value = saleData.client.id || '';
+                results.push(`✅ Cliente: ${saleClientField.value}`);
+            } else {
+                results.push('❌ Campo saleClient não encontrado ou dados do cliente ausentes');
+            }
+            
+            // Data
+            const saleDateField = document.getElementById('saleDate');
+            if (saleDateField && saleData.dataVenda) {
+                saleDateField.value = saleData.dataVenda;
+                results.push(`✅ Data: ${saleDateField.value}`);
+            } else {
+                results.push('❌ Campo saleDate não encontrado ou data ausente');
+            }
+            
+            // Status
+            const saleStatusField = document.getElementById('saleStatus');
+            if (saleStatusField && saleData.status) {
+                saleStatusField.value = saleData.status;
+                results.push(`✅ Status: ${saleStatusField.value}`);
+            } else {
+                results.push('❌ Campo saleStatus não encontrado ou status ausente');
+            }
+            
+            // Valor pago
+            const salePaidValueField = document.getElementById('salePaidValueInitial');
+            if (salePaidValueField && saleData.valorPago !== undefined) {
+                salePaidValueField.value = saleData.valorPago;
+                results.push(`✅ Valor pago: ${salePaidValueField.value}`);
+            } else {
+                results.push('❌ Campo salePaidValueInitial não encontrado ou valor ausente');
+            }
+            
+            // Total
+            const saleTotalDisplayField = document.getElementById('saleTotalValueDisplay');
+            const saleTotalHiddenField = document.getElementById('saleTotalValue');
+            if (saleTotalDisplayField && saleTotalHiddenField && saleData.valorTotal) {
+                saleTotalDisplayField.value = `R$ ${parseFloat(saleData.valorTotal).toFixed(2).replace('.', ',')}`;
+                saleTotalHiddenField.value = saleData.valorTotal;
+                results.push(`✅ Total: ${saleTotalDisplayField.value}`);
+            } else {
+                results.push('❌ Campos de total não encontrados ou valor ausente');
+            }
+            
+            // Produtos
+            const saleProductsList = document.getElementById('saleProductsList');
+            if (saleProductsList && saleData.saleProducts && Array.isArray(saleData.saleProducts)) {
+                saleProductsList.innerHTML = '';
+                saleData.saleProducts.forEach(product => {
+                    const productItem = document.createElement('div');
+                    productItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    productItem.innerHTML = `
+                        <div>
+                            <strong>${product.Product?.nome || 'Produto'}</strong>
+                            <br>
+                            <small>Qtd: ${product.quantidade} x R$ ${product.precoUnitario}</small>
+                        </div>
+                        <div>
+                            <span class="badge bg-primary rounded-pill">R$ ${(product.quantidade * product.precoUnitario).toFixed(2)}</span>
+                        </div>
+                    `;
+                    saleProductsList.appendChild(productItem);
+                });
+                results.push(`✅ Produtos: ${saleData.saleProducts.length} produtos adicionados`);
+            } else {
+                results.push('❌ Lista de produtos não encontrada ou dados ausentes');
+            }
+            
+            document.getElementById('fillResult').innerHTML = results.map(result => `<div class="field-value">${result}</div>`).join('');
+        }
+
+        function openModal() {
+            if (!modal) {
+                modal = new bootstrap.Modal(document.getElementById('saleModal'));
+            }
+            modal.show();
+        }
+
+        function saveSale() {
+            console.log('💾 Salvando venda...');
+            const formData = new FormData(document.getElementById('saleForm'));
+            const data = Object.fromEntries(formData);
+            console.log('Dados do formulário:', data);
+            alert('Venda salva! (simulado)');
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📄 Página carregada');
+        });
+    </script>
+</body>
+</html> 

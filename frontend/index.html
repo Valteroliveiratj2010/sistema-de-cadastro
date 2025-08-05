@@ -144,6 +144,8 @@
                 <a class="nav-link" href="#" data-section="purchasesSection" data-i18n="purchases"><i class="bi bi-bag me-2"></i>Compras</a>
                 <a class="nav-link mt-auto" href="#" id="logoutButton" data-section="logoutSection" data-i18n="logout"><i
                         class="bi bi-box-arrow-right me-2"></i>Sair</a>
+                <a class="nav-link" href="#" onclick="auth.forceClearCache(); return false;" style="color: #ffc107;"><i
+                        class="bi bi-broom me-2"></i>Limpar Cache</a>
             </nav>
             <div id="languageSelector" class="mt-3"></div>
         </aside>
@@ -281,12 +283,14 @@
                                         <table class="table table-sm" id="topProductsTable">
                                             <thead>
                                                 <tr>
-                                                    <th data-i18n="tables">Tabelas</th>
+                                                    <th data-i18n="product">Produto</th>
+                                                    <th data-i18n="quantity">Quantidade</th>
+                                                    <th data-i18n="total">Total</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 <tr>
-                                                    <td class="text-center text-muted" data-i18n="noProductsSold">Nenhum produto vendido</td>
+                                                    <td colspan="3" class="text-center text-muted" data-i18n="noProductsSold">Nenhum produto vendido</td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -1003,10 +1007,16 @@
                 </div>
                 <div class="modal-body">
                     <form id="saleForm" data-action="createSale">
-                        <input type="hidden" id="saleId">
-                        <div class="mb-3">
-                            <label for="saleClient" class="form-label" data-i18n="client">Cliente</label>
-                            <select class="form-select" id="saleClient" required></select>
+                        <input type="hidden" id="saleId" name="id">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="saleClient" class="form-label" data-i18n="client">Cliente</label>
+                                <select class="form-select" id="saleClient" name="clientId" required></select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="saleDate" class="form-label" data-i18n="saleDate">Data da Venda</label>
+                                <input type="date" class="form-control" id="saleDate" name="dataVenda" required>
+                            </div>
                         </div>
                         <div class="card mb-3">
                             <div class="card-header" data-i18n="saleProducts">Produtos da Venda</div>
@@ -1042,15 +1052,24 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label for="saleTotalValueDisplay" class="form-label" data-i18n="saleTotalValue">Valor Total da Venda</label>
                                 <input type="text" class="form-control fw-bold" id="saleTotalValueDisplay" readonly
                                     value="R$ 0,00">
                                 <input type="hidden" id="saleTotalValue" value="0">
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label for="saleDueDate" class="form-label" data-i18n="dueDate">Data de Vencimento</label>
                                 <input type="date" class="form-control" id="saleDueDate">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="saleStatus" class="form-label" data-i18n="status">Status</label>
+                                <select class="form-select" id="saleStatus" name="status">
+                                    <option value="Pendente">Pendente</option>
+                                    <option value="Pago">Pago</option>
+                                    <option value="Vencido">Vencido</option>
+                                    <option value="Cancelado">Cancelado</option>
+                                </select>
                             </div>
                         </div>
                         <div class="card">
@@ -1257,7 +1276,7 @@
                 </div>
                 <div class="modal-body">
                     <form id="purchaseForm" data-action="createPurchase">
-                        <input type="hidden" id="purchaseId">
+                        <input type="hidden" id="purchaseId" name="id">
                         <div class="mb-3">
                             <label for="purchaseSupplier" class="form-label" data-i18n="supplier">Fornecedor</label>
                             <select class="form-select" id="purchaseSupplier" required></select>
@@ -1294,7 +1313,7 @@
                                 <div class="row mt-3">
                                     <div class="col-12">
                                         <button type="button" class="btn btn-primary" id="btnAddPurchaseProduct"
-                                            title="Adicionar Produto">
+                                            onclick="addProductToPurchase()" title="Adicionar Produto">
                                             <i class="fas fa-plus me-2"></i><span data-i18n="addProduct">Adicionar Produto</span>
                                         </button>
                                     </div>
@@ -1316,6 +1335,7 @@
                                 <option value="Concluída" data-i18n="completed">Concluída</option>
                                 <option value="Pendente" data-i18n="pending">Pendente</option>
                                 <option value="Cancelada" data-i18n="cancelled">Cancelada</option>
+                                <option value="Vencida" data-i18n="overdue">Vencida</option>
                             </select>
                         </div>
                         <div class="mb-3">
@@ -1490,7 +1510,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="close">Fechar</button>
-                    <button type="button" class="btn btn-primary" id="editSaleFromDetailBtn">
+                    <button type="button" class="btn btn-primary" id="editSaleFromDetailBtn" onclick="handleEditFromDetail('sale')">
                         <i class="bi bi-pencil"></i> <span data-i18n="editSale">Editar Venda</span>
                     </button>
                 </div>
@@ -1797,7 +1817,7 @@
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <!-- Core Modules -->
-        <script src="js/i18n/translations.js"></script>
+    <script src="js/i18n/translations.js"></script>
     <script src="js/i18n/i18n.js"></script>
     
     <script src="js/apiConfig.js"></script>
@@ -1806,7 +1826,10 @@
     <script src="js/auth.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/ui.js"></script>
-    <script src="js/app.js?v=3.9"></script>
+            <script src="js/app.js?v=3.32"></script>
+        
+        <!-- Script para limpar cache automaticamente -->
+
     
     <script>
         // Função de logout inline robusta

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Login Local</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 500px; margin: 0 auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .result { margin-top: 20px; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste Login Local</h1>
+        <p>Testando conexão com servidor local...</p>
+        
+        <div class="form-group">
+            <label for="username">Usuário:</label>
+            <input type="text" id="username" value="admin">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Senha:</label>
+            <input type="password" id="password" value="admin123">
+        </div>
+        
+        <button onclick="testLogin()">🔐 Testar Login</button>
+        <button onclick="testHealth()">🏥 Testar Health</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        
+        function showResult(message, isSuccess = true) {
+            const result = document.getElementById('result');
+            result.innerHTML = `<div class="${isSuccess ? 'success' : 'error'}">${message}</div>`;
+        }
+        
+        async function testHealth() {
+            try {
+                console.log('🔍 Testando health...');
+                const response = await fetch('http://localhost:3000/health');
+                const data = await response.json();
+                console.log('✅ Health response:', data);
+                showResult(`✅ Health OK: ${data.message}<br>Features: ${data.features.join(', ')}`);
+            } catch (error) {
+                console.error('❌ Health error:', error);
+                showResult(`❌ Health Error: ${error.message}`, false);
+            }
+        }
+        
+        async function testLogin() {
+            try {
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                
+                console.log('🔐 Tentando login...', { username, password });
+                
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                console.log('📡 Response status:', response.status);
+                
+                const data = await response.json();
+                console.log('📡 Response data:', data);
+                
+                if (response.ok && data.success) {
+                    showResult(`✅ Login OK!<br>Token: ${data.token}<br>User: ${JSON.stringify(data.user)}`);
+                    
+                    // Testar uma rota protegida
+                    setTimeout(() => testProtectedRoute(data.token), 1000);
+                } else {
+                    showResult(`❌ Login falhou: ${data.message}`, false);
+                }
+                
+            } catch (error) {
+                console.error('❌ Login error:', error);
+                showResult(`❌ Erro de rede: ${error.message}`, false);
+            }
+        }
+        
+        async function testProtectedRoute(token) {
+            try {
+                console.log('🔒 Testando rota protegida...');
+                const response = await fetch(`${API_BASE}/clients`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                console.log('📡 Protected route response:', data);
+                
+                if (response.ok) {
+                    showResult(`✅ Rota protegida OK!<br>Clientes: ${data.data.length} encontrados`);
+                } else {
+                    showResult(`❌ Rota protegida falhou: ${data.message}`, false);
+                }
+                
+            } catch (error) {
+                console.error('❌ Protected route error:', error);
+                showResult(`❌ Erro na rota protegida: ${error.message}`, false);
+            }
+        }
+        
+        // Testar health automaticamente ao carregar
+        window.onload = testHealth;
+    </script>
+</body>
+</html> 

@@ -156,9 +156,11 @@ html body #app-container .sidebar,
 body #app-container .sidebar,
 #app-container .sidebar,
 .sidebar {
-    width: 50% !important;
-    max-width: 50% !important;
-    min-width: 280px !important;
+    width: 280px !important;
+    max-width: 100vw !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
 }
 
 /* Para desktop, manter 280px */
@@ -169,5 +171,15 @@ body #app-container .sidebar,
     .sidebar {
         width: 280px !important;
         max-width: 280px !important;
+        min-width: 280px !important;
+    }
+}
+
+/* Para tablet/mobile, sidebar ocupa 100% da largura máxima permitida */
+@media (max-width: 991.98px) {
+    .sidebar {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        min-width: 0 !important;
     }
 } 

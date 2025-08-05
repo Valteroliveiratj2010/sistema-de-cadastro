@@ -1,11 +1,11 @@
-// server.js (ESTE ARQUIVO ESTÁ NA RAIZ DO PROJETO)
+// server-improved.js - Versão melhorada do servidor
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const app = express();
 
 // Carrega variáveis de ambiente - SEMPRE NO INÍCIO!
-require('dotenv').config({ path: path.join(__dirname, 'backend', '.env') });
+require('dotenv').config();
 
 // --- MIDDLEWARES GLOBAIS ---
 app.use(express.json());
@@ -61,7 +61,11 @@ async function initializeDatabase() {
         
         if (!adminUser) {
             console.log('⚠️ Usuário admin não encontrado. Criando...');
-            require('./backend/seeders/adminSeeder');
+            try {
+                require('./backend/seeders/adminSeeder');
+            } catch (seederError) {
+                console.log('⚠️ Erro ao executar seeder:', seederError.message);
+            }
         } else {
             console.log(`✅ Usuário admin encontrado: ${adminUser.username}`);
         }
@@ -73,27 +77,36 @@ async function initializeDatabase() {
 }
 
 // Inicializar banco de dados
-initializeDatabase().then(() => {
-    // Iniciar atualização automática de status após inicializar o banco
-    try {
-        const { startAutomaticStatusUpdate } = require('./backend/utils/statusUpdater');
-        startAutomaticStatusUpdate();
-        console.log('✅ Sistema de atualização automática de status iniciado');
-    } catch (error) {
-        console.log('⚠️ Erro ao iniciar atualização automática de status:', error.message);
-    }
-});
+initializeDatabase();
 
-// --- ROTAS DA API ---
+// --- ROTAS DA API COM TRATAMENTO DE ERRO MELHORADO ---
+let apiRoutesLoaded = false;
 try {
     const apiRoutesPath = path.join(__dirname, 'backend', 'routes', 'api.js');
-    console.log(`[SERVER_DEBUG] Caminho ABSOLUTO para api.js: ${apiRoutesPath}`);
+    console.log(`[SERVER_DEBUG] Tentando carregar rotas da API de: ${apiRoutesPath}`);
+    
+    // Verificar se o arquivo existe
+    const fs = require('fs');
+    if (!fs.existsSync(apiRoutesPath)) {
+        throw new Error(`Arquivo de rotas não encontrado: ${apiRoutesPath}`);
+    }
+    
     const apiRoutes = require(apiRoutesPath);
     app.use('/api', apiRoutes);
+    apiRoutesLoaded = true;
     console.log('✅ Rotas da API carregadas com sucesso');
 } catch (error) {
     console.log('⚠️ Erro ao carregar rotas da API:', error.message);
     console.log('⚠️ Continuando sem API...');
+    
+    // Adicionar rota de fallback para API
+    app.use('/api', (req, res) => {
+        res.status(503).json({ 
+            error: 'API Temporariamente Indisponível',
+            message: 'As rotas da API não puderam ser carregadas',
+            path: req.path
+        });
+    });
 }
 
 // --- SERVIÇO DE ARQUIVOS ESTÁTICOS DO FRONTEND ---
@@ -110,25 +123,43 @@ app.get('/login', (req, res) => {
     res.sendFile(path.join(frontendPath, 'login.html'));
 });
 
-// --- ROTAS DE TESTE ---
-app.get('/teste-dados-venda', (req, res) => {
-    res.sendFile(path.join(frontendPath, 'teste-dados-venda.html'));
-});
-
-// --- ROTA DE HEALTH CHECK ---
+// --- ROTA DE HEALTH CHECK MELHORADA ---
 app.get('/health', (req, res) => {
     res.status(200).json({ 
         status: 'OK', 
         timestamp: new Date().toISOString(),
         environment: process.env.NODE_ENV || 'development',
         port: process.env.PORT || 3000,
-        database: sequelize ? 'connected' : 'not_available'
+        database: sequelize ? 'connected' : 'not_available',
+        api: apiRoutesLoaded ? 'loaded' : 'not_available'
     });
 });
 
-// --- ROTA DE FALLBACK ---
+// --- ROTA DE TESTE ---
+app.get('/test', (req, res) => {
+    res.json({ 
+        message: 'Servidor funcionando!',
+        timestamp: new Date().toISOString(),
+        env: process.env.NODE_ENV || 'development',
+        database: sequelize ? 'connected' : 'not_available',
+        api: apiRoutesLoaded ? 'loaded' : 'not_available'
+    });
+});
+
+// --- ROTA DE FALLBACK MELHORADA ---
 app.get('*', (req, res) => {
     console.log(`[404] Rota não encontrada: ${req.path}`);
+    
+    // Se for uma requisição para API, retornar JSON
+    if (req.path.startsWith('/api/')) {
+        return res.status(404).json({ 
+            error: 'API Endpoint Not Found',
+            path: req.path,
+            message: 'Endpoint da API não encontrado'
+        });
+    }
+    
+    // Para outras rotas, tentar servir arquivo estático ou retornar 404
     res.status(404).json({ 
         error: 'Not Found',
         path: req.path,
@@ -136,12 +167,24 @@ app.get('*', (req, res) => {
     });
 });
 
+// --- TRATAMENTO DE ERROS GLOBAL ---
+app.use((error, req, res, next) => {
+    console.error('❌ Erro não tratado:', error);
+    res.status(500).json({ 
+        error: 'Internal Server Error',
+        message: 'Erro interno do servidor',
+        timestamp: new Date().toISOString()
+    });
+});
+
 // --- INICIALIZAÇÃO DO SERVIDOR ---
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
-    console.log(`🚀 Servidor Express rodando na porta: ${port}`);
+    console.log(`🚀 Servidor Express melhorado rodando na porta: ${port}`);
     console.log(`🌍 Ambiente: ${process.env.NODE_ENV || 'development'}`);
     console.log(`📁 Frontend: ${frontendPath}`);
     console.log(`🔗 Health Check: http://localhost:${port}/health`);
-});
+    console.log(`🔗 Teste: http://localhost:${port}/test`);
+    console.log(`🔗 API Status: ${apiRoutesLoaded ? '✅ Carregada' : '❌ Não carregada'}`);
+}); 

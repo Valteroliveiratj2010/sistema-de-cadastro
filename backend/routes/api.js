@@ -13,7 +13,10 @@ const { Client, Sale, Payment, User, Product, SaleProduct, Supplier, Purchase, P
 
 // Importar os middlewares
 const authMiddleware = require('../middleware/authMiddleware'); 
-const authorizeRole = require('../middleware/authorizationMiddleware'); 
+const authorizeRole = require('../middleware/authorizationMiddleware');
+
+// Importar o controller do dashboard
+const dashboardController = require('../controllers/dashboardController'); 
 
 const router = express.Router();
 
@@ -479,8 +482,20 @@ router.get('/sales/report-by-period', authorizeRole(['admin', 'gerente', 'vended
 });
 
 router.get('/sales', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
-    const { page = 1, limit = 5, q = '' } = req.query;
+    const { page = 1, limit = 5, q = '', clientId, updateStatus } = req.query;
     const offset = (page - 1) * limit;
+    
+    // Se solicitado, atualizar status de todas as vendas
+    let updatedCount = 0;
+    if (updateStatus === 'true' && (req.user.role === 'admin' || req.user.role === 'gerente')) {
+        try {
+            const { updateSalesStatus } = require('../utils/statusUpdater');
+            updatedCount = await updateSalesStatus();
+            console.log(`✅ ${updatedCount} vendas atualizadas automaticamente`);
+        } catch (updateError) {
+            console.warn('⚠️ Erro ao atualizar status:', updateError.message);
+        }
+    }
     
     let whereClause = {};
     if (q) {
@@ -491,14 +506,30 @@ router.get('/sales', authorizeRole(['admin', 'gerente', 'vendedor']), async (req
     }
 
     try {
-        const { count, rows } = await Sale.findAndCountAll({
-            where: whereClause, 
-            limit: parseInt(limit),
-            offset: parseInt(offset),
-            order: [['dataVenda', 'DESC']],
-            include: [{ model: Client, as: 'client', attributes: ['nome'] }]
-        });
-        res.json({ total: count, data: rows });
+        let rows, count;
+        if (clientId) {
+            // Filtro explícito por clientId
+            const result = await Sale.findAndCountAll({
+                where: { ...whereClause, clientId: parseInt(clientId) },
+                include: [{ model: Client, as: 'client', attributes: ['nome'] }],
+                order: [['dataVenda', 'DESC']],
+                limit: parseInt(limit),
+                offset: parseInt(offset)
+            });
+            rows = result.rows;
+            count = result.count;
+        } else {
+            const result = await Sale.findAndCountAll({
+                where: whereClause,
+                include: [{ model: Client, as: 'client', attributes: ['nome'] }],
+                order: [['dataVenda', 'DESC']],
+                limit: parseInt(limit),
+                offset: parseInt(offset)
+            });
+            rows = result.rows;
+            count = result.count;
+        }
+        res.json({ total: count, data: rows, updatedCount });
     } catch (error) {
         console.error('❌ ERRO AO BUSCAR VENDAS:', error);
         res.status(500).json({ message: error.message });
@@ -532,8 +563,24 @@ router.get('/sales/:id', authorizeRole(['admin', 'gerente', 'vendedor']), async 
                 }
             ]
         });
-        if (sale) res.json(sale);
-        else res.status(404).json({ message: 'Venda não encontrada ou você não tem permissão para vê-la.' });
+        
+        if (sale) {
+            // Verificar e atualizar status automaticamente
+            try {
+                const { checkAndUpdateSaleStatus } = require('../utils/statusUpdater');
+                const wasUpdated = await checkAndUpdateSaleStatus(id);
+                if (wasUpdated) {
+                    // Recarregar a venda para obter o status atualizado
+                    await sale.reload();
+                }
+            } catch (updateError) {
+                console.warn('⚠️ Erro ao verificar status automático:', updateError.message);
+            }
+            
+            res.json(sale);
+        } else {
+            res.status(404).json({ message: 'Venda não encontrada ou você não tem permissão para vê-la.' });
+        }
     } catch (error) {
         console.error('❌ ERRO AO OBTER DETALHES DA VENDA:', error);
         res.status(500).json({ message: error.message });
@@ -542,6 +589,8 @@ router.get('/sales/:id', authorizeRole(['admin', 'gerente', 'vendedor']), async 
 
 router.post('/sales', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
     console.log('[API Route Log] POST /sales - Request Body:', JSON.stringify(req.body, null, 2));
+    console.log('[API Route Log] Status recebido:', req.body.status);
+    console.log('[API Route Log] InitialPayment recebido:', req.body.initialPayment);
     const { clientId, dataVenda, dataVencimento, products: saleProductsData, initialPayment } = req.body;
 
     const userId = req.user.id; 
@@ -560,6 +609,23 @@ router.post('/sales', authorizeRole(['admin', 'gerente', 'vendedor']), async (re
             const precoUnitario = item.precoUnitario !== undefined ? parseFloat(item.precoUnitario) : product.preco;
             valorTotalCalculado += precoUnitario * item.quantidade;
         }
+        // Determinar status da venda
+        let saleStatus = 'Pendente';
+        console.log('[API Route Log] Determinando status da venda:');
+        console.log('[API Route Log] - Status recebido:', req.body.status);
+        console.log('[API Route Log] - InitialPayment:', initialPayment);
+        console.log('[API Route Log] - Valor total calculado:', valorTotalCalculado);
+        
+        if (req.body.status) {
+            saleStatus = req.body.status;
+            console.log('[API Route Log] - Usando status do frontend:', saleStatus);
+        } else if (initialPayment && parseFloat(initialPayment.valor) >= valorTotalCalculado) {
+            saleStatus = 'Pago';
+            console.log('[API Route Log] - Status determinado automaticamente como Pago');
+        } else {
+            console.log('[API Route Log] - Status mantido como Pendente');
+        }
+        
         const sale = await Sale.create({
             clientId,
             userId,
@@ -567,7 +633,7 @@ router.post('/sales', authorizeRole(['admin', 'gerente', 'vendedor']), async (re
             dataVencimento: dataVencimento || null,
             valorTotal: valorTotalCalculado,
             valorPago: (initialPayment && initialPayment.valor) ? parseFloat(initialPayment.valor) : 0, 
-            status: (initialPayment && parseFloat(initialPayment.valor) >= valorTotalCalculado) ? 'Pago' : 'Pendente'
+            status: saleStatus
         }, { transaction });
         console.log('✅ Venda criada com ID:', sale.id);
         
@@ -1886,6 +1952,65 @@ router.get('/finance/sales-prediction', authorizeRole(['admin', 'gerente', 'vend
     } catch (error) {
         console.error('❌ ERRO AO GERAR DADOS PARA PREDIÇÃO DE VENDAS:', error);
         res.status(500).json({ message: 'Erro ao gerar dados para análise preditiva de vendas.' });
+    }
+});
+
+// --- ROTAS DO DASHBOARD TOP 5 ---
+router.get('/dashboard/top-products', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
+    console.log(`[API Route Log] ${new Date().toISOString()} - Top Products route accessed by ${req.user.username}.`);
+    try {
+        await dashboardController.getProdutosMaisVendidos(req, res);
+    } catch (error) {
+        console.error('❌ ERRO AO BUSCAR TOP 5 PRODUTOS:', error);
+        res.status(500).json({ message: 'Erro ao buscar top 5 produtos mais vendidos.' });
+    }
+});
+
+router.get('/dashboard/top-clients', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
+    console.log(`[API Route Log] ${new Date().toISOString()} - Top Clients route accessed by ${req.user.username}.`);
+    try {
+        await dashboardController.getClientesMaisCompraram(req, res);
+    } catch (error) {
+        console.error('❌ ERRO AO BUSCAR TOP 5 CLIENTES:', error);
+        res.status(500).json({ message: 'Erro ao buscar top 5 clientes que mais compraram.' });
+    }
+});
+
+router.get('/dashboard/top-suppliers', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
+    console.log(`[API Route Log] ${new Date().toISOString()} - Top Suppliers route accessed by ${req.user.username}.`);
+    try {
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+        const purchaseTable = 'Purchases';
+        const supplierTable = 'Suppliers';
+
+        // Query para buscar fornecedores com mais compras no mês
+        const query = `
+            SELECT s.nome AS nome_fornecedor, COALESCE(COUNT(p.id), 0) AS total_compras
+            FROM "Suppliers" s
+            LEFT JOIN "Purchases" p ON s.id = p."supplierId"
+            WHERE (p."dataCompra" >= :monthStart AND p."dataCompra" < :nextMonthStart) OR p.id IS NULL
+            GROUP BY s.id, s.nome
+            ORDER BY total_compras DESC
+            LIMIT 5
+        `;
+
+        const rows = await sequelize.query(query, {
+            replacements: { monthStart, nextMonthStart },
+            type: sequelize.QueryTypes.SELECT
+        });
+
+        const data = rows.map(r => ({
+            nome_fornecedor: r.nome_fornecedor,
+            total_compras: parseInt(r.total_compras, 10) || 0
+        }));
+
+        res.json(data);
+    } catch (error) {
+        console.error('❌ ERRO AO BUSCAR TOP 5 FORNECEDORES:', error);
+        res.status(500).json({ message: 'Erro ao buscar top 5 fornecedores.' });
     }
 });
 

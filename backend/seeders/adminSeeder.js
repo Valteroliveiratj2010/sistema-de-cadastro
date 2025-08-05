@@ -1,9 +1,24 @@
 'use strict';
 
-// Forçar ambiente de produção para garantir SSL
-process.env.NODE_ENV = 'production';
-
+// Carregar variáveis de ambiente
 const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
+// Usar ambiente de desenvolvimento se não estiver definido
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = 'development';
+}
+
+// Debug: verificar variáveis de ambiente
+console.log('🔍 Variáveis de ambiente carregadas:');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('PGUSER:', process.env.PGUSER);
+console.log('PGPASSWORD:', process.env.PGPASSWORD ? '***' : 'não definida');
+console.log('PGDATABASE:', process.env.PGDATABASE);
+console.log('PGHOST:', process.env.PGHOST);
+console.log('PGPORT:', process.env.PGPORT);
+console.log('ADMIN_USERNAME:', process.env.ADMIN_USERNAME);
+console.log('ADMIN_PASSWORD:', process.env.ADMIN_PASSWORD ? '***' : 'não definida');
 // Certifique-se de que o dotenv seja carregado no início da sua aplicação principal (server.js)
 // Para um seeder standalone, você pode precisar carregá-lo aqui também se ele não for
 // executado no contexto da sua aplicação principal que já carrega o dotenv.

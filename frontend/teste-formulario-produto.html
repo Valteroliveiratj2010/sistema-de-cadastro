@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Formulário Produto</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Teste Formulário Produto</h1>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Formulário de Produto</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="productForm" data-action="createProduct">
+                            <input type="hidden" name="id" id="productId">
+                            <div class="mb-3">
+                                <label for="productName" class="form-label">Nome</label>
+                                <input type="text" class="form-control" id="productName" name="nome" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="productDescription" class="form-label">Descrição</label>
+                                <textarea class="form-control" id="productDescription" name="descricao" rows="3"></textarea>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="productPrice" class="form-label">Preço de Venda</label>
+                                    <input type="number" step="0.01" class="form-control" id="productPrice" name="preco" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="productCost" class="form-label">Preço de Custo</label>
+                                    <input type="number" step="0.01" class="form-control" id="productCost" name="custo">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="productStock" class="form-label">Estoque</label>
+                                    <input type="number" class="form-control" id="productStock" name="estoque" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="productSku" class="form-label">SKU</label>
+                                    <input type="text" class="form-control" id="productSku" name="sku">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Salvar Produto</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Logs</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="logs" style="height: 400px; overflow-y: auto; background: #f8f9fa; padding: 10px; font-family: monospace; font-size: 12px;">
+                            <div>Logs aparecerão aqui...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logsDiv = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            logsDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+            console.log(message);
+        }
+
+        // Teste 1: Verificar se o formulário existe
+        log('🔍 Verificando formulário...');
+        const form = document.getElementById('productForm');
+        if (form) {
+            log('✅ Formulário encontrado');
+            log(`📋 Action: ${form.dataset.action}`);
+        } else {
+            log('❌ Formulário não encontrado');
+        }
+
+        // Teste 2: Verificar se as funções estão disponíveis
+        log('🔍 Verificando funções...');
+        log(`createProduct: ${typeof window.createProduct}`);
+        log(`createClient: ${typeof window.createClient}`);
+        log(`createSale: ${typeof window.createSale}`);
+
+        // Teste 3: Adicionar evento de submit
+        if (form) {
+            form.addEventListener('submit', function(event) {
+                log('🎯 Evento submit capturado!');
+                event.preventDefault();
+                
+                const formData = new FormData(form);
+                const data = {};
+                
+                for (const [key, value] of formData.entries()) {
+                    if (value !== '') {
+                        data[key] = value;
+                    }
+                }
+                
+                log('📊 Dados coletados:');
+                log(JSON.stringify(data, null, 2));
+                
+                // Teste 4: Verificar se a função createProduct existe
+                if (typeof window.createProduct === 'function') {
+                    log('✅ Função createProduct encontrada, chamando...');
+                    window.createProduct(data).then(result => {
+                        log('✅ Resultado da função createProduct:');
+                        log(JSON.stringify(result, null, 2));
+                    }).catch(error => {
+                        log('❌ Erro na função createProduct:');
+                        log(error.message);
+                        log(error.stack);
+                    });
+                } else {
+                    log('❌ Função createProduct não encontrada');
+                    log('🔍 Funções disponíveis:');
+                    Object.keys(window).filter(key => key.startsWith('create')).forEach(func => {
+                        log(`  - ${func}: ${typeof window[func]}`);
+                    });
+                }
+            });
+            log('✅ Evento submit adicionado ao formulário');
+        }
+
+        // Teste 5: Verificar se o token está disponível
+        log('🔍 Verificando token...');
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            log('✅ Token encontrado no localStorage');
+            log(`Token: ${token.substring(0, 20)}...`);
+        } else {
+            log('❌ Token não encontrado no localStorage');
+        }
+
+        // Teste 6: Verificar API base URL
+        log('🔍 Verificando API base URL...');
+        if (window.API_BASE_URL) {
+            log(`✅ API_BASE_URL: ${window.API_BASE_URL}`);
+        } else {
+            log('❌ API_BASE_URL não definido');
+        }
+
+        log('🚀 Teste configurado! Preencha o formulário e clique em "Salvar Produto"');
+        
+        // Verificar novamente após 2 segundos
+        setTimeout(() => {
+            log('🔍 Verificação tardia (2s)...');
+            if (window.createProduct) {
+                log('✅ createProduct encontrada na verificação tardia!');
+            } else {
+                log('❌ createProduct ainda não encontrada');
+                log('🔍 Tentando recarregar a página...');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            }
+        }, 2000);
+    </script>
+</body>
+</html> 

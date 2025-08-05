@@ -171,6 +171,11 @@ class I18nManager {
         
         // Atualizar anos dinamicamente
         this.updateDynamicYears();
+        
+        // Atualizar status das tabelas
+        if (typeof window.updateTableStatuses === 'function') {
+            window.updateTableStatuses();
+        }
 
         console.log(`✅ ${elements.length} elementos traduzidos para ${this.currentLanguage}`);
     }

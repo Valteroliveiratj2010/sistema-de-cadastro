@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Debug Simples</title>
+</head>
+<body>
+    <h1>Teste Debug Simples</h1>
+    <div id="output"></div>
+
+    <script>
+        function log(message) {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            output.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            console.log(message);
+        }
+
+        // Teste 1: Verificar se os scripts estão carregados
+        log('🔍 Verificando carregamento dos scripts...');
+        
+        // Aguardar um pouco para os scripts carregarem
+        setTimeout(() => {
+            log('🔍 Verificando objetos...');
+            
+            // Verificar api
+            if (window.api) {
+                log('✅ API encontrada');
+                log(`API Base URL: ${window.api.baseURL}`);
+                log(`API Token: ${window.api.token ? 'Presente' : 'Ausente'}`);
+            } else {
+                log('❌ API não encontrada');
+            }
+            
+            // Verificar ui
+            if (window.ui) {
+                log('✅ UI encontrada');
+            } else {
+                log('❌ UI não encontrada');
+            }
+            
+            // Verificar auth
+            if (window.auth) {
+                log('✅ Auth encontrada');
+            } else {
+                log('❌ Auth não encontrada');
+            }
+            
+            // Verificar Utils
+            if (window.Utils) {
+                log('✅ Utils encontrada');
+            } else {
+                log('❌ Utils não encontrada');
+            }
+            
+            // Verificar funções create
+            log('🔍 Verificando funções create...');
+            const createFunctions = Object.keys(window).filter(key => key.startsWith('create'));
+            if (createFunctions.length > 0) {
+                log('✅ Funções create encontradas:');
+                createFunctions.forEach(func => {
+                    log(`  - ${func}: ${typeof window[func]}`);
+                });
+            } else {
+                log('❌ Nenhuma função create encontrada');
+            }
+            
+            // Verificar se o app.js foi carregado
+            log('🔍 Verificando se app.js foi carregado...');
+            if (window.state) {
+                log('✅ App.js carregado (state encontrado)');
+            } else {
+                log('❌ App.js não carregado (state não encontrado)');
+            }
+            
+        }, 1000);
+        
+        // Teste 2: Verificar após 3 segundos
+        setTimeout(() => {
+            log('🔍 Verificação tardia (3s)...');
+            
+            if (window.createProduct) {
+                log('✅ createProduct encontrada na verificação tardia');
+            } else {
+                log('❌ createProduct ainda não encontrada');
+            }
+            
+            if (window.api) {
+                log('✅ API ainda disponível');
+            } else {
+                log('❌ API não disponível');
+            }
+        }, 3000);
+        
+        // Teste 3: Verificar após 5 segundos
+        setTimeout(() => {
+            log('🔍 Verificação final (5s)...');
+            
+            if (window.createProduct) {
+                log('✅ createProduct encontrada na verificação final');
+                log('🚀 Teste concluído com sucesso!');
+            } else {
+                log('❌ createProduct não encontrada na verificação final');
+                log('🔍 Tentando carregar manualmente...');
+                
+                // Tentar carregar os scripts manualmente
+                const scripts = [
+                    'js/apiConfig.js',
+                    'js/api.js',
+                    'js/auth.js',
+                    'js/utils.js',
+                    'js/ui.js',
+                    'js/app.js'
+                ];
+                
+                scripts.forEach(script => {
+                    const scriptElement = document.createElement('script');
+                    scriptElement.src = script;
+                    scriptElement.onload = () => log(`✅ ${script} carregado manualmente`);
+                    scriptElement.onerror = () => log(`❌ Erro ao carregar ${script}`);
+                    document.head.appendChild(scriptElement);
+                });
+            }
+        }, 5000);
+    </script>
+</body>
+</html> 

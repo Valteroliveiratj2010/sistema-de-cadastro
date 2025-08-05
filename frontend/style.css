@@ -57,6 +57,25 @@ html, body, #app-container, .main-content, .content-wrapper, .sidebar {
     max-width: 100vw !important;
 }
 
+/* Regras adicionais para eliminar scroll horizontal */
+html, body {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+    width: 100% !important;
+}
+
+#app-container {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+    width: 100% !important;
+}
+
+.sidebar * {
+    overflow-x: hidden !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
 /* Forçar largura correta em todos os elementos */
 #app-container {
     width: 100vw !important;
@@ -116,8 +135,10 @@ h1, h2, h3, h4, h5, h6 {
     box-shadow: var(--shadow-lg);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: hidden !important;
     max-height: 100vh;
+    max-width: var(--sidebar-width-desktop) !important;
+    box-sizing: border-box !important;
 }
 
 .sidebar-title {
@@ -131,6 +152,8 @@ h1, h2, h3, h4, h5, h6 {
     text-overflow: ellipsis;
     padding: 0 0.5rem;
     flex-shrink: 0;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
 }
 
 .sidebar .nav-link {
@@ -143,6 +166,11 @@ h1, h2, h3, h4, h5, h6 {
     align-items: center;
     text-decoration: none;
     font-weight: 500;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
 }
 
 .sidebar .nav-link:hover,
@@ -162,8 +190,11 @@ h1, h2, h3, h4, h5, h6 {
 .sidebar .nav {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden !important;
     padding-right: 0.5rem;
     margin-bottom: 1rem;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
 }
 
 .sidebar .nav.flex-column {
@@ -621,15 +652,40 @@ h1, h2, h3, h4, h5, h6 {
 /* ===== MODAIS ===== */
 .modal {
     backdrop-filter: blur(5px);
+    z-index: 3000 !important;
+}
+
+/* FORÇAR LARGURA DOS MODAIS - SOBRESCREVER BOOTSTRAP */
+.modal-dialog {
+    max-width: 600px !important;
+    width: 600px !important;
+    margin: 1.75rem auto !important;
+    min-width: 300px !important;
+}
+
+/* MODAIS SIMPLES - LARGURA FIXA */
+#clientModal .modal-dialog,
+#productModal .modal-dialog,
+#userModal .modal-dialog,
+#supplierModal .modal-dialog {
+    max-width: 400px !important;
+    width: 400px !important;
+    margin: 1.75rem auto !important;
+    min-width: 300px !important;
+}
+
+/* MODAIS COMPLEXOS - LARGURA FIXA */
+#saleModal .modal-dialog,
+#purchaseModal .modal-dialog {
+    max-width: 700px !important;
+    width: 700px !important;
+    margin: 1.75rem auto !important;
+    min-width: 500px !important;
 }
 
 .modal-backdrop {
     background-color: rgba(0, 0, 0, 0.6);
-}
-
-.modal-dialog {
-    max-width: 800px;
-    margin: 1.75rem auto;
+    z-index: 2999 !important;
 }
 
 #saleModal,
@@ -638,12 +694,7 @@ h1, h2, h3, h4, h5, h6 {
 #productModal,
 #userModal,
 #supplierModal {
-    z-index: 1055;
-}
-
-#saleModal .modal-dialog,
-#purchaseModal .modal-dialog {
-    max-width: 900px;
+    z-index: 3000 !important;
 }
 
 #saleModal + .modal-backdrop,
@@ -951,7 +1002,17 @@ body .modal-backdrop {
     
     #saleModal .modal-dialog,
     #purchaseModal .modal-dialog {
-        max-width: 95% !important;
+        max-width: 600px !important;
+        width: 600px !important;
+        margin: 0.5rem auto !important;
+    }
+    
+    #clientModal .modal-dialog,
+    #productModal .modal-dialog,
+    #userModal .modal-dialog,
+    #supplierModal .modal-dialog {
+        max-width: 380px !important;
+        width: 380px !important;
         margin: 0.5rem auto !important;
     }
     
@@ -971,6 +1032,19 @@ body .modal-backdrop {
     
     .modal-footer {
         padding: 1rem !important;
+    }
+    
+    /* Z-index para modais em mobile */
+    .modal {
+        z-index: 3000 !important;
+    }
+    
+    .modal-backdrop {
+        z-index: 2999 !important;
+    }
+    
+    .modal-dialog {
+        z-index: 3001 !important;
     }
     
     #saleDetailSection h3,
@@ -1017,6 +1091,23 @@ body .modal-backdrop {
 @media (max-width: 575.98px) {
     .card-header, .card-body {
         padding: 0.75rem;
+    }
+    
+    /* Modais ainda mais estreitos em mobile pequeno */
+    #clientModal .modal-dialog,
+    #productModal .modal-dialog,
+    #userModal .modal-dialog,
+    #supplierModal .modal-dialog {
+        max-width: 350px !important;
+        width: 350px !important;
+        margin: 0.5rem auto !important;
+    }
+    
+    #saleModal .modal-dialog,
+    #purchaseModal .modal-dialog {
+        max-width: 500px !important;
+        width: 500px !important;
+        margin: 0.5rem auto !important;
     }
     
     .card-header h1, .card-header h2, .card-header h3, .card-header h4, .card-header h5, .card-header h6 {

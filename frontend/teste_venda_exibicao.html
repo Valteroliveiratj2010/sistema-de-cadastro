@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Exibição de Vendas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>🧪 Teste - Exibição de Vendas</h1>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Teste de Renderização</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary" onclick="testarRenderizacao()">
+                            Testar Renderização
+                        </button>
+                        <button class="btn btn-success" onclick="testarAPIVendas()">
+                            Testar API Vendas
+                        </button>
+                        <button class="btn btn-warning" onclick="limparTabela()">
+                            Limpar Tabela
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Status do Teste</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="testStatus" class="alert alert-info">
+                            Aguardando teste...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5>Tabela de Vendas</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="salesTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Cliente</th>
+                                <th>Valor Total</th>
+                                <th>Data</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="bi bi-cart-check fs-1 d-block mb-2"></i>
+                                    Nenhuma venda registrada
+                                    <br>
+                                    <small>Clique em "Testar Renderização" para ver os dados</small>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5>Logs de Debug</h5>
+            </div>
+            <div class="card-body">
+                <div id="debugLogs" class="bg-dark text-light p-3 rounded" style="height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+                    <div>🔄 Aguardando logs...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/apiConfig.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+    
+    <script>
+        // Interceptar console.log para mostrar no debug
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        function addToDebugLog(message, type = 'log') {
+            const debugLogs = document.getElementById('debugLogs');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#ff6b6b' : type === 'warn' ? '#ffd93d' : '#6bcf7f';
+            
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<span style="color: ${color}">[${timestamp}]</span> ${message}`;
+            debugLogs.appendChild(logEntry);
+            debugLogs.scrollTop = debugLogs.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addToDebugLog(args.join(' '), 'log');
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addToDebugLog(args.join(' '), 'error');
+        };
+        
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            addToDebugLog(args.join(' '), 'warn');
+        };
+        
+        // Função para testar renderização
+        function testarRenderizacao() {
+            console.log('🧪 Testando renderização de vendas...');
+            
+            const testStatus = document.getElementById('testStatus');
+            testStatus.className = 'alert alert-info';
+            testStatus.textContent = 'Testando renderização...';
+            
+            // Dados de teste
+            const mockData = {
+                success: true,
+                data: [
+                    {
+                        id: 1,
+                        client: { nome: 'João Silva' },
+                        valorTotal: 150.00,
+                        dataVenda: '2024-01-15',
+                        status: 'Pendente'
+                    },
+                    {
+                        id: 2,
+                        client: { nome: 'Maria Santos' },
+                        valorTotal: 250.50,
+                        dataVenda: '2024-01-16',
+                        status: 'Pago'
+                    },
+                    {
+                        id: 3,
+                        client: { nome: 'Pedro Costa' },
+                        valorTotal: 75.25,
+                        dataVenda: '2024-01-17',
+                        status: 'Concluída'
+                    }
+                ]
+            };
+            
+            console.log('📦 Dados de teste:', mockData);
+            
+            // Chamar renderSales
+            if (typeof renderSales === 'function') {
+                console.log('✅ Função renderSales encontrada, chamando...');
+                renderSales(mockData);
+                testStatus.className = 'alert alert-success';
+                testStatus.textContent = 'Renderização concluída! Verifique a tabela.';
+            } else {
+                console.error('❌ Função renderSales não encontrada!');
+                testStatus.className = 'alert alert-danger';
+                testStatus.textContent = 'Erro: Função renderSales não encontrada!';
+            }
+        }
+        
+        // Função para testar API de vendas
+        async function testarAPIVendas() {
+            console.log('🧪 Testando API de vendas...');
+            
+            const testStatus = document.getElementById('testStatus');
+            testStatus.className = 'alert alert-info';
+            testStatus.textContent = 'Testando API de vendas...';
+            
+            try {
+                if (typeof loadSales === 'function') {
+                    console.log('✅ Função loadSales encontrada, chamando...');
+                    await loadSales();
+                    testStatus.className = 'alert alert-success';
+                    testStatus.textContent = 'API de vendas testada! Verifique a tabela.';
+                } else {
+                    console.error('❌ Função loadSales não encontrada!');
+                    testStatus.className = 'alert alert-danger';
+                    testStatus.textContent = 'Erro: Função loadSales não encontrada!';
+                }
+            } catch (error) {
+                console.error('❌ Erro ao testar API:', error);
+                testStatus.className = 'alert alert-danger';
+                testStatus.textContent = 'Erro ao testar API: ' + error.message;
+            }
+        }
+        
+        // Função para limpar tabela
+        function limparTabela() {
+            console.log('🧹 Limpando tabela...');
+            
+            const tbody = document.querySelector('#salesTable tbody');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4"><i class="bi bi-cart-check fs-1 d-block mb-2"></i>Nenhuma venda registrada<br><small>Clique em "Testar Renderização" para ver os dados</small></td></tr>';
+                console.log('✅ Tabela limpa');
+            }
+            
+            const testStatus = document.getElementById('testStatus');
+            testStatus.className = 'alert alert-info';
+            testStatus.textContent = 'Tabela limpa!';
+        }
+        
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Página de teste carregada');
+            console.log('🔍 Verificando funções disponíveis:');
+            console.log('  - renderSales:', typeof renderSales);
+            console.log('  - loadSales:', typeof loadSales);
+            console.log('  - Utils.formatCurrency:', typeof Utils?.formatCurrency);
+            console.log('  - Utils.formatDate:', typeof Utils?.formatDate);
+            
+            const testStatus = document.getElementById('testStatus');
+            testStatus.className = 'alert alert-success';
+            testStatus.textContent = 'Página carregada! Clique em "Testar Renderização" para começar.';
+        });
+    </script>
+</body>
+</html> 
