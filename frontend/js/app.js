@@ -285,6 +285,15 @@
     function initialize() {
         console.log('🚀 Inicializando aplicação...');
         
+        // Verificar autenticação primeiro
+        if (!checkAuthentication()) {
+            console.log('❌ Usuário não autenticado, redirecionando para login...');
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        console.log('✅ Usuário autenticado, continuando inicialização...');
+        
         // Setup UI
         setupUI();
         
@@ -298,6 +307,32 @@
         configurarAtualizacaoAutomatica();
         
         console.log('✅ Aplicação inicializada com sucesso');
+    }
+
+    /**
+     * Verificar se o usuário está autenticado
+     */
+    function checkAuthentication() {
+        const token = localStorage.getItem('authToken');
+        const user = localStorage.getItem('user');
+        
+        console.log('🔍 Verificando autenticação...');
+        console.log('Token:', token ? 'Presente' : 'Ausente');
+        console.log('User:', user ? 'Presente' : 'Ausente');
+        
+        if (!token || !user) {
+            console.log('❌ Dados de autenticação ausentes');
+            return false;
+        }
+        
+        try {
+            const userData = JSON.parse(user);
+            console.log('✅ Usuário autenticado:', userData.username);
+            return true;
+        } catch (error) {
+            console.error('❌ Erro ao parsear dados do usuário:', error);
+            return false;
+        }
     }
 
     /**
