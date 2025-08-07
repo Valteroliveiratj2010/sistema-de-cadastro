@@ -52,6 +52,37 @@
     }
 
     /**
+     * Helper function to get payment method translation
+     */
+    function getTranslatedPaymentMethod(method) {
+        if (!method) return getTranslatedValue('cash', 'Dinheiro');
+        
+        const methodMap = {
+            'Dinheiro': 'cash',
+            'Cartão de Crédito': 'creditCard',
+            'Cartão de Débito': 'debitCard',
+            'PIX': 'pix',
+            'Crediário': 'installment',
+            'Boleto': 'boleto',
+            'Transferência': 'transfer',
+            'Money': 'cash',
+            'Credit Card': 'creditCard',
+            'Debit Card': 'debitCard',
+            'Installment': 'installment',
+            'Bank Slip': 'boleto',
+            'Transfer': 'transfer',
+            'Efectivo': 'cash',
+            'Tarjeta de Crédito': 'creditCard',
+            'Tarjeta de Débito': 'debitCard',
+            'Cuotas': 'installment',
+            'Transferencia': 'transfer'
+        };
+        
+        const translationKey = methodMap[method] || 'cash';
+        return getTranslatedValue(translationKey, method);
+    }
+
+    /**
      * Helper function to translate status
      */
     function getTranslatedStatus(status) {
@@ -132,6 +163,17 @@
                         }
                     }
                 });
+                
+                // Atualizar mensagens de "Nenhum produto encontrado" e "Nenhum pagamento encontrado"
+                const noProductsRow = modal.querySelector('#detailSaleProductsList tr td[colspan="4"]');
+                if (noProductsRow && noProductsRow.textContent.includes('Nenhum produto encontrado')) {
+                    noProductsRow.textContent = getTranslatedValue('noProductsFound', 'Nenhum produto encontrado');
+                }
+                
+                const noPaymentsRow = modal.querySelector('#detailSalePaymentsList tr td[colspan="3"]');
+                if (noPaymentsRow && noPaymentsRow.textContent.includes('Nenhum pagamento encontrado')) {
+                    noPaymentsRow.textContent = getTranslatedValue('noPaymentsFound', 'Nenhum pagamento encontrado');
+                }
             }
         });
     }
@@ -146,7 +188,42 @@
         let saleId = null;
         
         if (type === 'sale') {
-            saleId = document.getElementById('detailSaleId')?.textContent?.trim();
+            // Primeiro, tentar buscar do elemento hidden
+            const saleIdElement = document.getElementById('detailSaleId');
+            console.log('🔍 Elemento detailSaleId encontrado:', saleIdElement);
+            
+            if (saleIdElement) {
+                saleId = saleIdElement.value?.trim();
+                console.log('🔍 Valor do elemento detailSaleId:', saleId);
+            }
+            
+            // Se o valor estiver vazio, tentar buscar do dataset do modal
+            if (!saleId) {
+                const modal = document.getElementById('saleDetailModal');
+                if (modal && modal.dataset.saleId) {
+                    saleId = modal.dataset.saleId;
+                    console.log('🔍 ID encontrado no dataset do modal:', saleId);
+                }
+            }
+            
+            // Se ainda não encontrou, tentar buscar de outras formas
+            if (!saleId) {
+                console.error('❌ Elemento detailSaleId não encontrado ou vazio');
+                console.log('🔍 Tentando buscar ID de outras formas...');
+                
+                // Tentar buscar do modal diretamente
+                const modal = document.getElementById('saleDetailModal');
+                if (modal) {
+                    console.log('🔍 Modal encontrado:', modal);
+                    console.log('🔍 Dataset do modal:', modal.dataset);
+                    
+                    // Tentar buscar do atributo data-sale-id
+                    if (modal.dataset.saleId) {
+                        saleId = modal.dataset.saleId;
+                        console.log('🔍 ID encontrado no data-sale-id:', saleId);
+                    }
+                }
+            }
             
             // Validar se temos o ID
             if (!saleId) {
@@ -407,6 +484,537 @@
         
         // Pagination
         document.addEventListener('click', handlePagination);
+        
+        // Language change events
+        document.addEventListener('languageChanged', handleLanguageChange);
+        
+        console.log('🔧 Todos os event listeners configurados');
+    }
+
+    /**
+     * Handle section load
+     */
+    function handleSectionLoad(event) {
+        const section = event.detail.section;
+        
+        switch (section) {
+            case 'dashboardSection':
+                loadDashboardData();
+                break;
+            case 'clientsSection':
+                loadClients();
+                break;
+            case 'salesSection':
+                loadSales();
+                // Configurar eventos do formulário de venda quando a seção for carregada
+                console.log('🔧 Configurando eventos do formulário de venda na seção...');
+                setupSaleFormEvents();
+                break;
+            case 'productsSection':
+                loadProducts();
+                break;
+            case 'purchasesSection':
+                loadPurchases();
+                break;
+            case 'suppliersSection':
+                loadSuppliers();
+                break;
+            case 'usersSection':
+                loadUsers();
+                break;
+        }
+    }
+
+    /**
+/**
+ * Main Application Module
+ * Gestor PRO - Sistema de Gestão Empresarial
+ * Version: 2.0.0
+ */
+
+(() => {
+    'use strict';
+
+    // Application state
+    const state = {
+        currentSection: null,
+        modals: new Map(),
+        charts: new Map(),
+        detailModalData: null, // Armazenar dados do modal de detalhes ativo
+        data: {
+            clients: { page: 1, data: [], total: 0, loaded: false },
+            sales: { page: 1, data: [], total: 0, loaded: false },
+            products: { page: 1, data: [], total: 0, loaded: false },
+            purchases: { page: 1, data: [], total: 0, loaded: false },
+            suppliers: { page: 1, data: [], total: 0, loaded: false },
+            users: { page: 1, data: [], total: 0, loaded: false }
+        }
+    };
+
+    // Expor estado globalmente para i18n.js
+    window.state = state;
+
+    /**
+     * Helper function to show toast notifications
+     */
+    function showToast(message, type = 'info', duration = 5000) {
+        console.log('🔔 showToast chamado:', message, type);
+        
+        if (window.ui && window.ui.showToast) {
+            console.log('🔔 Usando ui.showToast');
+            window.ui.showToast(message, type, duration);
+        } else if (window.Utils && window.Utils.showToast) {
+            console.log('🔔 Usando Utils.showToast');
+            window.Utils.showToast(message, type, duration);
+        } else {
+            console.log('🔔 Usando alert como fallback');
+            alert(`${type.toUpperCase()}: ${message}`);
+        }
+    }
+
+    /**
+     * Helper function to get translated value
+     */
+    function getTranslatedValue(key, fallback) {
+        return window.i18n ? window.i18n.t(key) : fallback;
+    }
+
+    /**
+     * Helper function to get payment method translation
+     */
+    function getTranslatedPaymentMethod(method) {
+        if (!method) return getTranslatedValue('cash', 'Dinheiro');
+        
+        const methodMap = {
+            'Dinheiro': 'cash',
+            'Cartão de Crédito': 'creditCard',
+            'Cartão de Débito': 'debitCard',
+            'PIX': 'pix',
+            'Crediário': 'installment',
+            'Boleto': 'boleto',
+            'Transferência': 'transfer',
+            'Money': 'cash',
+            'Credit Card': 'creditCard',
+            'Debit Card': 'debitCard',
+            'Installment': 'installment',
+            'Bank Slip': 'boleto',
+            'Transfer': 'transfer',
+            'Efectivo': 'cash',
+            'Tarjeta de Crédito': 'creditCard',
+            'Tarjeta de Débito': 'debitCard',
+            'Cuotas': 'installment',
+            'Transferencia': 'transfer'
+        };
+        
+        const translationKey = methodMap[method] || 'cash';
+        return getTranslatedValue(translationKey, method);
+    }
+
+    /**
+     * Helper function to translate status
+     */
+    function getTranslatedStatus(status) {
+        if (!status) return getTranslatedValue('dash', '-');
+        
+        // Mapear status para chaves de tradução
+        const statusMap = {
+            'Pago': 'paid',
+            'Pendente': 'pending',
+            'Concluída': 'completed',
+            'Concluida': 'completed',
+            'Cancelada': 'cancelled',
+            'Cancelado': 'cancelled',
+            'vencido': 'overdue',
+            'Vencido': 'overdue',
+            'Vencida': 'overdue',
+            'Paid': 'paid',
+            'Pending': 'pending',
+            'Completed': 'completed',
+            'Cancelled': 'cancelled',
+            'Pagado': 'paid',
+            'Pendiente': 'pending',
+            'Completado': 'completed',
+            'Cancelado': 'cancelled'
+        };
+        
+        const translationKey = statusMap[status] || status.toLowerCase();
+        return getTranslatedValue(translationKey, status);
+    }
+
+    /**
+     * Update detail modals when language changes
+     */
+    function updateDetailModals() {
+        // Verificar se há algum modal de detalhes aberto
+        const detailModals = [
+            'clientDetailModal',
+            'saleDetailModal', 
+            'purchaseDetailModal',
+            'supplierDetailModal',
+            'userDetailModal'
+        ];
+
+        detailModals.forEach(modalId => {
+            const modal = document.getElementById(modalId);
+            if (modal && modal.classList.contains('show')) {
+                console.log(`🔄 Atualizando modal ${modalId}...`);
+                
+                // Atualizar todos os elementos com getTranslatedValue
+                const elements = modal.querySelectorAll('[id^="detail"]');
+                elements.forEach(element => {
+                    const currentText = element.textContent.trim();
+                    
+                    // Verificar se o elemento é um status (contém 'Status' no ID)
+                    if (element.id && element.id.includes('Status')) {
+                        const newText = getTranslatedStatus(currentText);
+                        if (newText !== currentText) {
+                            element.textContent = newText;
+                            console.log(`✅ Status traduzido: "${currentText}" → "${newText}"`);
+                        }
+                    }
+                    // Verificar se o texto atual é um valor traduzível
+                    else if (currentText === '-' || currentText === 'N/A' || currentText === 'Não informado' || 
+                        currentText === 'Not informed' || currentText === 'No informado') {
+                        
+                        // Determinar qual chave de tradução usar baseado no ID do elemento
+                        let translationKey = 'dash';
+                        if (currentText === 'N/A') {
+                            translationKey = 'notAvailable';
+                        } else if (currentText === 'Não informado' || currentText === 'Not informed' || currentText === 'No informado') {
+                            translationKey = 'notInformed';
+                        }
+                        
+                        const newText = getTranslatedValue(translationKey, currentText);
+                        if (newText !== currentText) {
+                            element.textContent = newText;
+                            console.log(`✅ Traduzido: "${currentText}" → "${newText}"`);
+                        }
+                    }
+                });
+                
+                // Atualizar mensagens de "Nenhum produto encontrado" e "Nenhum pagamento encontrado"
+                const noProductsRow = modal.querySelector('#detailSaleProductsList tr td[colspan="4"]');
+                if (noProductsRow && noProductsRow.textContent.includes('Nenhum produto encontrado')) {
+                    noProductsRow.textContent = getTranslatedValue('noProductsFound', 'Nenhum produto encontrado');
+                }
+                
+                const noPaymentsRow = modal.querySelector('#detailSalePaymentsList tr td[colspan="3"]');
+                if (noPaymentsRow && noPaymentsRow.textContent.includes('Nenhum pagamento encontrado')) {
+                    noPaymentsRow.textContent = getTranslatedValue('noPaymentsFound', 'Nenhum pagamento encontrado');
+                }
+            }
+        });
+    }
+
+    /**
+     * Handle edit from detail modal
+     */
+    async function handleEditFromDetail(type) {
+        console.log('🎯 handleEditFromDetail chamado para:', type);
+        
+        // Obter ID do modal de detalhes
+        let saleId = null;
+        
+        if (type === 'sale') {
+            // Primeiro, tentar buscar do elemento hidden
+            const saleIdElement = document.getElementById('detailSaleId');
+            console.log('🔍 Elemento detailSaleId encontrado:', saleIdElement);
+            
+            if (saleIdElement) {
+                saleId = saleIdElement.value?.trim();
+                console.log('🔍 Valor do elemento detailSaleId:', saleId);
+            }
+            
+            // Se o valor estiver vazio, tentar buscar do dataset do modal
+            if (!saleId) {
+                const modal = document.getElementById('saleDetailModal');
+                if (modal && modal.dataset.saleId) {
+                    saleId = modal.dataset.saleId;
+                    console.log('🔍 ID encontrado no dataset do modal:', saleId);
+                }
+            }
+            
+            // Se ainda não encontrou, tentar buscar de outras formas
+            if (!saleId) {
+                console.error('❌ Elemento detailSaleId não encontrado ou vazio');
+                console.log('🔍 Tentando buscar ID de outras formas...');
+                
+                // Tentar buscar do modal diretamente
+                const modal = document.getElementById('saleDetailModal');
+                if (modal) {
+                    console.log('🔍 Modal encontrado:', modal);
+                    console.log('🔍 Dataset do modal:', modal.dataset);
+                    
+                    // Tentar buscar do atributo data-sale-id
+                    if (modal.dataset.saleId) {
+                        saleId = modal.dataset.saleId;
+                        console.log('🔍 ID encontrado no data-sale-id:', saleId);
+                    }
+                }
+            }
+            
+            // Validar se temos o ID
+            if (!saleId) {
+                console.error('❌ ID da venda não encontrado no modal de detalhes');
+                showToast('Erro: ID da venda não encontrado', 'error');
+                return;
+            }
+            
+            console.log('📊 ID extraído do modal de detalhes:', saleId);
+        }
+        
+        // Fechar modal de detalhes
+        const detailModal = document.getElementById(`${type}DetailModal`);
+        if (detailModal && typeof bootstrap !== 'undefined') {
+            const bootstrapModal = bootstrap.Modal.getInstance(detailModal);
+            if (bootstrapModal) {
+                bootstrapModal.hide();
+            }
+        }
+        
+        // Aguardar e usar o fluxo padrão de edição
+        setTimeout(async () => {
+            console.log('🔄 Usando fluxo padrão de edição...');
+            try {
+                await handleEdit(type, saleId);
+                console.log('✅ Modal de edição aberto com dados da API');
+            } catch (error) {
+                console.error('❌ Erro ao abrir modal de edição:', error);
+                showToast('Erro ao carregar dados para edição', 'error');
+            }
+        }, 300);
+    }
+
+    /**
+     * Configure edit button for sale detail modal
+     */
+    function configureSaleEditButton(data) {
+        const editBtn = document.getElementById('editSaleFromDetailBtn');
+        if (editBtn) {
+            editBtn.onclick = () => {
+                console.log('Botão editar venda clicado');
+                handleEditFromDetail('sale');
+            };
+        }
+    }
+
+    /**
+     * Update all table statuses when language changes
+     */
+    function updateTableStatuses() {
+        console.log('🔄 Atualizando status das tabelas...');
+        
+        // Atualizar status na tabela de vendas
+        const salesTable = document.querySelector('#salesTable tbody');
+        if (salesTable) {
+            const statusBadges = salesTable.querySelectorAll('.badge');
+            statusBadges.forEach(badge => {
+                const currentText = badge.textContent.trim();
+                const newText = getTranslatedStatus(currentText);
+                if (newText !== currentText) {
+                    badge.textContent = newText;
+                    console.log(`✅ Status de venda traduzido: "${currentText}" → "${newText}"`);
+                }
+            });
+        }
+        
+        // Atualizar status na tabela de compras
+        const purchasesTable = document.querySelector('#purchasesTable tbody');
+        if (purchasesTable) {
+            const statusBadges = purchasesTable.querySelectorAll('.badge');
+            statusBadges.forEach(badge => {
+                const currentText = badge.textContent.trim();
+                const newText = getTranslatedStatus(currentText);
+                if (newText !== currentText) {
+                    badge.textContent = newText;
+                    console.log(`✅ Status de compra traduzido: "${currentText}" → "${newText}"`);
+                }
+            });
+        }
+        
+        // Atualizar status na tabela de clientes
+        const clientsTable = document.querySelector('#clientsTable tbody');
+        if (clientsTable) {
+            const statusBadges = clientsTable.querySelectorAll('.badge');
+            statusBadges.forEach(badge => {
+                const currentText = badge.textContent.trim();
+                const newText = getTranslatedStatus(currentText);
+                if (newText !== currentText) {
+                    badge.textContent = newText;
+                    console.log(`✅ Status de cliente traduzido: "${currentText}" → "${newText}"`);
+                }
+            });
+        }
+        
+        // Atualizar status na tabela de usuários
+        const usersTable = document.querySelector('#usersTable tbody');
+        if (usersTable) {
+            const statusBadges = usersTable.querySelectorAll('.badge');
+            statusBadges.forEach(badge => {
+                const currentText = badge.textContent.trim();
+                const newText = getTranslatedStatus(currentText);
+                if (newText !== currentText) {
+                    badge.textContent = newText;
+                    console.log(`✅ Status de usuário traduzido: "${currentText}" → "${newText}"`);
+                }
+            });
+        }
+        
+        // Atualizar status na tabela de produtos (se houver badges de status)
+        const productsTable = document.querySelector('#productsTable tbody');
+        if (productsTable) {
+            const statusBadges = productsTable.querySelectorAll('.badge');
+            statusBadges.forEach(badge => {
+                const currentText = badge.textContent.trim();
+                const newText = getTranslatedStatus(currentText);
+                if (newText !== currentText) {
+                    badge.textContent = newText;
+                    console.log(`✅ Status de produto traduzido: "${currentText}" → "${newText}"`);
+                }
+            });
+        }
+        
+        console.log('✅ Atualização de status das tabelas concluída');
+    }
+
+    /**
+     * Clear detail modal data when modal is closed
+     */
+    function clearDetailModalData() {
+        state.detailModalData = null;
+    }
+
+    /**
+     * Initialize application
+     */
+    function initialize() {
+        console.log('🚀 Inicializando aplicação...');
+        
+        // Verificar autenticação primeiro
+        if (!checkAuthentication()) {
+            console.log('❌ Usuário não autenticado, redirecionando para login...');
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        console.log('✅ Usuário autenticado, continuando inicialização...');
+        
+        // Setup UI
+        setupUI();
+        
+        // Setup event listeners
+        setupEventListeners();
+        
+        // Load initial data
+        loadInitialData();
+        
+        // Configurar atualização automática dos cards financeiros
+        configurarAtualizacaoAutomatica();
+        
+        console.log('✅ Aplicação inicializada com sucesso');
+    }
+
+    /**
+     * Verificar se o usuário está autenticado
+     */
+    function checkAuthentication() {
+        const token = localStorage.getItem('authToken');
+        const user = localStorage.getItem('user');
+        
+        console.log('🔍 Verificando autenticação...');
+        console.log('Token:', token ? 'Presente' : 'Ausente');
+        console.log('User:', user ? 'Presente' : 'Ausente');
+        
+        if (!token || !user) {
+            console.log('❌ Dados de autenticação ausentes');
+            return false;
+        }
+        
+        try {
+            const userData = JSON.parse(user);
+            console.log('✅ Usuário autenticado:', userData.username);
+            return true;
+        } catch (error) {
+            console.error('❌ Erro ao parsear dados do usuário:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Setup UI components
+     */
+    function setupUI() {
+        // Update user info
+        auth.updateUI();
+        
+        // Show dashboard by default
+        ui.showSection('dashboardSection');
+        
+        // Setup table responsiveness
+        ui.setupTableResponsiveness();
+    }
+
+    /**
+     * Load initial data
+     */
+    async function loadInitialData() {
+        try {
+            const loadingSpinner = ui.showLoadingOverlay('Carregando dados iniciais...');
+            
+            // Load dashboard data
+            await loadDashboardData();
+            
+            ui.hideLoadingOverlay();
+        } catch (error) {
+            console.error('Erro ao carregar dados iniciais:', error);
+            showToast('Erro ao carregar dados iniciais', 'error');
+        }
+    }
+
+    /**
+     * Setup event listeners
+     */
+    function setupEventListeners() {
+        console.log('🔧 setupEventListeners chamado');
+        
+        // Section load events
+        document.addEventListener('sectionLoad', handleSectionLoad);
+        
+        // Modal close events for detail modals
+        const detailModals = [
+            'clientDetailModal',
+            'saleDetailModal', 
+            'purchaseDetailModal',
+            'supplierDetailModal',
+            'userDetailModal'
+        ];
+
+        detailModals.forEach(modalId => {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.addEventListener('hidden.bs.modal', clearDetailModalData);
+            }
+        });
+        
+        // Form submissions
+        document.addEventListener('submit', handleFormSubmit);
+        
+        // Button clicks
+        document.addEventListener('click', handleButtonClick);
+        console.log('🔧 Event listener de clique configurado');
+        
+        // Search inputs
+        if (typeof Utils !== 'undefined' && Utils.debounce) {
+            document.addEventListener('input', Utils.debounce(handleSearch, 300));
+        } else {
+            document.addEventListener('input', handleSearch);
+        }
+        
+        // Pagination
+        document.addEventListener('click', handlePagination);
+        
+        // Language change events
+        document.addEventListener('languageChanged', handleLanguageChange);
         
         console.log('🔧 Todos os event listeners configurados');
     }
@@ -867,6 +1475,1602 @@
         }
     }
 
+    /**
+     * Handle language change
+     */
+    function handleLanguageChange(event) {
+        console.log('🌍 Idioma alterado:', event.detail.language);
+        
+        // Atualizar status das tabelas
+        updateTableStatuses();
+        
+        // Atualizar modais de detalhes abertos
+        updateDetailModals();
+        
+        // Atualizar elementos dinâmicos
+        if (window.i18n) {
+            window.i18n.updateAllElements();
+        }
+    }
+
+    // ===== DATA LOADING FUNCTIONS =====
+
+    /**
+     * Extract supplier name from purchase object
+     */
+    function extractSupplierName(purchase) {
+        // Se o fornecedor é um objeto, extrair o nome
+        if (purchase.supplier && typeof purchase.supplier === 'object') {
+            return purchase.supplier.nome || purchase.supplier.name || 'Fornecedor';
+        }
+        
+        // Se o fornecedor é um objeto, extrair o nome
+        if (purchase.fornecedor && typeof purchase.fornecedor === 'object') {
+            return purchase.fornecedor.nome || purchase.fornecedor.name || 'Fornecedor';
+        }
+        
+        // Se é uma string, usar diretamente
+        if (typeof purchase.supplier === 'string') {
+            return purchase.supplier;
+        }
+        
+        if (typeof purchase.fornecedor === 'string') {
+            return purchase.fornecedor;
+        }
+        
+        // Fallbacks
+        return purchase.nomeFornecedor || purchase.supplierName || 'Fornecedor';
+    }
+
+    /**
+     * Load dashboard data
+     */
+    async function loadDashboardData() {
+        try {
+            console.log('🎯 Carregando dados do dashboard...');
+            const response = await api.get('/dashboard/stats');
+            console.log('📊 Resposta da API dashboard:', response);
+            
+            // Verificar se a resposta tem dados válidos (com ou sem propriedade success/data)
+            if (response && (response.success || response.data || typeof response === 'object')) {
+                const data = response.data || response;
+                console.log('📈 Dados do dashboard:', data);
+                
+                // Se não há dados de vendas no dashboard, buscar separadamente
+                if (!data.sales && !data.vendas && !data.salesByMonth) {
+                    console.log('⚠️ Nenhum dado de vendas no dashboard, buscando separadamente...');
+                    try {
+                        const salesResponse = await api.get('/sales', { limit: 1000 });
+                        console.log('📈 Resposta da API vendas:', salesResponse);
+                        
+                        if (salesResponse && (salesResponse.sales || salesResponse.data || Array.isArray(salesResponse))) {
+                            const sales = salesResponse.sales || salesResponse.data || salesResponse;
+                            data.sales = sales;
+                            console.log(`✅ ${sales.length} vendas carregadas separadamente`);
+                        } else {
+                            console.log('⚠️ Nenhuma venda encontrada na API');
+                            data.sales = [];
+                        }
+                    } catch (salesError) {
+                        console.error('❌ Erro ao carregar vendas:', salesError);
+                        data.sales = [];
+                    }
+                }
+                
+                // Buscar dados específicos para os cards que estão faltando
+                await loadDashboardCardsData(data);
+                
+                renderDashboard(data);
+            } else {
+                console.log('❌ Resposta inválida do dashboard:', response);
+                // Tentar carregar apenas vendas
+                try {
+                    const salesResponse = await api.get('/sales', { limit: 1000 });
+                    const sales = salesResponse.sales || salesResponse.data || salesResponse || [];
+                    console.log(`✅ ${sales.length} vendas carregadas como fallback`);
+                    const data = { sales };
+                    await loadDashboardCardsData(data);
+                    renderDashboard(data);
+                } catch (error) {
+                    console.error('❌ Erro ao carregar vendas como fallback:', error);
+                    renderDashboard({});
+                }
+            }
+        } catch (error) {
+            console.error('❌ Erro ao carregar dashboard:', error);
+            // Tentar carregar apenas vendas como último recurso
+            try {
+                const salesResponse = await api.get('/sales', { limit: 1000 });
+                const sales = salesResponse.sales || salesResponse.data || salesResponse || [];
+                console.log(`✅ ${sales.length} vendas carregadas como último recurso`);
+                const data = { sales };
+                await loadDashboardCardsData(data);
+                renderDashboard(data);
+            } catch (salesError) {
+                console.error('❌ Erro ao carregar vendas como último recurso:', salesError);
+                renderDashboard({});
+            }
+        }
+
+        // Carregar notificações de estoque após o dashboard
+        if (window.stockNotificationManager) {
+            console.log('✅ Sistema de notificações encontrado no dashboard');
+            setTimeout(() => {
+                console.log('🔄 Forçando verificação de alertas...');
+                window.stockNotificationManager.forceCheck();
+            }, 1000);
+        } else {
+            console.error('❌ Sistema de notificações não encontrado no dashboard');
+        }
+    }
+
+    /**
+     * Helper function to show toast notifications
+     */
+    function showToast(message, type = 'info', duration = 5000) {
+        console.log('🔔 showToast chamado:', message, type);
+        
+        if (window.ui && window.ui.showToast) {
+            console.log('🔔 Usando ui.showToast');
+            window.ui.showToast(message, type, duration);
+        } else if (window.Utils && window.Utils.showToast) {
+            console.log('🔔 Usando Utils.showToast');
+            window.Utils.showToast(message, type, duration);
+        } else {
+            console.log('🔔 Usando alert como fallback');
+            alert(`${type.toUpperCase()}: ${message}`);
+        }
+    }
+
+    /**
+     * Helper function to get translated value
+     */
+    function getTranslatedValue(key, fallback) {
+        return window.i18n ? window.i18n.t(key) : fallback;
+    }
+
+    /**
+     * Helper function to get payment method translation
+     */
+    function getTranslatedPaymentMethod(method) {
+        if (!method) return getTranslatedValue('cash', 'Dinheiro');
+        
+        const methodMap = {
+            'Dinheiro': 'cash',
+            'Cartão de Crédito': 'creditCard',
+            'Cartão de Débito': 'debitCard',
+            'PIX': 'pix',
+            'Crediário': 'installment',
+            'Boleto': 'boleto',
+            'Transferência': 'transfer',
+            'Money': 'cash',
+            'Credit Card': 'creditCard',
+            'Debit Card': 'debitCard',
+            'Installment': 'installment',
+            'Bank Slip': 'boleto',
+            'Transfer': 'transfer',
+            'Efectivo': 'cash',
+            'Tarjeta de Crédito': 'creditCard',
+            'Tarjeta de Débito': 'debitCard',
+            'Cuotas': 'installment',
+            'Transferencia': 'transfer'
+        };
+        
+        const translationKey = methodMap[method] || 'cash';
+        return getTranslatedValue(translationKey, method);
+    }
+
+    /**
+     * Helper function to translate status
+     */
+    function getTranslatedStatus(status) {
+        if (!status) return getTranslatedValue('dash', '-');
+        
+        // Mapear status para chaves de tradução
+        const statusMap = {
+            'Pago': 'paid',
+            'Pendente': 'pending',
+            'Concluída': 'completed',
+            'Concluida': 'completed',
+            'Cancelada': 'cancelled',
+            'Cancelado': 'cancelled',
+            'vencido': 'overdue',
+            'Vencido': 'overdue',
+            'Vencida': 'overdue',
+            'Paid': 'paid',
+            'Pending': 'pending',
+            'Completed': 'completed',
+            'Cancelled': 'cancelled',
+            'Pagado': 'paid',
+            'Pendiente': 'pending',
+            'Completado': 'completed',
+            'Cancelado': 'cancelled'
+        };
+        
+        const translationKey = statusMap[status] || status.toLowerCase();
+        return getTranslatedValue(translationKey, status);
+    }
+
+    /**
+     * Update detail modals when language changes
+     */
+    function updateDetailModals() {
+        // Verificar se há algum modal de detalhes aberto
+        const detailModals = [
+            'clientDetailModal',
+            'saleDetailModal', 
+            'purchaseDetailModal',
+            'supplierDetailModal',
+            'userDetailModal'
+        ];
+
+        detailModals.forEach(modalId => {
+            const modal = document.getElementById(modalId);
+            if (modal && modal.classList.contains('show')) {
+                console.log(`🔄 Atualizando modal ${modalId}...`);
+                
+                // Atualizar todos os elementos com getTranslatedValue
+                const elements = modal.querySelectorAll('[id^="detail"]');
+                elements.forEach(element => {
+                    const currentText = element.textContent.trim();
+                    
+                    // Verificar se o elemento é um status (contém 'Status' no ID)
+                    if (element.id && element.id.includes('Status')) {
+                        const newText = getTranslatedStatus(currentText);
+                        if (newText !== currentText) {
+                            element.textContent = newText;
+                            console.log(`✅ Status traduzido: "${currentText}" → "${newText}"`);
+                        }
+                    }
+                    // Verificar se o texto atual é um valor traduzível
+                    else if (currentText === '-' || currentText === 'N/A' || currentText === 'Não informado' || 
+                        currentText === 'Not informed' || currentText === 'No informado') {
+                        
+                        // Determinar qual chave de tradução usar baseado no ID do elemento
+                        let translationKey = 'dash';
+                        if (currentText === 'N/A') {
+                            translationKey = 'notAvailable';
+                        } else if (currentText === 'Não informado' || currentText === 'Not informed' || currentText === 'No informado') {
+                            translationKey = 'notInformed';
+                        }
+                        
+                        const newText = getTranslatedValue(translationKey, currentText);
+                        if (newText !== currentText) {
+                            element.textContent = newText;
+                            console.log(`✅ Traduzido: "${currentText}" → "${newText}"`);
+                        }
+                    }
+                });
+                
+                // Atualizar mensagens de "Nenhum produto encontrado" e "Nenhum pagamento encontrado"
+                const noProductsRow = modal.querySelector('#detailSaleProductsList tr td[colspan="4"]');
+                if (noProductsRow && noProductsRow.textContent.includes('Nenhum produto encontrado')) {
+                    noProductsRow.textContent = getTranslatedValue('noProductsFound', 'Nenhum produto encontrado');
+                }
+                
+                const noPaymentsRow = modal.querySelector('#detailSalePaymentsList tr td[colspan="3"]');
+                if (noPaymentsRow && noPaymentsRow.textContent.includes('Nenhum pagamento encontrado')) {
+                    noPaymentsRow.textContent = getTranslatedValue('noPaymentsFound', 'Nenhum pagamento encontrado');
+                }
+            }
+        });
+    }
+
+    /**
+     * Handle edit from detail modal
+     */
+    async function handleEditFromDetail(type) {
+        console.log('🎯 handleEditFromDetail chamado para:', type);
+        
+        // Obter ID do modal de detalhes
+        let saleId = null;
+        
+        if (type === 'sale') {
+            // Primeiro, tentar buscar do elemento hidden
+            const saleIdElement = document.getElementById('detailSaleId');
+            console.log('🔍 Elemento detailSaleId encontrado:', saleIdElement);
+            
+            if (saleIdElement) {
+                saleId = saleIdElement.value?.trim();
+                console.log('🔍 Valor do elemento detailSaleId:', saleId);
+            }
+            
+            // Se o valor estiver vazio, tentar buscar do dataset do modal
+            if (!saleId) {
+                const modal = document.getElementById('saleDetailModal');
+                if (modal && modal.dataset.saleId) {
+                    saleId = modal.dataset.saleId;
+                    console.log('🔍 ID encontrado no dataset do modal:', saleId);
+                }
+            }
+            
+            // Se ainda não encontrou, tentar buscar de outras formas
+            if (!saleId) {
+                console.error('❌ Elemento detailSaleId não encontrado ou vazio');
+                console.log('🔍 Tentando buscar ID de outras formas...');
+                
+                // Tentar buscar do modal diretamente
+                const modal = document.getElementById('saleDetailModal');
+                if (modal) {
+                    console.log('🔍 Modal encontrado:', modal);
+                    console.log('🔍 Dataset do modal:', modal.dataset);
+                    
+                    // Tentar buscar do atributo data-sale-id
+                    if (modal.dataset.saleId) {
+                        saleId = modal.dataset.saleId;
+                        console.log('🔍 ID encontrado no data-sale-id:', saleId);
+                    }
+                }
+            }
+            
+            // Validar se temos o ID
+            if (!saleId) {
+                console.error('❌ ID da venda não encontrado no modal de detalhes');
+                showToast('Erro: ID da venda não encontrado', 'error');
+                return;
+            }
+            
+            console.log('📊 ID extraído do modal de detalhes:', saleId);
+        }
+        
+        // Fechar modal de detalhes
+        const detailModal = document.getElementById(`${type}DetailModal`);
+        if (detailModal && typeof bootstrap !== 'undefined') {
+            const bootstrapModal = bootstrap.Modal.getInstance(detailModal);
+            if (bootstrapModal) {
+                bootstrapModal.hide();
+            }
+        }
+        
+        // Aguardar e usar o fluxo padrão de edição
+        setTimeout(async () => {
+            console.log('🔄 Usando fluxo padrão de edição...');
+            try {
+                await handleEdit(type, saleId);
+                console.log('✅ Modal de edição aberto com dados da API');
+            } catch (error) {
+                console.error('❌ Erro ao abrir modal de edição:', error);
+                showToast('Erro ao carregar dados para edição', 'error');
+            }
+        }, 300);
+    }
+
+    /**
+     * Configure edit button for sale detail modal
+     */
+    function configureSaleEditButton(data) {
+        const editBtn = document.getElementById('editSaleFromDetailBtn');
+        if (editBtn) {
+            editBtn.onclick = () => {
+                console.log('Botão editar venda clicado');
+                handleEditFromDetail('sale');
+            };
+        }
+    }
+
+    /**
+     * Update all table statuses when language changes
+     */
+    function updateTableStatuses() {
+        console.log('🔄 Atualizando status das tabelas...');
+        
+        // Atualizar status na tabela de vendas
+        const salesTable = document.querySelector('#salesTable tbody');
+        if (salesTable) {
+            const statusBadges = salesTable.querySelectorAll('.badge');
+            statusBadges.forEach(badge => {
+                const currentText = badge.textContent.trim();
+                const newText = getTranslatedStatus(currentText);
+                if (newText !== currentText) {
+                    badge.textContent = newText;
+                    console.log(`✅ Status de venda traduzido: "${currentText}" → "${newText}"`);
+                }
+            });
+        }
+        
+        // Atualizar status na tabela de compras
+        const purchasesTable = document.querySelector('#purchasesTable tbody');
+        if (purchasesTable) {
+            const statusBadges = purchasesTable.querySelectorAll('.badge');
+            statusBadges.forEach(badge => {
+                const currentText = badge.textContent.trim();
+                const newText = getTranslatedStatus(currentText);
+                if (newText !== currentText) {
+                    badge.textContent = newText;
+                    console.log(`✅ Status de compra traduzido: "${currentText}" → "${newText}"`);
+                }
+            });
+        }
+        
+        // Atualizar status na tabela de clientes
+        const clientsTable = document.querySelector('#clientsTable tbody');
+        if (clientsTable) {
+            const statusBadges = clientsTable.querySelectorAll('.badge');
+            statusBadges.forEach(badge => {
+                const currentText = badge.textContent.trim();
+                const newText = getTranslatedStatus(currentText);
+                if (newText !== currentText) {
+                    badge.textContent = newText;
+                    console.log(`✅ Status de cliente traduzido: "${currentText}" → "${newText}"`);
+                }
+            });
+        }
+        
+        // Atualizar status na tabela de usuários
+        const usersTable = document.querySelector('#usersTable tbody');
+        if (usersTable) {
+            const statusBadges = usersTable.querySelectorAll('.badge');
+            statusBadges.forEach(badge => {
+                const currentText = badge.textContent.trim();
+                const newText = getTranslatedStatus(currentText);
+                if (newText !== currentText) {
+                    badge.textContent = newText;
+                    console.log(`✅ Status de usuário traduzido: "${currentText}" → "${newText}"`);
+                }
+            });
+        }
+        
+        // Atualizar status na tabela de produtos (se houver badges de status)
+        const productsTable = document.querySelector('#productsTable tbody');
+        if (productsTable) {
+            const statusBadges = productsTable.querySelectorAll('.badge');
+            statusBadges.forEach(badge => {
+                const currentText = badge.textContent.trim();
+                const newText = getTranslatedStatus(currentText);
+                if (newText !== currentText) {
+                    badge.textContent = newText;
+                    console.log(`✅ Status de produto traduzido: "${currentText}" → "${newText}"`);
+                }
+            });
+        }
+        
+        console.log('✅ Atualização de status das tabelas concluída');
+    }
+
+    /**
+     * Clear detail modal data when modal is closed
+     */
+    function clearDetailModalData() {
+        state.detailModalData = null;
+    }
+
+    /**
+     * Initialize application
+     */
+    function initialize() {
+        console.log('🚀 Inicializando aplicação...');
+        
+        // Verificar autenticação primeiro
+        if (!checkAuthentication()) {
+            console.log('❌ Usuário não autenticado, redirecionando para login...');
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        console.log('✅ Usuário autenticado, continuando inicialização...');
+        
+        // Setup UI
+        setupUI();
+        
+        // Setup event listeners
+        setupEventListeners();
+        
+        // Load initial data
+        loadInitialData();
+        
+        // Configurar atualização automática dos cards financeiros
+        configurarAtualizacaoAutomatica();
+        
+        console.log('✅ Aplicação inicializada com sucesso');
+    }
+
+    /**
+     * Verificar se o usuário está autenticado
+     */
+    function checkAuthentication() {
+        const token = localStorage.getItem('authToken');
+        const user = localStorage.getItem('user');
+        
+        console.log('🔍 Verificando autenticação...');
+        console.log('Token:', token ? 'Presente' : 'Ausente');
+        console.log('User:', user ? 'Presente' : 'Ausente');
+        
+        if (!token || !user) {
+            console.log('❌ Dados de autenticação ausentes');
+            return false;
+        }
+        
+        try {
+            const userData = JSON.parse(user);
+            console.log('✅ Usuário autenticado:', userData.username);
+            return true;
+        } catch (error) {
+            console.error('❌ Erro ao parsear dados do usuário:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Setup UI components
+     */
+    function setupUI() {
+        // Update user info
+        auth.updateUI();
+        
+        // Show dashboard by default
+        ui.showSection('dashboardSection');
+        
+        // Setup table responsiveness
+        ui.setupTableResponsiveness();
+    }
+
+    /**
+     * Load initial data
+     */
+    async function loadInitialData() {
+        try {
+            const loadingSpinner = ui.showLoadingOverlay('Carregando dados iniciais...');
+            
+            // Load dashboard data
+            await loadDashboardData();
+            
+            ui.hideLoadingOverlay();
+        } catch (error) {
+            console.error('Erro ao carregar dados iniciais:', error);
+            showToast('Erro ao carregar dados iniciais', 'error');
+        }
+    }
+
+    /**
+     * Setup event listeners
+     */
+    function setupEventListeners() {
+        console.log('🔧 setupEventListeners chamado');
+        
+        // Section load events
+        document.addEventListener('sectionLoad', handleSectionLoad);
+        
+        // Modal close events for detail modals
+        const detailModals = [
+            'clientDetailModal',
+            'saleDetailModal', 
+            'purchaseDetailModal',
+            'supplierDetailModal',
+            'userDetailModal'
+        ];
+
+        detailModals.forEach(modalId => {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.addEventListener('hidden.bs.modal', clearDetailModalData);
+            }
+        });
+        
+        // Form submissions
+        document.addEventListener('submit', handleFormSubmit);
+        
+        // Button clicks
+        document.addEventListener('click', handleButtonClick);
+        console.log('🔧 Event listener de clique configurado');
+        
+        // Search inputs
+        if (typeof Utils !== 'undefined' && Utils.debounce) {
+            document.addEventListener('input', Utils.debounce(handleSearch, 300));
+        } else {
+            document.addEventListener('input', handleSearch);
+        }
+        
+        // Pagination
+        document.addEventListener('click', handlePagination);
+        
+        // Language change events
+        document.addEventListener('languageChanged', handleLanguageChange);
+        
+        console.log('🔧 Todos os event listeners configurados');
+    }
+
+    /**
+     * Handle section load
+     */
+    function handleSectionLoad(event) {
+        const section = event.detail.section;
+        
+        switch (section) {
+            case 'dashboardSection':
+                loadDashboardData();
+                break;
+            case 'clientsSection':
+                loadClients();
+                break;
+            case 'salesSection':
+                loadSales();
+                // Configurar eventos do formulário de venda quando a seção for carregada
+                console.log('🔧 Configurando eventos do formulário de venda na seção...');
+                setupSaleFormEvents();
+                break;
+            case 'productsSection':
+                loadProducts();
+                break;
+            case 'purchasesSection':
+                loadPurchases();
+                break;
+            case 'suppliersSection':
+                loadSuppliers();
+                break;
+            case 'usersSection':
+                loadUsers();
+                break;
+        }
+    }
+
+    /**
+/**
+ * Main Application Module
+ * Gestor PRO - Sistema de Gestão Empresarial
+ * Version: 2.0.0
+ */
+
+(() => {
+    'use strict';
+
+    // Application state
+    const state = {
+        currentSection: null,
+        modals: new Map(),
+        charts: new Map(),
+        detailModalData: null, // Armazenar dados do modal de detalhes ativo
+        data: {
+            clients: { page: 1, data: [], total: 0, loaded: false },
+            sales: { page: 1, data: [], total: 0, loaded: false },
+            products: { page: 1, data: [], total: 0, loaded: false },
+            purchases: { page: 1, data: [], total: 0, loaded: false },
+            suppliers: { page: 1, data: [], total: 0, loaded: false },
+            users: { page: 1, data: [], total: 0, loaded: false }
+        }
+    };
+
+    // Expor estado globalmente para i18n.js
+    window.state = state;
+
+    /**
+     * Helper function to show toast notifications
+     */
+    function showToast(message, type = 'info', duration = 5000) {
+        console.log('🔔 showToast chamado:', message, type);
+        
+        if (window.ui && window.ui.showToast) {
+            console.log('🔔 Usando ui.showToast');
+            window.ui.showToast(message, type, duration);
+        } else if (window.Utils && window.Utils.showToast) {
+            console.log('🔔 Usando Utils.showToast');
+            window.Utils.showToast(message, type, duration);
+        } else {
+            console.log('🔔 Usando alert como fallback');
+            alert(`${type.toUpperCase()}: ${message}`);
+        }
+    }
+
+    /**
+     * Helper function to get translated value
+     */
+    function getTranslatedValue(key, fallback) {
+        return window.i18n ? window.i18n.t(key) : fallback;
+    }
+
+    /**
+     * Helper function to get payment method translation
+     */
+    function getTranslatedPaymentMethod(method) {
+        if (!method) return getTranslatedValue('cash', 'Dinheiro');
+        
+        const methodMap = {
+            'Dinheiro': 'cash',
+            'Cartão de Crédito': 'creditCard',
+            'Cartão de Débito': 'debitCard',
+            'PIX': 'pix',
+            'Crediário': 'installment',
+            'Boleto': 'boleto',
+            'Transferência': 'transfer',
+            'Money': 'cash',
+            'Credit Card': 'creditCard',
+            'Debit Card': 'debitCard',
+            'Installment': 'installment',
+            'Bank Slip': 'boleto',
+            'Transfer': 'transfer',
+            'Efectivo': 'cash',
+            'Tarjeta de Crédito': 'creditCard',
+            'Tarjeta de Débito': 'debitCard',
+            'Cuotas': 'installment',
+            'Transferencia': 'transfer'
+        };
+        
+        const translationKey = methodMap[method] || 'cash';
+        return getTranslatedValue(translationKey, method);
+    }
+
+    /**
+     * Helper function to translate status
+     */
+    function getTranslatedStatus(status) {
+        if (!status) return getTranslatedValue('dash', '-');
+        
+        // Mapear status para chaves de tradução
+        const statusMap = {
+            'Pago': 'paid',
+            'Pendente': 'pending',
+            'Concluída': 'completed',
+            'Concluida': 'completed',
+            'Cancelada': 'cancelled',
+            'Cancelado': 'cancelled',
+            'vencido': 'overdue',
+            'Vencido': 'overdue',
+            'Vencida': 'overdue',
+            'Paid': 'paid',
+            'Pending': 'pending',
+            'Completed': 'completed',
+            'Cancelled': 'cancelled',
+            'Pagado': 'paid',
+            'Pendiente': 'pending',
+            'Completado': 'completed',
+            'Cancelado': 'cancelled'
+        };
+        
+        const translationKey = statusMap[status] || status.toLowerCase();
+        return getTranslatedValue(translationKey, status);
+    }
+
+    /**
+     * Update detail modals when language changes
+     */
+    function updateDetailModals() {
+        // Verificar se há algum modal de detalhes aberto
+        const detailModals = [
+            'clientDetailModal',
+            'saleDetailModal', 
+            'purchaseDetailModal',
+            'supplierDetailModal',
+            'userDetailModal'
+        ];
+
+        detailModals.forEach(modalId => {
+            const modal = document.getElementById(modalId);
+            if (modal && modal.classList.contains('show')) {
+                console.log(`🔄 Atualizando modal ${modalId}...`);
+                
+                // Atualizar todos os elementos com getTranslatedValue
+                const elements = modal.querySelectorAll('[id^="detail"]');
+                elements.forEach(element => {
+                    const currentText = element.textContent.trim();
+                    
+                    // Verificar se o elemento é um status (contém 'Status' no ID)
+                    if (element.id && element.id.includes('Status')) {
+                        const newText = getTranslatedStatus(currentText);
+                        if (newText !== currentText) {
+                            element.textContent = newText;
+                            console.log(`✅ Status traduzido: "${currentText}" → "${newText}"`);
+                        }
+                    }
+                    // Verificar se o texto atual é um valor traduzível
+                    else if (currentText === '-' || currentText === 'N/A' || currentText === 'Não informado' || 
+                        currentText === 'Not informed' || currentText === 'No informado') {
+                        
+                        // Determinar qual chave de tradução usar baseado no ID do elemento
+                        let translationKey = 'dash';
+                        if (currentText === 'N/A') {
+                            translationKey = 'notAvailable';
+                        } else if (currentText === 'Não informado' || currentText === 'Not informed' || currentText === 'No informado') {
+                            translationKey = 'notInformed';
+                        }
+                        
+                        const newText = getTranslatedValue(translationKey, currentText);
+                        if (newText !== currentText) {
+                            element.textContent = newText;
+                            console.log(`✅ Traduzido: "${currentText}" → "${newText}"`);
+                        }
+                    }
+                });
+                
+                // Atualizar mensagens de "Nenhum produto encontrado" e "Nenhum pagamento encontrado"
+                const noProductsRow = modal.querySelector('#detailSaleProductsList tr td[colspan="4"]');
+                if (noProductsRow && noProductsRow.textContent.includes('Nenhum produto encontrado')) {
+                    noProductsRow.textContent = getTranslatedValue('noProductsFound', 'Nenhum produto encontrado');
+                }
+                
+                const noPaymentsRow = modal.querySelector('#detailSalePaymentsList tr td[colspan="3"]');
+                if (noPaymentsRow && noPaymentsRow.textContent.includes('Nenhum pagamento encontrado')) {
+                    noPaymentsRow.textContent = getTranslatedValue('noPaymentsFound', 'Nenhum pagamento encontrado');
+                }
+            }
+        });
+    }
+
+    /**
+     * Handle edit from detail modal
+     */
+    async function handleEditFromDetail(type) {
+        console.log('🎯 handleEditFromDetail chamado para:', type);
+        
+        // Obter ID do modal de detalhes
+        let saleId = null;
+        
+        if (type === 'sale') {
+            // Primeiro, tentar buscar do elemento hidden
+            const saleIdElement = document.getElementById('detailSaleId');
+            console.log('🔍 Elemento detailSaleId encontrado:', saleIdElement);
+            
+            if (saleIdElement) {
+                saleId = saleIdElement.value?.trim();
+                console.log('🔍 Valor do elemento detailSaleId:', saleId);
+            }
+            
+            // Se o valor estiver vazio, tentar buscar do dataset do modal
+            if (!saleId) {
+                const modal = document.getElementById('saleDetailModal');
+                if (modal && modal.dataset.saleId) {
+                    saleId = modal.dataset.saleId;
+                    console.log('🔍 ID encontrado no dataset do modal:', saleId);
+                }
+            }
+            
+            // Se ainda não encontrou, tentar buscar de outras formas
+            if (!saleId) {
+                console.error('❌ Elemento detailSaleId não encontrado ou vazio');
+                console.log('🔍 Tentando buscar ID de outras formas...');
+                
+                // Tentar buscar do modal diretamente
+                const modal = document.getElementById('saleDetailModal');
+                if (modal) {
+                    console.log('🔍 Modal encontrado:', modal);
+                    console.log('🔍 Dataset do modal:', modal.dataset);
+                    
+                    // Tentar buscar do atributo data-sale-id
+                    if (modal.dataset.saleId) {
+                        saleId = modal.dataset.saleId;
+                        console.log('🔍 ID encontrado no data-sale-id:', saleId);
+                    }
+                }
+            }
+            
+            // Validar se temos o ID
+            if (!saleId) {
+                console.error('❌ ID da venda não encontrado no modal de detalhes');
+                showToast('Erro: ID da venda não encontrado', 'error');
+                return;
+            }
+            
+            console.log('📊 ID extraído do modal de detalhes:', saleId);
+        }
+        
+        // Fechar modal de detalhes
+        const detailModal = document.getElementById(`${type}DetailModal`);
+        if (detailModal && typeof bootstrap !== 'undefined') {
+            const bootstrapModal = bootstrap.Modal.getInstance(detailModal);
+            if (bootstrapModal) {
+                bootstrapModal.hide();
+            }
+        }
+        
+        // Aguardar e usar o fluxo padrão de edição
+        setTimeout(async () => {
+            console.log('🔄 Usando fluxo padrão de edição...');
+            try {
+                await handleEdit(type, saleId);
+                console.log('✅ Modal de edição aberto com dados da API');
+            } catch (error) {
+                console.error('❌ Erro ao abrir modal de edição:', error);
+                showToast('Erro ao carregar dados para edição', 'error');
+            }
+        }, 300);
+    }
+
+    /**
+     * Configure edit button for sale detail modal
+     */
+    function configureSaleEditButton(data) {
+        const editBtn = document.getElementById('editSaleFromDetailBtn');
+        if (editBtn) {
+            editBtn.onclick = () => {
+                console.log('Botão editar venda clicado');
+                handleEditFromDetail('sale');
+            };
+        }
+    }
+
+    /**
+     * Update all table statuses when language changes
+     */
+    function updateTableStatuses() {
+        console.log('🔄 Atualizando status das tabelas...');
+        
+        // Atualizar status na tabela de vendas
+        const salesTable = document.querySelector('#salesTable tbody');
+        if (salesTable) {
+            const statusBadges = salesTable.querySelectorAll('.badge');
+            statusBadges.forEach(badge => {
+                const currentText = badge.textContent.trim();
+                const newText = getTranslatedStatus(currentText);
+                if (newText !== currentText) {
+                    badge.textContent = newText;
+                    console.log(`✅ Status de venda traduzido: "${currentText}" → "${newText}"`);
+                }
+            });
+        }
+        
+        // Atualizar status na tabela de compras
+        const purchasesTable = document.querySelector('#purchasesTable tbody');
+        if (purchasesTable) {
+            const statusBadges = purchasesTable.querySelectorAll('.badge');
+            statusBadges.forEach(badge => {
+                const currentText = badge.textContent.trim();
+                const newText = getTranslatedStatus(currentText);
+                if (newText !== currentText) {
+                    badge.textContent = newText;
+                    console.log(`✅ Status de compra traduzido: "${currentText}" → "${newText}"`);
+                }
+            });
+        }
+        
+        // Atualizar status na tabela de clientes
+        const clientsTable = document.querySelector('#clientsTable tbody');
+        if (clientsTable) {
+            const statusBadges = clientsTable.querySelectorAll('.badge');
+            statusBadges.forEach(badge => {
+                const currentText = badge.textContent.trim();
+                const newText = getTranslatedStatus(currentText);
+                if (newText !== currentText) {
+                    badge.textContent = newText;
+                    console.log(`✅ Status de cliente traduzido: "${currentText}" → "${newText}"`);
+                }
+            });
+        }
+        
+        // Atualizar status na tabela de usuários
+        const usersTable = document.querySelector('#usersTable tbody');
+        if (usersTable) {
+            const statusBadges = usersTable.querySelectorAll('.badge');
+            statusBadges.forEach(badge => {
+                const currentText = badge.textContent.trim();
+                const newText = getTranslatedStatus(currentText);
+                if (newText !== currentText) {
+                    badge.textContent = newText;
+                    console.log(`✅ Status de usuário traduzido: "${currentText}" → "${newText}"`);
+                }
+            });
+        }
+        
+        // Atualizar status na tabela de produtos (se houver badges de status)
+        const productsTable = document.querySelector('#productsTable tbody');
+        if (productsTable) {
+            const statusBadges = productsTable.querySelectorAll('.badge');
+            statusBadges.forEach(badge => {
+                const currentText = badge.textContent.trim();
+                const newText = getTranslatedStatus(currentText);
+                if (newText !== currentText) {
+                    badge.textContent = newText;
+                    console.log(`✅ Status de produto traduzido: "${currentText}" → "${newText}"`);
+                }
+            });
+        }
+        
+        console.log('✅ Atualização de status das tabelas concluída');
+    }
+
+    /**
+     * Clear detail modal data when modal is closed
+     */
+    function clearDetailModalData() {
+        state.detailModalData = null;
+    }
+
+    /**
+     * Initialize application
+     */
+    function initialize() {
+        console.log('🚀 Inicializando aplicação...');
+        
+        // Verificar autenticação primeiro
+        if (!checkAuthentication()) {
+            console.log('❌ Usuário não autenticado, redirecionando para login...');
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        console.log('✅ Usuário autenticado, continuando inicialização...');
+        
+        // Setup UI
+        setupUI();
+        
+        // Setup event listeners
+        setupEventListeners();
+        
+        // Load initial data
+        loadInitialData();
+        
+        // Configurar atualização automática dos cards financeiros
+        configurarAtualizacaoAutomatica();
+        
+        console.log('✅ Aplicação inicializada com sucesso');
+    }
+
+    /**
+     * Verificar se o usuário está autenticado
+     */
+    function checkAuthentication() {
+        const token = localStorage.getItem('authToken');
+        const user = localStorage.getItem('user');
+        
+        console.log('🔍 Verificando autenticação...');
+        console.log('Token:', token ? 'Presente' : 'Ausente');
+        console.log('User:', user ? 'Presente' : 'Ausente');
+        
+        if (!token || !user) {
+            console.log('❌ Dados de autenticação ausentes');
+            return false;
+        }
+        
+        try {
+            const userData = JSON.parse(user);
+            console.log('✅ Usuário autenticado:', userData.username);
+            return true;
+        } catch (error) {
+            console.error('❌ Erro ao parsear dados do usuário:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Setup UI components
+     */
+    function setupUI() {
+        // Update user info
+        auth.updateUI();
+        
+        // Show dashboard by default
+        ui.showSection('dashboardSection');
+        
+        // Setup table responsiveness
+        ui.setupTableResponsiveness();
+    }
+
+    /**
+     * Load initial data
+     */
+    async function loadInitialData() {
+        try {
+            const loadingSpinner = ui.showLoadingOverlay('Carregando dados iniciais...');
+            
+            // Load dashboard data
+            await loadDashboardData();
+            
+            ui.hideLoadingOverlay();
+        } catch (error) {
+            console.error('Erro ao carregar dados iniciais:', error);
+            showToast('Erro ao carregar dados iniciais', 'error');
+        }
+    }
+
+    /**
+     * Setup event listeners
+     */
+    function setupEventListeners() {
+        console.log('🔧 setupEventListeners chamado');
+        
+        // Section load events
+        document.addEventListener('sectionLoad', handleSectionLoad);
+        
+        // Modal close events for detail modals
+        const detailModals = [
+            'clientDetailModal',
+            'saleDetailModal', 
+            'purchaseDetailModal',
+            'supplierDetailModal',
+            'userDetailModal'
+        ];
+
+        detailModals.forEach(modalId => {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.addEventListener('hidden.bs.modal', clearDetailModalData);
+            }
+        });
+        
+        // Form submissions
+        document.addEventListener('submit', handleFormSubmit);
+        
+        // Button clicks
+        document.addEventListener('click', handleButtonClick);
+        console.log('🔧 Event listener de clique configurado');
+        
+        // Search inputs
+        if (typeof Utils !== 'undefined' && Utils.debounce) {
+            document.addEventListener('input', Utils.debounce(handleSearch, 300));
+        } else {
+            document.addEventListener('input', handleSearch);
+        }
+        
+        // Pagination
+        document.addEventListener('click', handlePagination);
+        
+        // Language change events
+        document.addEventListener('languageChanged', handleLanguageChange);
+        
+        console.log('🔧 Todos os event listeners configurados');
+    }
+
+    /**
+     * Handle section load
+     */
+    function handleSectionLoad(event) {
+        const section = event.detail.section;
+        
+        switch (section) {
+            case 'dashboardSection':
+                loadDashboardData();
+                break;
+            case 'clientsSection':
+                loadClients();
+                break;
+            case 'salesSection':
+                loadSales();
+                // Configurar eventos do formulário de venda quando a seção for carregada
+                console.log('🔧 Configurando eventos do formulário de venda na seção...');
+                setupSaleFormEvents();
+                break;
+            case 'productsSection':
+                loadProducts();
+                break;
+            case 'purchasesSection':
+                loadPurchases();
+                break;
+            case 'suppliersSection':
+                loadSuppliers();
+                break;
+            case 'usersSection':
+                loadUsers();
+                break;
+        }
+    }
+
+    /**
+     * Handle form submissions
+     */
+    async function handleFormSubmit(event) {
+        console.log('🎯 handleFormSubmit chamado!');
+        console.log('📋 Event:', event);
+        console.log('📋 Target:', event.target);
+        
+        const form = event.target;
+        const action = form.dataset.action;
+        
+        console.log('📋 Action:', action);
+        
+        if (!action) {
+            console.log('❌ Nenhuma ação definida no formulário');
+            return;
+        }
+        
+        event.preventDefault();
+        
+        try {
+            console.log('📋 Iniciando coleta de dados...');
+            
+            // Coletar dados do formulário
+            const formData = new FormData(form);
+            const data = {};
+            
+            // Converter FormData para objeto
+            for (const [key, value] of formData.entries()) {
+                if (value !== '') {
+                    data[key] = value;
+                }
+            }
+
+            console.log('📊 Dados coletados:', data);
+
+            // Processamento especial para vendas
+            if (action === 'createSale' || action === 'updateSale') {
+                // Coletar produtos da venda
+                const productsList = document.getElementById('saleProductsList');
+                const productElements = productsList.querySelectorAll('[data-product-id]');
+                
+                if (productElements.length === 0) {
+                    showToast('Adicione pelo menos um produto à venda', 'warning');
+                    return;
+                }
+
+                const products = [];
+                productElements.forEach(element => {
+                    const productId = element.dataset.productId;
+                    const text = element.querySelector('small').textContent;
+                    
+                    console.log('🔍 Processando produto:', { productId, text });
+                    
+                    // Extrair quantidade e preço do texto
+                    // Formato esperado: "Qtd: 2 x R$ 50,00"
+                    const quantityMatch = text.match(/Qtd: (\d+)/);
+                    const priceMatch = text.match(/x R\$ ([\d,]+\.?\d*)/);
+                    
+                    console.log('🔍 Matches:', { quantityMatch, priceMatch });
+                    
+                    if (quantityMatch && priceMatch) {
+                        const quantity = parseInt(quantityMatch[1]);
+                        const price = parseFloat(priceMatch[1].replace(',', '.'));
+                        
+                        console.log('✅ Dados extraídos:', { quantity, price });
+                        
+                        products.push({
+                            productId: parseInt(productId),
+                            quantidade: quantity,
+                            precoUnitario: price
+                        });
+                    } else {
+                        console.error('❌ Erro ao extrair dados do produto:', text);
+                        console.log('   Quantity match:', quantityMatch);
+                        console.log('   Price match:', priceMatch);
+                    }
+                });
+
+                console.log('Produtos coletados:', products);
+                data.products = products;
+
+                // Definir data de venda usando função robusta
+                data.dataVenda = Utils.getCurrentDate();
+
+                // Determinar status da venda de forma robusta
+                const paidValue = parseFloat(document.getElementById('salePaidValueInitial').value) || 0;
+                const totalValue = parseFloat(document.getElementById('saleTotalValue').value) || 0;
+                const paymentForm = document.getElementById('paymentForma').value;
+                const statusSelectElement = document.getElementById('saleStatus');
+                
+                // Determinar status
+                let saleStatus = 'Pendente';
+                
+                // 1. Verificar se há um status selecionado no campo
+                if (statusSelectElement && statusSelectElement.value && statusSelectElement.value !== 'Pendente') {
+                    saleStatus = statusSelectElement.value;
+                    console.log('📊 Status selecionado manualmente:', saleStatus);
+                }
+                // 2. Se não há status manual, determinar automaticamente
+                else if (paidValue >= totalValue && totalValue > 0) {
+                    saleStatus = 'Pago';
+                    console.log('📊 Status determinado automaticamente como Pago (pagamento completo)');
+                } else if (paidValue > 0) {
+                    saleStatus = 'Pendente';
+                    console.log('📊 Status determinado automaticamente como Pendente (pagamento parcial)');
+                } else {
+                    saleStatus = 'Pendente';
+                    console.log('📊 Status definido como padrão: Pendente');
+                }
+                
+                // Definir o status no objeto de dados
+                data.status = saleStatus;
+                console.log('📊 Status final da venda:', data.status);
+
+                // Coletar dados do pagamento inicial
+                if (paidValue > 0) {
+                    data.initialPayment = {
+                        valor: paidValue,
+                        formaPagamento: paymentForm,
+                        parcelas: parseInt(document.getElementById('paymentParcelas').value) || 1,
+                        bandeiraCartao: document.getElementById('paymentBandeiraCartao').value || null,
+                        bancoCrediario: document.getElementById('paymentBancoCrediario').value || null
+                    };
+                    console.log('💳 Dados do pagamento inicial:', data.initialPayment);
+                }
+
+                // Adicionar dados do cliente
+                const clientSelect = document.getElementById('saleClient');
+                if (clientSelect && clientSelect.value) {
+                    data.clientId = parseInt(clientSelect.value);
+                    
+                    // Adicionar nome do cliente se disponível
+                    const selectedOption = clientSelect.options[clientSelect.selectedIndex];
+                    if (selectedOption) {
+                        data.clientName = selectedOption.textContent.trim();
+                        console.log('👤 Cliente selecionado:', data.clientId, 'Nome:', data.clientName);
+                    } else {
+                        console.log('👤 Cliente selecionado:', data.clientId);
+                    }
+                }
+
+                // Adicionar valor total da venda
+                if (totalValue > 0) {
+                    data.valorTotal = totalValue;
+                    console.log('💰 Valor total da venda:', data.valorTotal);
+                }
+                
+                // Log final de debug
+                console.log('📊 Dados finais para envio:', JSON.stringify(data, null, 2));
+                console.log('🔍 DEBUG FINAL:');
+                console.log('  - Status final:', data.status);
+                console.log('  - Data da venda:', data.dataVenda);
+                console.log('  - Valor pago:', paidValue);
+                console.log('  - Valor total:', totalValue);
+                console.log('  - Cliente ID:', data.clientId);
+                console.log('  - Produtos:', data.products ? data.products.length : 0);
+            }
+
+            // Processamento especial para compras
+            if (action === 'createPurchase' || action === 'updatePurchase') {
+                // Coletar produtos da compra
+                const productsList = document.getElementById('purchaseProductsList');
+                const productElements = productsList.querySelectorAll('[data-product-id]');
+                
+                if (productElements.length === 0) {
+                    showToast('Adicione pelo menos um produto à compra', 'warning');
+                    return;
+                }
+
+                const products = [];
+                productElements.forEach(element => {
+                    const productId = element.dataset.productId;
+                    const text = element.querySelector('small').textContent;
+                    
+                    // Extrair quantidade e custo do texto
+                    // Formato esperado: "Qtd: 2 x R$ 50,00 = R$ 100,00"
+                    const quantityMatch = text.match(/Qtd: (\d+)/);
+                    const costMatch = text.match(/x R\$ ([\d,]+\.?\d*)/);
+                    
+                    if (quantityMatch && costMatch) {
+                        const quantity = parseInt(quantityMatch[1]);
+                        const cost = parseFloat(costMatch[1].replace(',', '.'));
+                        
+                        products.push({
+                            productId: parseInt(productId),
+                            quantidade: quantity,
+                            precoCustoUnitario: cost
+                        });
+                    } else {
+                        console.error('Erro ao extrair dados do produto da compra:', text);
+                        console.log('   Quantity match:', quantityMatch);
+                        console.log('   Cost match:', costMatch);
+                    }
+                });
+
+                console.log('Produtos da compra coletados:', products);
+                data.products = products;
+
+                // Adicionar data de compra se não fornecida
+                if (!data.dataCompra) {
+                    data.dataCompra = new Date().toISOString().split('T')[0];
+                }
+
+                // Adicionar supplierId se não estiver presente
+                const supplierSelect = document.getElementById('purchaseSupplier');
+                if (supplierSelect && supplierSelect.value) {
+                    data.supplierId = parseInt(supplierSelect.value);
+                }
+            }
+
+            // Limpar campos vazios
+            Object.keys(data).forEach(key => {
+                if (data[key] === '' || data[key] === null || data[key] === undefined) {
+                    delete data[key];
+                }
+            });
+
+            // Remover ID se estiver vazio (para criação)
+            if (data.id === '') {
+                delete data.id;
+            }
+
+            console.log('Dados do formulário:', data);
+
+            // Chamar função apropriada
+            console.log('🔍 Procurando função:', action);
+            
+            let result;
+            switch (action) {
+                case 'createClient':
+                    result = await createClient(data);
+                    break;
+                case 'updateClient':
+                    result = await updateClient(data);
+                    break;
+                case 'createSale':
+                    result = await createSale(data);
+                    break;
+                case 'updateSale':
+                    result = await updateSale(data);
+                    break;
+                case 'createProduct':
+                    result = await createProduct(data);
+                    break;
+                case 'updateProduct':
+                    result = await updateProduct(data);
+                    break;
+                case 'createPurchase':
+                    result = await createPurchase(data);
+                    break;
+                case 'updatePurchase':
+                    result = await updatePurchase(data);
+                    break;
+                case 'createSupplier':
+                    result = await createSupplier(data);
+                    break;
+                case 'updateSupplier':
+                    result = await updateSupplier(data);
+                    break;
+                case 'createUser':
+                    result = await createUser(data);
+                    break;
+                case 'updateUser':
+                    result = await updateUser(data);
+                    break;
+                case 'generateSalesReport':
+                    result = await handleSalesReport();
+                    break;
+                case 'generateCashFlowReport':
+                    result = await handleCashFlowReport();
+                    break;
+                case 'exportAccountingReport':
+                    result = await handleAccountingReport();
+                    break;
+                case 'generateSalesPrediction':
+                    result = await handleSalesPrediction();
+                    break;
+                default:
+                    console.error('❌ Ação não reconhecida:', action);
+                    showToast('Ação não reconhecida: ' + action, 'error');
+                    return;
+            }
+            
+            console.log('✅ Função', action, 'executada com sucesso');
+
+        } catch (error) {
+            console.error('Erro no formulário:', error);
+            if (ui && ui.showToast) {
+                ui.showToast('Erro ao processar formulário', 'error');
+            } else if (Utils && Utils.showToast) {
+                Utils.showToast('Erro ao processar formulário', 'error');
+            } else {
+                alert('Erro ao processar formulário');
+            }
+        }
+    }
+
+    /**
+     * Handle button clicks
+     */
+    async function handleButtonClick(event) {
+        console.log('🎯 handleButtonClick chamado:', event);
+        console.log('🎯 Target:', event.target);
+        console.log('🎯 Current target:', event.currentTarget);
+        
+        const button = event.target.closest('[data-action]');
+        console.log('🎯 Botão encontrado:', button);
+        
+        if (!button) {
+            console.log('❌ Nenhum botão com data-action encontrado');
+            return;
+        }
+        
+        const action = button.dataset.action;
+        const type = button.dataset.type;
+        const id = button.dataset.id;
+        
+        console.log('🎯 Ação:', action);
+        console.log('🎯 Tipo:', type);
+        console.log('🎯 ID:', id);
+        
+        try {
+            switch (action) {
+                case 'edit':
+                    console.log('🎯 Executando ação EDIT para:', button.dataset.type, id);
+                    await handleEdit(button.dataset.type, id);
+                    break;
+                case 'delete':
+                    await handleDelete(button.dataset.type, id);
+                    break;
+                case 'view':
+                    console.log('🎯 Executando ação VIEW para:', button.dataset.type, id);
+                    await handleView(button.dataset.type, id);
+                    break;
+                case 'export':
+                    await handleExport(button.dataset.type);
+                    break;
+                case 'print':
+                    handlePrint(button.dataset.type);
+                    break;
+            }
+        } catch (error) {
+            console.error('Erro na ação:', error);
+            ui.showToast('Erro ao executar ação', 'error');
+        }
+    }
+
+    /**
+     * Handle search
+     */
+    async function handleSearch(event) {
+        const input = event.target;
+        const searchType = input.dataset.search;
+        const query = input.value.trim();
+        
+        if (!searchType) return;
+        
+        try {
+            switch (searchType) {
+                case 'clients':
+                    await searchClients(query);
+                    break;
+                case 'sales':
+                    await searchSales(query);
+                    break;
+                case 'products':
+                    await searchProducts(query);
+                    break;
+                case 'purchases':
+                    await searchPurchases(query);
+                    break;
+                case 'suppliers':
+                    await searchSuppliers(query);
+                    break;
+                case 'users':
+                    await searchUsers(query);
+                    break;
+            }
+        } catch (error) {
+            console.error('Erro na busca:', error);
+        }
+    }
+
+    /**
+     * Handle pagination
+     */
+    async function handlePagination(event) {
+        const link = event.target.closest('[data-page]');
+        if (!link) return;
+        
+        const page = parseInt(link.dataset.page);
+        const type = link.dataset.type;
+        
+        if (!type || isNaN(page)) return;
+        
+        try {
+            switch (type) {
+                case 'clients':
+                    await loadClients(page);
+                    break;
+                case 'sales':
+                    await loadSales(page);
+                    break;
+                case 'products':
+                    await loadProducts(page);
+                    break;
+                case 'purchases':
+                    await loadPurchases(page);
+                    break;
+                case 'suppliers':
+                    await loadSuppliers(page);
+                    break;
+                case 'users':
+                    await loadUsers(page);
+                    break;
+            }
+        } catch (error) {
+            console.error('Erro na paginação:', error);
+        }
+    }
+
+    /**
+     * Handle language change
+     */
+    function handleLanguageChange(event) {
+        console.log('🌍 Idioma alterado:', event.detail.language);
+        
+        // Atualizar status das tabelas
+        updateTableStatuses();
+        
+        // Atualizar modais de detalhes abertos
+        updateDetailModals();
+        
+        // Atualizar elementos dinâmicos
+        if (window.i18n) {
+            window.i18n.updateAllElements();
+        }
+    }
+
     // ===== DATA LOADING FUNCTIONS =====
 
     /**
@@ -990,11 +3194,18 @@
                 try {
                     console.log('📊 Buscando top 5 produtos mais vendidos...');
                     const productsResponse = await api.get('/dashboard/top-products');
+                    console.log('📊 Resposta da API top-products:', productsResponse);
+                    
                     if (productsResponse && Array.isArray(productsResponse)) {
-                        data.topProducts = productsResponse.map(product => ({
-                            nome: product.nome_produto || 'Produto',
-                            totalVendas: product.total_vendido || 0
-                        }));
+                        data.topProducts = productsResponse.map(product => {
+                            const mappedProduct = {
+                                nome: product.nome_produto || product.nome || 'Produto',
+                                totalVendas: product.total_vendido || product.totalVendas || 0,
+                                valorTotal: product.total_valor || product.valorTotal || product.valor || 0
+                            };
+                            console.log('🔍 Produto mapeado:', mappedProduct);
+                            return mappedProduct;
+                        });
                         console.log('✅ Top 5 produtos carregados:', data.topProducts);
                     } else {
                         console.warn('⚠️ Resposta inválida para top produtos:', productsResponse);
@@ -1237,7 +3448,6 @@
                             if (dueDate) {
                                 try {
                                     const dueDateObj = new Date(dueDate);
-                                    
                                     if (isNaN(dueDateObj.getTime())) {
                                         return false;
                                     }
@@ -4174,7 +6384,17 @@
                 const data = response.data || response;
                 console.log('✅ Dados carregados para edição:', data);
                 fillEditForm(type, data);
-                ui.showModal(`${type}Modal`);
+                
+                // Tentar abrir o modal usando Bootstrap diretamente
+                const editModal = document.getElementById(`${type}Modal`);
+                if (editModal && typeof bootstrap !== 'undefined') {
+                    const editBootstrapModal = new bootstrap.Modal(editModal);
+                    editBootstrapModal.show();
+                    console.log('✅ Modal de edição aberto com dados da API');
+                } else {
+                    console.error('❌ Modal de edição não encontrado ou Bootstrap não disponível');
+                    showToast('Erro ao abrir modal de edição', 'error');
+                }
             } else {
                 console.log('❌ Erro na resposta:', response.message);
                 showToast(response.message || 'Erro ao carregar dados', 'error');
@@ -4472,70 +6692,167 @@
             try {
                 console.log('🎨 Mostrando detalhes da venda:', data);
                 
+                // Armazenar ID da venda no elemento hidden
+                const saleIdElement = document.getElementById('detailSaleId');
+                console.log('🔍 Procurando elemento detailSaleId:', saleIdElement);
+                if (saleIdElement) {
+                    saleIdElement.value = data.id || '';
+                    console.log('✅ ID da venda armazenado:', data.id);
+                } else {
+                    console.error('❌ Elemento detailSaleId não encontrado no modal');
+                }
+                
+                // Também armazenar o ID no dataset do modal para backup
+                const saleDetailModal = document.getElementById('saleDetailModal');
+                if (saleDetailModal && data.id) {
+                    saleDetailModal.dataset.saleId = data.id;
+                    console.log('✅ ID da venda armazenado no dataset do modal:', data.id);
+                } else {
+                    console.error('❌ Modal saleDetailModal não encontrado ou data.id não disponível');
+                }
+                
                 // Preencher modal de detalhes da venda
-                const idElement = document.getElementById('detailSaleId');
                 const clientElement = document.getElementById('detailSaleClient');
                 const dateElement = document.getElementById('detailSaleDate');
                 const totalElement = document.getElementById('detailSaleTotal');
                 const statusElement = document.getElementById('detailSaleStatus');
                 
-                if (idElement) idElement.textContent = data.id || '-';
                 if (clientElement) clientElement.textContent = data.client?.nome || data.cliente?.nome || 'N/A';
                 if (dateElement) dateElement.textContent = data.dataVenda ? new Date(data.dataVenda).toLocaleDateString('pt-BR') : '-';
                 if (totalElement) totalElement.textContent = data.valorTotal ? `R$ ${parseFloat(data.valorTotal).toFixed(2).replace('.', ',')}` : '-';
-                if (statusElement) statusElement.textContent = data.status || 'N/A';
+                if (statusElement) statusElement.textContent = getTranslatedStatus(data.status) || 'N/A';
                 
-                // Preencher produtos
-                const productsList = document.getElementById('detailSaleProductsList');
-                if (productsList) {
-                    if (data.saleProducts && Array.isArray(data.saleProducts) && data.saleProducts.length > 0) {
-                        const productsHTML = data.saleProducts.map(item => {
-                            const product = item.Product || item.product || {};
-                            const quantity = item.quantidade || item.quantity || 0;
-                            const price = item.precoUnitario || item.price || 0;
-                            const total = quantity * price;
-                            
-                            return `
+                // Função para preencher produtos
+                function fillProducts(productsListId) {
+                    const productsList = document.getElementById(productsListId);
+                    if (productsList) {
+                        console.log('🔍 Dados dos produtos:', data.saleProducts);
+                        if (data.saleProducts && Array.isArray(data.saleProducts) && data.saleProducts.length > 0) {
+                            const productsHTML = data.saleProducts.map(item => {
+                                const product = item.Product || item.product || {};
+                                const quantity = item.quantidade || item.quantity || 0;
+                                const price = item.precoUnitario || item.price || 0;
+                                const total = quantity * price;
+                                
+                                console.log('🔍 Produto processado:', { product, quantity, price, total });
+                                
+                                                            return `
                                 <tr>
-                                    <td>${product.nome || product.name || 'Produto'}</td>
+                                    <td>${product.nome || product.name || getTranslatedValue('product', 'Produto')}</td>
                                     <td>${quantity}</td>
-                                    <td>R$ ${parseFloat(price).toFixed(2).replace('.', ',')}</td>
                                     <td>R$ ${parseFloat(total).toFixed(2).replace('.', ',')}</td>
                                 </tr>
                             `;
-                        }).join('');
-                        productsList.innerHTML = productsHTML;
-                    } else {
-                        productsList.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhum produto encontrado</td></tr>';
+                            }).join('');
+                            productsList.innerHTML = productsHTML;
+                        } else {
+                            productsList.innerHTML = `<tr><td colspan="3" class="text-center text-muted">${getTranslatedValue('noProductsFound', 'Nenhum produto encontrado')}</td></tr>`;
+                        }
                     }
                 }
                 
-                // Preencher pagamentos
-                const paymentsList = document.getElementById('detailSalePaymentsList');
-                if (paymentsList) {
-                    if (data.payments && Array.isArray(data.payments) && data.payments.length > 0) {
-                        const paymentsHTML = data.payments.map(payment => `
-                            <tr>
-                                <td>${payment.dataPagamento ? new Date(payment.dataPagamento).toLocaleDateString('pt-BR') : '-'}</td>
-                                <td>R$ ${parseFloat(payment.valor).toFixed(2).replace('.', ',')}</td>
-                                <td>${payment.formaPagamento || 'N/A'}</td>
-                            </tr>
-                        `).join('');
-                        paymentsList.innerHTML = paymentsHTML;
-                    } else {
-                        paymentsList.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Nenhum pagamento encontrado</td></tr>';
+                // Função para preencher pagamentos
+                function fillPayments(paymentsListId) {
+                    const paymentsList = document.getElementById(paymentsListId);
+                    if (paymentsList) {
+                        console.log('🔍 Dados dos pagamentos:', data.payments);
+                        
+                        // Verificar se há dados de pagamento inicial
+                        let payments = [];
+                        
+                        // Adicionar pagamento inicial se existir
+                        if (data.initialPayment && data.initialPayment.valor > 0) {
+                            payments.push({
+                                dataPagamento: data.dataVenda,
+                                valor: data.initialPayment.valor,
+                                formaPagamento: data.initialPayment.formaPagamento || getTranslatedValue('cash', 'Dinheiro')
+                            });
+                        }
+                        
+                        // Adicionar outros pagamentos se existirem
+                        if (data.payments && Array.isArray(data.payments)) {
+                            payments = payments.concat(data.payments);
+                        }
+                        
+                        // Verificar se há pagamentos registrados
+                        if (payments.length > 0) {
+                            const paymentsHTML = payments.map(payment => {
+                                const paymentDate = payment.dataPagamento ? new Date(payment.dataPagamento).toLocaleDateString('pt-BR') : '-';
+                                const paymentValue = parseFloat(payment.valor || 0).toFixed(2).replace('.', ',');
+                                const paymentMethod = getTranslatedPaymentMethod(payment.formaPagamento);
+                                
+                                console.log('🔍 Pagamento processado:', { paymentDate, paymentValue, paymentMethod });
+                                return `
+                                    <tr>
+                                        <td>${paymentDate}</td>
+                                        <td>R$ ${paymentValue}</td>
+                                        <td>${paymentMethod}</td>
+                                    </tr>
+                                `;
+                            }).join('');
+                            paymentsList.innerHTML = paymentsHTML;
+                        } else {
+                            // Se não há pagamentos mas o status é "Pago", mostrar pagamento completo
+                            if (data.status === 'Pago' || data.status === 'Paid') {
+                                const paymentDate = data.dataVenda ? new Date(data.dataVenda).toLocaleDateString('pt-BR') : '-';
+                                const paymentValue = parseFloat(data.valorTotal || 0).toFixed(2).replace('.', ',');
+                                
+                                // Determinar forma de pagamento baseada nos dados disponíveis
+                                let paymentMethod = getTranslatedValue('cash', 'Dinheiro'); // Padrão
+                                
+                                // Verificar se há dados de pagamento inicial
+                                if (data.initialPayment && data.initialPayment.formaPagamento) {
+                                    paymentMethod = getTranslatedPaymentMethod(data.initialPayment.formaPagamento);
+                                }
+                                // Verificar se há dados de pagamento nos produtos da venda
+                                else if (data.saleProducts && data.saleProducts.length > 0) {
+                                    // Tentar extrair forma de pagamento dos produtos
+                                    const firstProduct = data.saleProducts[0];
+                                    if (firstProduct.formaPagamento) {
+                                        paymentMethod = getTranslatedPaymentMethod(firstProduct.formaPagamento);
+                                    }
+                                }
+                                // Verificar se há dados de pagamento na venda principal
+                                else if (data.formaPagamento) {
+                                    paymentMethod = getTranslatedPaymentMethod(data.formaPagamento);
+                                }
+                                
+                                paymentsList.innerHTML = `
+                                    <tr>
+                                        <td>${paymentDate}</td>
+                                        <td>R$ ${paymentValue}</td>
+                                        <td>${paymentMethod}</td>
+                                    </tr>
+                                `;
+                            } else {
+                                paymentsList.innerHTML = `<tr><td colspan="3" class="text-center text-muted">${getTranslatedValue('noPaymentsFound', 'Nenhum pagamento encontrado')}</td></tr>`;
+                            }
+                        }
                     }
                 }
+                
+                // Preencher produtos
+                fillProducts('detailSaleProductsList');
+                
+                // Preencher pagamentos
+                fillPayments('detailSalePaymentsList');
                 
                 // Configurar botão de editar usando função padronizada
                 configureSaleEditButton(data);
                 
                 // Mostrar o modal
-                const modal = document.getElementById('saleDetailModal');
-                if (modal && typeof bootstrap !== 'undefined') {
-                    const bootstrapModal = new bootstrap.Modal(modal);
+                const saleModal = document.getElementById('saleDetailModal');
+                if (saleModal && typeof bootstrap !== 'undefined') {
+                    const bootstrapModal = new bootstrap.Modal(saleModal);
                     bootstrapModal.show();
                     console.log('✅ Modal de detalhes da venda aberto com sucesso');
+                    
+                    // Aplicar traduções ao modal após abrir
+                    setTimeout(() => {
+                        if (window.i18n) {
+                            window.i18n.updateAllElements();
+                        }
+                    }, 100);
                 } else {
                     console.error('Modal de detalhes da venda não encontrado ou Bootstrap não disponível');
                     showToast('Erro ao abrir detalhes da venda', 'error');
@@ -4581,7 +6898,7 @@
                             
                             return `
                                 <tr>
-                                    <td>${product.nome || product.name || 'Produto'}</td>
+                                    <td>${product.nome || product.name || getTranslatedValue('product', 'Produto')}</td>
                                     <td>${quantity}</td>
                                     <td>R$ ${parseFloat(cost).toFixed(2).replace('.', ',')}</td>
                                     <td>R$ ${parseFloat(total).toFixed(2).replace('.', ',')}</td>
@@ -4590,7 +6907,7 @@
                         }).join('');
                         productsList.innerHTML = productsHTML;
                     } else {
-                        productsList.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhum produto encontrado</td></tr>';
+                        productsList.innerHTML = `<tr><td colspan="4" class="text-center text-muted">${getTranslatedValue('noProductsFound', 'Nenhum produto encontrado')}</td></tr>`;
                     }
                 }
                 
@@ -4627,6 +6944,13 @@
                     const bootstrapModal = new bootstrap.Modal(modal);
                     bootstrapModal.show();
                     console.log('✅ Modal de detalhes da compra aberto com sucesso');
+                    
+                    // Aplicar traduções ao modal após abrir
+                    setTimeout(() => {
+                        if (window.i18n) {
+                            window.i18n.updateAllElements();
+                        }
+                    }, 100);
                 } else {
                     console.error('Modal de detalhes da compra não encontrado ou Bootstrap não disponível');
                     showToast('Erro ao abrir detalhes da compra', 'error');
@@ -4700,11 +7024,18 @@
                 if (typeof bootstrap !== 'undefined') {
                     const bootstrapModal = new bootstrap.Modal(modal);
                     bootstrapModal.show();
+                    console.log('✅ Modal de detalhes do fornecedor aberto com sucesso');
+                    
+                    // Aplicar traduções ao modal após abrir
+                    setTimeout(() => {
+                        if (window.i18n) {
+                            window.i18n.updateAllElements();
+                        }
+                    }, 100);
                 } else {
                     console.error('Bootstrap não disponível');
                     showToast('Erro ao abrir detalhes do fornecedor', 'error');
                 }
-                
             } catch (error) {
                 console.error('Erro ao mostrar detalhes do fornecedor:', error);
                 showToast('Erro ao mostrar detalhes do fornecedor', 'error');
@@ -4772,22 +7103,21 @@
                 if (typeof bootstrap !== 'undefined') {
                     const bootstrapModal = new bootstrap.Modal(modal);
                     bootstrapModal.show();
+                    console.log('✅ Modal de detalhes do usuário aberto com sucesso');
+                    
+                    // Aplicar traduções ao modal após abrir
+                    setTimeout(() => {
+                        if (window.i18n) {
+                            window.i18n.updateAllElements();
+                        }
+                    }, 100);
                 } else {
                     console.error('Bootstrap não disponível');
                     showToast('Erro ao abrir detalhes do usuário', 'error');
                 }
-                
             } catch (error) {
                 console.error('Erro ao mostrar detalhes do usuário:', error);
                 showToast('Erro ao mostrar detalhes do usuário', 'error');
-            }
-        } else {
-            // Para outros tipos, tentar mostrar uma seção de detalhes
-            const detailSection = document.getElementById(`${type}DetailSection`);
-            if (detailSection) {
-                ui.showSection(`${type}DetailSection`);
-            } else {
-                showToast('Visualização de detalhes não implementada para este tipo', 'info');
             }
         }
     }
@@ -5026,7 +7356,7 @@
                     productItem.setAttribute('data-product-id', product.id || product.product_id);
                     productItem.innerHTML = `
                         <div>
-                            <strong>${product.name || product.product_name || product.Product?.nome || 'Produto'}</strong>
+                            <strong>${product.name || product.Product?.nome || 'Produto'}</strong>
                             <br>
                             <small>Qtd: ${product.quantity || product.quantidade} x R$ ${product.price || product.unit_price || product.precoUnitario || 0}</small>
                         </div>
@@ -5542,7 +7872,7 @@
     
     // Função de debug global (mais simples)
     window.debug = function() {
-        console.log('🔍 DEBUG GLOBAL: Verificando modais...');
+        console.log('🔍 DEBUG: Verificando modais...');
         console.log('🔍 saleDetailModal:', document.getElementById('saleDetailModal'));
         console.log('🔍 saleModal:', document.getElementById('saleModal'));
         console.log('🔍 Bootstrap:', typeof bootstrap);
@@ -5637,7 +7967,7 @@
             data: {
                 labels: data.map(item => item.month),
                 datasets: [{
-                    label: 'Predição de Vendas',
+                    label: getTranslatedValue('salesPredictionLabel', 'Predição de Vendas'),
                     data: data.map(item => item.predicted),
                     backgroundColor: '#2E8B57'
                 }]
@@ -5659,21 +7989,38 @@
      * Render top products table
      */
     function renderTopProducts(products) {
+        console.log('🎯 Renderizando top produtos:', products);
         const tbody = document.querySelector('#topProductsTable tbody');
-        if (!tbody) return;
+        if (!tbody) {
+            console.error('❌ Elemento #topProductsTable tbody não encontrado');
+            return;
+        }
 
-        if (products.length === 0) {
+        if (!products || products.length === 0) {
             tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Nenhum produto vendido</td></tr>';
             return;
         }
 
-        tbody.innerHTML = products.slice(0, 5).map(product => `
-            <tr>
-                <td>${product.nome || product.nome_produto || 'Produto'}</td>
-                <td>${product.totalVendas || product.total_vendido || 0}</td>
-                <td>${Utils.formatCurrency(product.valorTotal || product.total_valor || 0)}</td>
-            </tr>
-        `).join('');
+        tbody.innerHTML = products.slice(0, 5).map(product => {
+            const nome = product.nome || product.nome_produto || 'Produto';
+            const totalVendas = product.totalVendas || product.total_vendido || 0;
+            const valorTotal = parseFloat(product.valorTotal || product.total_valor || product.valor || 0);
+            
+            console.log('🔍 Produto processado:', { nome, totalVendas, valorTotal, originalProduct: product });
+            
+            // Garantir que o valor seja um número válido
+            const valorFormatado = isNaN(valorTotal) ? 'R$ 0,00' : Utils.formatCurrency(valorTotal);
+            
+            return `
+                <tr>
+                    <td>${nome}</td>
+                    <td>${totalVendas}</td>
+                    <td>${valorFormatado}</td>
+                </tr>
+            `;
+        }).join('');
+        
+        console.log('✅ Top produtos renderizados com sucesso');
     }
 
     /**
@@ -5904,6 +8251,194 @@
         }
     }
 
+    /**
+     * Render sales report
+     */
+    function renderSalesReport(data) {
+        console.log('🎨 Renderizando relatório de vendas:', data);
+        
+        const reportResults = document.getElementById('reportResults');
+        if (!reportResults) {
+            console.error('❌ Elemento #reportResults não encontrado');
+            return;
+        }
+
+        // Verificar se data é um array ou tem a propriedade sales/data
+        const sales = Array.isArray(data) ? data : (data.sales || data.data || []);
+        console.log('📦 Vendas para renderizar no relatório:', sales);
+        
+        if (sales.length === 0) {
+            console.log('📝 Renderizando: Nenhum venda encontrada no período');
+            reportResults.innerHTML = `
+                <div class="alert alert-info text-center">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <span data-i18n="noSalesInPeriod">Nenhuma venda encontrada no período selecionado.</span>
+                </div>
+            `;
+            return;
+        }
+
+        // Calcular estatísticas
+        const totalSales = sales.length;
+        const totalValue = sales.reduce((sum, sale) => sum + parseFloat(sale.valorTotal || 0), 0);
+        const averageValue = totalValue / totalSales;
+        
+        // Agrupar por status
+        const statusCount = {};
+        sales.forEach(sale => {
+            const status = sale.status || 'Pendente';
+            statusCount[status] = (statusCount[status] || 0) + 1;
+        });
+
+        // Gerar HTML do relatório
+        const reportHTML = `
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <h4 class="card-title">${totalSales}</h4>
+                            <p class="card-text" data-i18n="totalSales">Total de Vendas</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h4 class="card-title">${Utils.formatCurrency(totalValue)}</h4>
+                            <p class="card-text" data-i18n="totalValue">Valor Total</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h4 class="card-title">${Utils.formatCurrency(averageValue)}</h4>
+                            <p class="card-text" data-i18n="averageValue">Valor Médio</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-dark">
+                        <div class="card-body text-center">
+                            <h4 class="card-title">${Object.keys(statusCount).length}</h4>
+                            <p class="card-text" data-i18n="statusTypes">Tipos de Status</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0" data-i18n="salesByStatus">Vendas por Status</h6>
+                        </div>
+                        <div class="card-body">
+                            ${Object.entries(statusCount).map(([status, count]) => `
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-${getStatusColor(status)}">${getTranslatedStatus(status)}</span>
+                                    <span class="fw-bold">${count}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0" data-i18n="recentSales">Vendas Recentes</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th data-i18n="id">ID</th>
+                                            <th data-i18n="client">Cliente</th>
+                                            <th data-i18n="value">Valor</th>
+                                            <th data-i18n="status">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${sales.slice(0, 5).map(sale => {
+                                            const clientName = sale.client?.nome || sale.cliente?.nome || sale.clientName || 'N/A';
+                                            const saleStatus = sale.status || 'Pendente';
+                                            
+                                            return `
+                                                <tr>
+                                                    <td>${sale.id}</td>
+                                                    <td>${Utils.sanitizeHTML(clientName)}</td>
+                                                    <td>${Utils.formatCurrency(sale.valorTotal)}</td>
+                                                    <td><span class="badge bg-${getStatusColor(saleStatus)}">${getTranslatedStatus(saleStatus)}</span></td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0" data-i18n="allSalesInPeriod">Todas as Vendas do Período</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="id">ID</th>
+                                    <th data-i18n="client">Cliente</th>
+                                    <th data-i18n="value">Valor</th>
+                                    <th data-i18n="date">Data</th>
+                                    <th data-i18n="status">Status</th>
+                                    <th data-i18n="actions">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${sales.map(sale => {
+                                    const clientName = sale.client?.nome || sale.cliente?.nome || sale.clientName || 'N/A';
+                                    const saleDate = sale.dataVenda || sale.data_venda || sale.date || sale.createdAt;
+                                    const saleStatus = sale.status || 'Pendente';
+                                    
+                                    return `
+                                        <tr>
+                                            <td>${sale.id}</td>
+                                            <td>${Utils.sanitizeHTML(clientName)}</td>
+                                            <td>${Utils.formatCurrency(sale.valorTotal)}</td>
+                                            <td>${Utils.formatDate(saleDate)}</td>
+                                            <td><span class="badge bg-${getStatusColor(saleStatus)}">${getTranslatedStatus(saleStatus)}</span></td>
+                                            <td>
+                                                <button class="btn btn-outline-info btn-sm" data-action="view" data-type="sale" data-id="${sale.id}">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-primary btn-sm" data-action="edit" data-type="sale" data-id="${sale.id}">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        reportResults.innerHTML = reportHTML;
+        
+        // Aplicar traduções no conteúdo dinâmico
+        if (window.i18n && window.i18n.translateElement) {
+            window.i18n.translateElement(reportResults);
+        }
+        
+        console.log('✅ Relatório de vendas renderizado com sucesso');
+    }
+
     async function handleCashFlowReport() {
         console.log('💰 Gerando relatório de fluxo de caixa...');
         try {
@@ -5921,16 +8456,163 @@
             
             console.log('📥 Resposta da API fluxo de caixa:', response);
             
-            if (response) {
+            // Verificar se a resposta tem dados válidos
+            if (response && (response.cashFlow || response.data || Array.isArray(response) || (typeof response === 'object' && Object.keys(response).length > 0))) {
+                console.log('✅ Dados recebidos com sucesso, renderizando...');
                 renderCashFlowReport(response);
                 showToast('Relatório de fluxo de caixa gerado com sucesso!', 'success');
             } else {
-                showToast('Erro ao gerar relatório de fluxo de caixa', 'error');
+                console.error('❌ Resposta inválida da API:', response);
+                showToast('Erro ao gerar relatório de fluxo de caixa - dados inválidos', 'error');
             }
         } catch (error) {
             console.error('❌ Erro ao gerar relatório de fluxo de caixa:', error);
             showToast('Erro ao gerar relatório de fluxo de caixa: ' + error.message, 'error');
         }
+    }
+
+    /**
+     * Render cash flow report
+     */
+    function renderCashFlowReport(data) {
+        console.log('🎨 Renderizando relatório de fluxo de caixa:', data);
+        
+        const cashFlowReportResults = document.getElementById('cashFlowReportResults');
+        if (!cashFlowReportResults) {
+            console.error('❌ Elemento #cashFlowReportResults não encontrado');
+            return;
+        }
+
+        // Verificar se data é um array ou tem a propriedade cashFlow/data
+        let cashFlow = [];
+        if (Array.isArray(data)) {
+            cashFlow = data;
+        } else if (data && data.cashFlow) {
+            cashFlow = data.cashFlow;
+        } else if (data && data.data) {
+            cashFlow = data.data;
+        } else if (data && typeof data === 'object') {
+            // Se não tem cashFlow nem data, mas é um objeto, pode ser que os dados estejam no nível raiz
+            // Filtrar apenas as propriedades que são arrays ou objetos com dados de fluxo
+            const validKeys = Object.keys(data).filter(key => {
+                const value = data[key];
+                return Array.isArray(value) || (typeof value === 'object' && value !== null && !['startDate', 'endDate', 'totalReceipts', 'totalPayments', 'netCashFlow'].includes(key));
+            });
+            
+            if (validKeys.length > 0) {
+                cashFlow = validKeys.map(key => data[key]).flat();
+            }
+        }
+        
+        // Se ainda não encontrou dados, tentar uma abordagem mais agressiva
+        if (cashFlow.length === 0 && data && typeof data === 'object') {
+            console.log('🔍 Tentando abordagem alternativa para extrair dados...');
+            // Tentar encontrar qualquer array no objeto
+            for (const key in data) {
+                if (Array.isArray(data[key]) && data[key].length > 0) {
+                    cashFlow = data[key];
+                    console.log(`✅ Encontrado array em ${key}:`, cashFlow);
+                    break;
+                }
+            }
+        }
+        
+        console.log('📦 Dados de fluxo de caixa para renderizar:', cashFlow);
+        
+        if (!cashFlow || cashFlow.length === 0) {
+            console.log('📝 Renderizando: Nenhum dado de fluxo de caixa encontrado no período');
+            cashFlowReportResults.innerHTML = `
+                <div class="alert alert-info text-center">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <span data-i18n="noCashFlowInPeriod">Nenhum dado de fluxo de caixa encontrado no período selecionado.</span>
+                </div>
+            `;
+            return;
+        }
+
+        // Calcular estatísticas
+        const totalIncome = cashFlow.reduce((sum, item) => sum + parseFloat(item.income || 0), 0);
+        const totalExpense = cashFlow.reduce((sum, item) => sum + parseFloat(item.expense || 0), 0);
+        const netFlow = totalIncome - totalExpense;
+
+        console.log('💰 Estatísticas calculadas:', { totalIncome, totalExpense, netFlow });
+
+        // Gerar HTML do relatório
+        const reportHTML = `
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h4 class="card-title">${Utils.formatCurrency(totalIncome)}</h4>
+                            <p class="card-text" data-i18n="totalIncome">Receitas</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body text-center">
+                            <h4 class="card-title">${Utils.formatCurrency(totalExpense)}</h4>
+                            <p class="card-text" data-i18n="totalExpense">Despesas</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-${netFlow >= 0 ? 'primary' : 'warning'} text-white">
+                        <div class="card-body text-center">
+                            <h4 class="card-title">${Utils.formatCurrency(netFlow)}</h4>
+                            <p class="card-text" data-i18n="netFlow">Fluxo Líquido</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0" data-i18n="cashFlowDetails">Detalhes do Fluxo de Caixa</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="date">Data</th>
+                                    <th data-i18n="description">Descrição</th>
+                                    <th data-i18n="income">Receitas</th>
+                                    <th data-i18n="expense">Despesas</th>
+                                    <th data-i18n="balance">Saldo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${cashFlow.map(item => {
+                                    const income = parseFloat(item.income || 0);
+                                    const expense = parseFloat(item.expense || 0);
+                                    const balance = income - expense;
+                                    
+                                    return `
+                                        <tr>
+                                            <td>${Utils.formatDate(item.date || item.data)}</td>
+                                            <td>${Utils.sanitizeHTML(item.description || item.descricao || 'N/A')}</td>
+                                            <td class="text-success">${income > 0 ? Utils.formatCurrency(income) : '-'}</td>
+                                            <td class="text-danger">${expense > 0 ? Utils.formatCurrency(expense) : '-'}</td>
+                                            <td class="fw-bold ${balance >= 0 ? 'text-success' : 'text-danger'}">${Utils.formatCurrency(balance)}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        cashFlowReportResults.innerHTML = reportHTML;
+        
+        // Aplicar traduções no conteúdo dinâmico
+        if (window.i18n && window.i18n.translateElement) {
+            window.i18n.translateElement(cashFlowReportResults);
+        }
+        
+        console.log('✅ Relatório de fluxo de caixa renderizado com sucesso');
     }
 
     async function handleAccountingReport() {
@@ -6001,16 +8683,388 @@
             const response = await api.get(`/finance/sales-prediction?months=${months}`);
             console.log('📥 Resposta da API de predição:', response);
             
-            if (response && response.historicalData) {
+            // Verificar se a resposta tem dados válidos
+            if (response && (response.historicalData || response.predictions || Array.isArray(response) || (typeof response === 'object' && Object.keys(response).length > 0))) {
+                console.log('✅ Dados recebidos com sucesso, renderizando...');
                 renderSalesPrediction(response);
-                showToast('Predição de vendas gerada com sucesso!', 'success');
+                showToast(getTranslatedValue('salesPredictionSuccess', 'Predição de vendas gerada com sucesso!'), 'success');
             } else {
-                showToast('Erro ao gerar predição de vendas', 'error');
+                console.error('❌ Resposta inválida da API:', response);
+                showToast(getTranslatedValue('salesPredictionInvalid', 'Erro ao gerar predição de vendas - dados inválidos'), 'error');
             }
         } catch (error) {
             console.error('❌ Erro ao gerar predição de vendas:', error);
-            showToast('Erro ao gerar predição de vendas: ' + error.message, 'error');
+            showToast(getTranslatedValue('salesPredictionError', 'Erro ao gerar predição de vendas') + ': ' + error.message, 'error');
         }
+    }
+
+    /**
+     * Render sales prediction
+     */
+    function renderSalesPrediction(data) {
+        console.log('🎨 Renderizando predição de vendas:', data);
+        
+        const predictionResults = document.getElementById('salesPredictionResults');
+        if (!predictionResults) {
+            console.error('❌ Elemento #salesPredictionResults não encontrado');
+            return;
+        }
+
+        // Verificar se data é um array ou tem a propriedade historicalData/predictions
+        let historicalData = [];
+        let predictions = [];
+        
+        if (Array.isArray(data)) {
+            // Se é um array, assumir que são dados históricos
+            historicalData = data;
+        } else if (data && data.historicalData) {
+            historicalData = data.historicalData;
+        } else if (data && data.data) {
+            historicalData = data.data;
+        }
+        
+        if (data && data.predictions) {
+            predictions = data.predictions;
+        }
+        
+        // Se ainda não encontrou dados, tentar uma abordagem mais agressiva
+        if (historicalData.length === 0 && predictions.length === 0 && data && typeof data === 'object') {
+            console.log('🔍 Tentando abordagem alternativa para extrair dados...');
+            // Tentar encontrar qualquer array no objeto
+            for (const key in data) {
+                if (Array.isArray(data[key]) && data[key].length > 0) {
+                    if (key.toLowerCase().includes('historical') || key.toLowerCase().includes('hist')) {
+                        historicalData = data[key];
+                        console.log(`✅ Encontrado dados históricos em ${key}:`, historicalData);
+                    } else if (key.toLowerCase().includes('prediction') || key.toLowerCase().includes('pred')) {
+                        predictions = data[key];
+                        console.log(`✅ Encontrado predições em ${key}:`, predictions);
+                    }
+                }
+            }
+        }
+        
+        console.log('📦 Dados de predição para renderizar:', { historicalData, predictions });
+        
+        if (historicalData.length === 0 && predictions.length === 0) {
+            console.log('📝 Renderizando: Nenhum dado de predição encontrado');
+            predictionResults.innerHTML = `
+                <div class="alert alert-info text-center">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <span data-i18n="noPredictionData">Nenhum dado de predição encontrado para o período selecionado.</span>
+                </div>
+            `;
+            // Aplicar traduções
+            if (window.i18n && window.i18n.updateAllElements) {
+                window.i18n.updateAllElements();
+            }
+            return;
+        }
+
+        // Calcular estatísticas
+        const totalHistorical = historicalData.reduce((sum, item) => sum + parseFloat(item.value || item.valor || 0), 0);
+        const totalPredicted = predictions.reduce((sum, item) => sum + parseFloat(item.value || item.valor || 0), 0);
+        const growthRate = totalHistorical > 0 ? ((totalPredicted - totalHistorical) / totalHistorical * 100) : 0;
+
+        console.log('💰 Estatísticas de predição:', { totalHistorical, totalPredicted, growthRate });
+
+        // Preparar dados para o gráfico
+        const chartData = prepareChartData(historicalData, predictions);
+        console.log('📊 Dados preparados para o gráfico:', chartData);
+
+        // Gerar HTML do relatório com gráfico
+        const reportHTML = `
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card bg-info text-white shadow-sm">
+                        <div class="card-body text-center">
+                            <h4 class="card-title">${Utils.formatCurrency(totalHistorical)}</h4>
+                            <p class="card-text" data-i18n="historicalSales">Vendas Históricas</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-warning text-white shadow-sm">
+                        <div class="card-body text-center">
+                            <h4 class="card-title">${Utils.formatCurrency(totalPredicted)}</h4>
+                            <p class="card-text" data-i18n="predictedSales">Vendas Previstas</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-${growthRate >= 0 ? 'success' : 'danger'} text-white shadow-sm">
+                        <div class="card-body text-center">
+                            <h4 class="card-title">${growthRate >= 0 ? '+' : ''}${growthRate.toFixed(1)}%</h4>
+                            <p class="card-text" data-i18n="growthRate">Taxa de Crescimento</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico de Projeção -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>
+                        <span data-i18n="salesProjectionChart">Gráfico de Projeção de Vendas</span>
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height:400px;">
+                        <canvas id="salesPredictionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0" data-i18n="predictionDetails">Detalhes da Predição</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="period">Período</th>
+                                    <th data-i18n="historicalValue">Valor Histórico</th>
+                                    <th data-i18n="predictedValue">Valor Previsto</th>
+                                    <th data-i18n="difference">Diferença</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${predictions.map((prediction, index) => {
+                                    const historical = historicalData[index] || { value: 0 };
+                                    const historicalValue = parseFloat(historical.value || historical.valor || 0);
+                                    const predictedValue = parseFloat(prediction.value || prediction.valor || 0);
+                                    const difference = predictedValue - historicalValue;
+                                    
+                                    return `
+                                        <tr>
+                                            <td>${prediction.period || prediction.date || prediction.mes || `${getTranslatedValue('period', 'Período')} ${index + 1}`}</td>
+                                            <td class="text-info">${historicalValue > 0 ? Utils.formatCurrency(historicalValue) : '-'}</td>
+                                            <td class="text-warning">${predictedValue > 0 ? Utils.formatCurrency(predictedValue) : '-'}</td>
+                                            <td class="fw-bold ${difference >= 0 ? 'text-success' : 'text-danger'}">${difference >= 0 ? '+' : ''}${Utils.formatCurrency(difference)}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        predictionResults.innerHTML = reportHTML;
+        
+        // Aplicar traduções no conteúdo dinâmico imediatamente
+        if (window.i18n && window.i18n.translateElement) {
+            window.i18n.translateElement(predictionResults);
+        }
+        
+        // Renderizar o gráfico após o HTML ser inserido
+        setTimeout(() => {
+            renderSalesPredictionChart(chartData);
+        }, 100);
+        
+        console.log('✅ Predição de vendas renderizada com sucesso');
+    }
+
+    /**
+     * Prepare chart data for sales prediction
+     */
+    function prepareChartData(historicalData, predictions) {
+        console.log('📊 Preparando dados para o gráfico:', { historicalData, predictions });
+        
+        const chartData = {
+            labels: [],
+            historical: [],
+            predicted: []
+        };
+
+        // Combinar dados históricos e predições
+        const allData = [];
+        
+        // Adicionar dados históricos
+        historicalData.forEach((item, index) => {
+            const period = item.period || item.date || item.mes || `${getTranslatedValue('period', 'Período')} ${index + 1}`;
+            const value = parseFloat(item.value || item.valor || 0);
+            allData.push({
+                period,
+                historical: value,
+                predicted: 0,
+                type: 'historical'
+            });
+        });
+
+        // Adicionar predições
+        predictions.forEach((item, index) => {
+            const period = item.period || item.date || item.mes || `${getTranslatedValue('period', 'Período')} ${index + 1}`;
+            const value = parseFloat(item.value || item.valor || 0);
+            
+            // Verificar se já existe um período similar
+            const existingIndex = allData.findIndex(d => d.period === period);
+            if (existingIndex >= 0) {
+                allData[existingIndex].predicted = value;
+            } else {
+                allData.push({
+                    period,
+                    historical: 0,
+                    predicted: value,
+                    type: 'prediction'
+                });
+            }
+        });
+
+        // Ordenar por período se possível
+        allData.sort((a, b) => {
+            // Tentar ordenar por data se possível
+            const dateA = new Date(a.period);
+            const dateB = new Date(b.period);
+            if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+                return dateA - dateB;
+            }
+            // Se não conseguir, manter ordem original
+            return 0;
+        });
+
+        // Extrair dados para o gráfico
+        chartData.labels = allData.map(item => item.period);
+        chartData.historical = allData.map(item => item.historical);
+        chartData.predicted = allData.map(item => item.predicted);
+
+        console.log('📈 Dados do gráfico preparados:', chartData);
+        return chartData;
+    }
+
+    /**
+     * Render sales prediction chart
+     */
+    function renderSalesPredictionChart(chartData) {
+        console.log('🎨 Renderizando gráfico de predição:', chartData);
+        
+        const ctx = document.getElementById('salesPredictionChart');
+        if (!ctx) {
+            console.error('❌ Elemento #salesPredictionChart não encontrado');
+            return;
+        }
+
+        // Destruir gráfico existente se houver
+        if (state.charts.has('salesPredictionChart')) {
+            state.charts.get('salesPredictionChart').destroy();
+        }
+
+        // Criar novo gráfico
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.labels,
+                datasets: [
+                    {
+                        label: getTranslatedValue('historicalSales', 'Vendas Históricas'),
+                        data: chartData.historical,
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#0d6efd',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    },
+                    {
+                        label: getTranslatedValue('predictedSales', 'Vendas Previstas'),
+                        data: chartData.predicted,
+                        borderColor: '#ffc107',
+                        backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#ffc107',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        borderDash: [5, 5]
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: {
+                                size: 12,
+                                weight: 'bold'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: '#0d6efd',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        displayColors: true,
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.dataset.label || '';
+                                const value = context.parsed.y;
+                                return `${label}: ${formatCurrencyByLanguage(value)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 11
+                            },
+                            callback: function(value) {
+                                return formatCurrencyByLanguage(value);
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                elements: {
+                    point: {
+                        hoverRadius: 8
+                    }
+                }
+            }
+        });
+
+        // Armazenar referência do gráfico
+        state.charts.set('salesPredictionChart', chart);
+        console.log('✅ Gráfico de predição renderizado com sucesso');
     }
 
     // Expor funções de relatórios globalmente
@@ -6571,426 +9625,44 @@
         }
     };
 
-    function renderSalesReport(data) {
-        console.log('📊 Renderizando relatório de vendas:', data);
-        const reportResults = document.getElementById('reportResults');
-        if (!reportResults) {
-            console.error('❌ Elemento reportResults não encontrado');
-            return;
+    /**
+     * Helper function to format currency based on current language
+     */
+    function formatCurrencyByLanguage(value) {
+        if (window.i18n && window.i18n.formatCurrency) {
+            return window.i18n.formatCurrency(value);
         }
-
-        const { sales, summary } = data;
         
-        let html = `
-            <div class="card mb-3">
-                <div class="card-header bg-primary text-white">
-                    <h6 class="mb-0"><i class="bi bi-bar-chart-line me-2"></i>Resumo do Relatório</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <h4 class="text-primary">${summary.numberOfSales}</h4>
-                                <small class="text-muted">Total de Vendas</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <h4 class="text-success">R$ ${summary.totalSalesAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
-                                <small class="text-muted">Valor Total</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <h4 class="text-info">R$ ${summary.totalPaidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
-                                <small class="text-muted">Valor Pago</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <h4 class="text-warning">R$ ${summary.totalDueAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
-                                <small class="text-muted">Valor Devido</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        if (sales && sales.length > 0) {
-            html += `
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>ID</th>
-                                <th>Cliente</th>
-                                <th>Data</th>
-                                <th>Valor Total</th>
-                                <th>Valor Pago</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
-            sales.forEach(sale => {
-                const valorDevido = sale.valorTotal - sale.valorPago;
-                html += `
-                    <tr>
-                        <td>${sale.id}</td>
-                        <td>${sale.client ? sale.client.nome : 'N/A'}</td>
-                        <td>${new Date(sale.dataVenda).toLocaleDateString('pt-BR')}</td>
-                        <td>R$ ${sale.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                        <td>R$ ${sale.valorPago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                        <td><span class="badge bg-${getStatusColor(sale.status)}">${sale.status}</span></td>
-                    </tr>
-                `;
-            });
-
-            html += `
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        } else {
-            html += `
-                <div class="alert alert-info text-center">
-                    <i class="bi bi-info-circle me-2"></i>
-                    Nenhuma venda encontrada no período selecionado.
-                </div>
-            `;
-        }
-
-        reportResults.innerHTML = html;
-        console.log('✅ Relatório de vendas renderizado com sucesso');
-    }
-
-    function renderCashFlowReport(data) {
-        console.log('💰 Renderizando relatório de fluxo de caixa:', data);
-        const reportResults = document.getElementById('cashFlowReportResults');
-        if (!reportResults) {
-            console.error('❌ Elemento cashFlowReportResults não encontrado');
-            return;
-        }
-
-        const { startDate, endDate, totalReceipts, totalPayments, netCashFlow } = data;
+        // Fallback to Utils.formatCurrency with language-specific currency
+        const currentLanguage = window.i18n ? window.i18n.getCurrentLanguage() : 'pt';
+        const currencyMap = {
+            'pt': 'BRL',
+            'en': 'USD',
+            'es': 'EUR'
+        };
+        const currency = currencyMap[currentLanguage] || 'BRL';
         
-        let html = `
-            <div class="card mb-3">
-                <div class="card-header bg-success text-white">
-                    <h6 class="mb-0"><i class="bi bi-currency-dollar me-2"></i>Fluxo de Caixa</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="text-center">
-                                <h4 class="text-success">R$ ${totalReceipts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
-                                <small class="text-muted">Total de Receitas</small>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="text-center">
-                                <h4 class="text-danger">R$ ${totalPayments.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
-                                <small class="text-muted">Total de Despesas</small>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="text-center">
-                                <h4 class="text-${netCashFlow >= 0 ? 'success' : 'danger'}">R$ ${netCashFlow.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
-                                <small class="text-muted">Fluxo Líquido</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <small class="text-muted">Período: ${new Date(startDate).toLocaleDateString('pt-BR')} a ${new Date(endDate).toLocaleDateString('pt-BR')}</small>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        // Adicionar gráfico ou análise adicional
-        if (netCashFlow >= 0) {
-            html += `
-                <div class="alert alert-success">
-                    <i class="bi bi-arrow-up-circle me-2"></i>
-                    <strong>Fluxo Positivo:</strong> O período apresentou um fluxo de caixa positivo, indicando que as receitas superaram as despesas.
-                </div>
-            `;
-        } else {
-            html += `
-                <div class="alert alert-warning">
-                    <i class="bi bi-arrow-down-circle me-2"></i>
-                    <strong>Fluxo Negativo:</strong> O período apresentou um fluxo de caixa negativo, indicando que as despesas superaram as receitas.
-                </div>
-            `;
-        }
-
-        // Adicionar análise de percentual
-        if (totalReceipts > 0) {
-            const profitMargin = ((netCashFlow / totalReceipts) * 100).toFixed(1);
-            html += `
-                <div class="card">
-                    <div class="card-body">
-                        <h6 class="card-title">Análise de Margem</h6>
-                        <p class="card-text">
-                            <strong>Margem de Lucro:</strong> ${profitMargin}%<br>
-                            <small class="text-muted">(Fluxo Líquido / Total de Receitas) × 100</small>
-                        </p>
-                    </div>
-                </div>
-            `;
-        }
-
-        reportResults.innerHTML = html;
-        console.log('✅ Relatório de fluxo de caixa renderizado com sucesso');
-    }
-
-    function renderSalesPrediction(data) {
-        const resultsDiv = document.getElementById('salesPredictionResults');
-        if (!resultsDiv) return;
-
-        const { historicalData, period } = data;
-        
-        if (!historicalData || historicalData.length === 0) {
-            resultsDiv.innerHTML = `
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle me-2"></i>
-                    <span data-i18n="noDataForPrediction">Não há dados suficientes para gerar a predição de vendas.</span>
-                </div>
-            `;
-            return;
-        }
-
-        // Calcular estatísticas
-        const totalSales = historicalData.reduce((sum, item) => sum + item.totalSales, 0);
-        const totalSalesCount = historicalData.reduce((sum, item) => sum + item.salesCount, 0);
-        const averageTicket = totalSalesCount > 0 ? totalSales / totalSalesCount : 0;
-        
-        // Calcular tendência (crescimento/decrescimento)
-        const recentMonths = historicalData.slice(-3);
-        const olderMonths = historicalData.slice(0, 3);
-        
-        const recentAverage = recentMonths.length > 0 ? 
-            recentMonths.reduce((sum, item) => sum + item.totalSales, 0) / recentMonths.length : 0;
-        const olderAverage = olderMonths.length > 0 ? 
-            olderMonths.reduce((sum, item) => sum + item.totalSales, 0) / olderMonths.length : 0;
-        
-        const trend = recentAverage > olderAverage ? 'crescimento' : 'decrescimento';
-        const trendPercentage = olderAverage > 0 ? 
-            ((recentAverage - olderAverage) / olderAverage * 100).toFixed(1) : 0;
-
-        // Calcular predição para os próximos 3 meses
-        const lastMonthSales = historicalData[historicalData.length - 1]?.totalSales || 0;
-        const predictedGrowth = trend === 'crescimento' ? 1.05 : 0.95; // 5% de crescimento ou decrescimento
-        
-        const predictions = [];
-        for (let i = 1; i <= 3; i++) {
-            const predictedSales = lastMonthSales * Math.pow(predictedGrowth, i);
-            const predictedDate = new Date();
-            predictedDate.setMonth(predictedDate.getMonth() + i);
-            predictions.push({
-                month: predictedDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
-                predictedSales: predictedSales,
-                predictedSalesCount: Math.round(predictedSales / averageTicket)
-            });
-        }
-
-        let html = `
-            <div class="row">
-                <!-- Resumo Estatístico -->
-                <div class="col-md-12 mb-4">
-                    <div class="card border-warning">
-                        <div class="card-header bg-warning text-dark">
-                            <h6 class="mb-0"><i class="bi bi-graph-up me-2"></i>Resumo Estatístico</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="row text-center">
-                                <div class="col-md-3">
-                                    <div class="border-end">
-                                        <h4 class="text-primary mb-1">${totalSales.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</h4>
-                                        <small class="text-muted">Total de Vendas</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="border-end">
-                                        <h4 class="text-success mb-1">${totalSalesCount}</h4>
-                                        <small class="text-muted">Total de Transações</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="border-end">
-                                        <h4 class="text-info mb-1">${averageTicket.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</h4>
-                                        <small class="text-muted">Ticket Médio</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div>
-                                        <h4 class="text-${trend === 'crescimento' ? 'success' : 'danger'} mb-1">
-                                            ${trendPercentage}%
-                                            <i class="bi bi-arrow-${trend === 'crescimento' ? 'up' : 'down'}"></i>
-                                        </h4>
-                                        <small class="text-muted">Tendência</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Gráfico Histórico -->
-                <div class="col-md-8 mb-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Histórico de Vendas</h6>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="salesPredictionChart" width="400" height="200"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Predições -->
-                <div class="col-md-4 mb-4">
-                    <div class="card border-success">
-                        <div class="card-header bg-success text-white">
-                            <h6 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Predições (Próximos 3 Meses)</h6>
-                        </div>
-                        <div class="card-body">
-                            ${predictions.map(pred => `
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <div>
-                                        <strong>${pred.month}</strong>
-                                        <br>
-                                        <small class="text-muted">${pred.predictedSalesCount} transações previstas</small>
-                                    </div>
-                                    <div class="text-end">
-                                        <span class="badge bg-success fs-6">
-                                            ${pred.predictedSales.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                        </span>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tabela de Dados Históricos -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="bi bi-table me-2"></i>Dados Históricos Detalhados</h6>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Mês</th>
-                                    <th>Total de Vendas</th>
-                                    <th>Nº de Transações</th>
-                                    <th>Ticket Médio</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${historicalData.map(item => `
-                                    <tr>
-                                        <td><strong>${new Date(item.month + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</strong></td>
-                                        <td>${item.totalSales.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                                        <td>${item.salesCount}</td>
-                                        <td>${item.averageTicket.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        resultsDiv.innerHTML = html;
-
-        // Renderizar gráfico
-        renderSalesPredictionChart(historicalData, predictions);
-        
-        console.log('✅ Predição de vendas renderizada com sucesso');
-    }
-
-    function renderSalesPredictionChart(historicalData, predictions) {
-        const canvas = document.getElementById('salesPredictionChart');
-        if (!canvas) return;
-
-        const ctx = canvas.getContext('2d');
-        
-        // Preparar dados para o gráfico
-        const labels = historicalData.map(item => {
-            const date = new Date(item.month + '-01');
-            return date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
-        });
-
-        const salesData = historicalData.map(item => item.totalSales);
-        
-        // Adicionar predições aos dados
-        const predictionLabels = predictions.map(pred => pred.month);
-        const predictionData = predictions.map(pred => pred.predictedSales);
-
-        // Criar gráfico usando Chart.js se disponível
-        if (typeof Chart !== 'undefined') {
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [...labels, ...predictionLabels],
-                    datasets: [{
-                        label: 'Vendas Históricas',
-                        data: salesData,
-                        borderColor: 'rgb(75, 192, 192)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        tension: 0.1
-                    }, {
-                        label: 'Predições',
-                        data: [...Array(salesData.length).fill(null), ...predictionData],
-                        borderColor: 'rgb(255, 99, 132)',
-                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                        borderDash: [5, 5],
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Histórico e Predições de Vendas'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return 'R$ ' + value.toLocaleString('pt-BR');
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        } else {
-            // Fallback se Chart.js não estiver disponível
-            ctx.fillStyle = '#f8f9fa';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#6c757d';
-            ctx.font = '14px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('Gráfico não disponível - Chart.js não carregado', canvas.width/2, canvas.height/2);
+        try {
+            const localeMap = {
+                'pt': 'pt-BR',
+                'en': 'en-US',
+                'es': 'es-ES'
+            };
+            const locale = localeMap[currentLanguage] || 'pt-BR';
+            
+            return new Intl.NumberFormat(locale, {
+                style: 'currency',
+                currency: currency
+            }).format(parseFloat(value));
+        } catch (error) {
+            console.error('❌ Erro ao formatar moeda:', error);
+            return Utils.formatCurrency(value);
         }
     }
 
-    // Inicializar a aplicação quando o DOM estiver pronto
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initialize);
-    } else {
-        initialize();
-    }
+    // Initialize the application
+    initialize();
 
-})();
+})(); // Close third IIFE (line 2112)
+})(); // Close second IIFE (line 534)
+})(); // Close first IIFE (line 6)

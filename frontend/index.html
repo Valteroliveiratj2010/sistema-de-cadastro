@@ -11,6 +11,225 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="style.css?v=2.0">
     <link rel="stylesheet" href="css/fix-horizontal-scroll.css?v=1.0">
+    
+    <style>
+        /* Estilos específicos para o modal de detalhes da venda */
+        #saleDetailModal .modal-dialog {
+            max-width: 800px !important;
+            margin: 2vh auto !important;
+        }
+        
+        #saleDetailModal .modal-content {
+            border: none !important;
+            border-radius: 0.5rem !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
+        }
+        
+        #saleDetailModal .modal-header {
+            border-bottom: 2px solid #dee2e6 !important;
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 50%, #004085 100%) !important;
+            color: white !important;
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3) !important;
+        }
+        
+        #saleDetailModal .modal-header .modal-title {
+            color: white !important;
+            font-weight: 600 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+            letter-spacing: 0.5px !important;
+        }
+        
+        #saleDetailModal .modal-header .btn-close-white {
+            filter: brightness(0) invert(1) !important;
+            opacity: 0.9 !important;
+        }
+        
+        #saleDetailModal .modal-header .btn-close-white:hover {
+            opacity: 1 !important;
+            transform: scale(1.1) !important;
+            transition: all 0.2s ease !important;
+        }
+        
+        #saleDetailModal .modal-body {
+            padding: 2rem !important;
+            background: #f8f9fa !important;
+        }
+        
+        #saleDetailModal .modal-footer {
+            border-top: 2px solid #dee2e6 !important;
+            background: #f8f9fa !important;
+        }
+        
+        /* Estilos para seções */
+        #saleDetailModal .sale-section {
+            background: white !important;
+            border: 1px solid #dee2e6 !important;
+            border-radius: 0.5rem !important;
+            padding: 1.5rem !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        #saleDetailModal .section-title {
+            border-bottom: 2px solid #dee2e6 !important;
+            padding-bottom: 0.5rem !important;
+            margin-bottom: 1.5rem !important;
+            font-size: 1.1rem !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+        }
+        
+        /* Estilos para formulário de informações */
+        #saleDetailModal .info-form {
+            background: #f8f9fa !important;
+            border: 1px solid #dee2e6 !important;
+            border-radius: 0.375rem !important;
+            padding: 1rem !important;
+        }
+        
+        #saleDetailModal .form-row {
+            display: flex !important;
+            justify-content: space-between !important;
+            margin-bottom: 1rem !important;
+            gap: 1rem !important;
+        }
+        
+        #saleDetailModal .form-row:last-child {
+            margin-bottom: 0 !important;
+        }
+        
+        #saleDetailModal .form-group {
+            flex: 1 !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.5rem !important;
+        }
+        
+        #saleDetailModal .form-label {
+            font-weight: 600 !important;
+            color: #495057 !important;
+            font-size: 0.9rem !important;
+            margin: 0 !important;
+            min-width: 120px !important;
+        }
+        
+        #saleDetailModal .form-value {
+            font-weight: 500 !important;
+            color: #212529 !important;
+            font-size: 0.9rem !important;
+            background: white !important;
+            padding: 0.25rem 0.5rem !important;
+            border: 1px solid #ced4da !important;
+            border-radius: 0.25rem !important;
+            flex: 1 !important;
+        }
+        
+        /* Estilos para tabelas */
+        #saleDetailModal .table-container {
+            background: white !important;
+            border: 1px solid #dee2e6 !important;
+            border-radius: 0.375rem !important;
+            overflow: hidden !important;
+        }
+        
+        #saleDetailModal .table {
+            margin-bottom: 0 !important;
+            background: white !important;
+        }
+        
+        #saleDetailModal .table thead th {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 50%, #004085 100%) !important;
+            border: 1px solid #dee2e6 !important;
+            font-weight: 600 !important;
+            font-size: 0.85rem !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            color: white !important;
+            padding: 0.75rem !important;
+            text-align: center !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2) !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+        
+        #saleDetailModal .table thead th::before {
+            content: '' !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: -100% !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent) !important;
+            transition: left 0.5s ease !important;
+        }
+        
+        #saleDetailModal .table thead th:hover::before {
+            left: 100% !important;
+        }
+        
+        #saleDetailModal .table tbody tr {
+            border-bottom: 1px solid #dee2e6 !important;
+        }
+        
+        #saleDetailModal .table tbody tr:last-child {
+            border-bottom: none !important;
+        }
+        
+        #saleDetailModal .table tbody tr:hover {
+            background-color: #f8f9fa !important;
+        }
+        
+        #saleDetailModal .table thead th:hover {
+            background: linear-gradient(135deg, #0056b3 0%, #004085 50%, #002752 100%) !important;
+            transform: translateY(-1px) !important;
+            transition: all 0.2s ease !important;
+            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3) !important;
+        }
+        
+        #saleDetailModal .table td {
+            border: 1px solid #dee2e6 !important;
+            padding: 0.75rem !important;
+            font-size: 0.9rem !important;
+            vertical-align: middle !important;
+            text-align: center !important;
+        }
+        
+        /* Estilos para botões */
+        #saleDetailModal .btn {
+            border-radius: 0.375rem !important;
+            font-weight: 500 !important;
+            padding: 0.5rem 1.5rem !important;
+            transition: all 0.2s ease !important;
+        }
+        
+        #saleDetailModal .btn:hover {
+            transform: translateY(-1px) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+        }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            #saleDetailModal .modal-dialog {
+                max-width: 95% !important;
+                margin: 1vh auto !important;
+            }
+            
+            #saleDetailModal .form-row {
+                flex-direction: column !important;
+                gap: 0.5rem !important;
+            }
+            
+            #saleDetailModal .form-group {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 0.25rem !important;
+            }
+            
+            #saleDetailModal .form-label {
+                min-width: auto !important;
+            }
+        }
+    </style>
 
     <style>
         /* CSS CRÍTICO PARA SIDEBAR - FORÇADO */
@@ -1435,83 +1654,103 @@
 
     <!-- Modal de Detalhes da Venda -->
     <div class="modal fade" id="saleDetailModal" tabindex="-1" aria-labelledby="saleDetailModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="saleDetailModalLabel" data-i18n="saleDetails">Detalhes da Venda</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title" id="saleDetailModalLabel" data-i18n="saleDetails">
+                        <i class="bi bi-receipt me-2"></i>DETALHES DA VENDA
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="text-primary" data-i18n="saleInformation">Informações da Venda</h6>
-                            <table class="table table-borderless">
-                                <tr>
-                                    <td><strong data-i18n="saleId">ID da Venda:</strong></td>
-                                    <td id="detailSaleId">-</td>
-                                </tr>
-                                <tr>
-                                    <td><strong data-i18n="client">Cliente:</strong></td>
-                                    <td id="detailSaleClient">-</td>
-                                </tr>
-                                <tr>
-                                    <td><strong data-i18n="saleDate">Data da Venda:</strong></td>
-                                    <td id="detailSaleDate">-</td>
-                                </tr>
-                                <tr>
-                                    <td><strong data-i18n="totalValue">Valor Total:</strong></td>
-                                    <td id="detailSaleTotal">-</td>
-                                </tr>
-                                <tr>
-                                    <td><strong data-i18n="status">Status:</strong></td>
-                                    <td id="detailSaleStatus">-</td>
-                                </tr>
-                            </table>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-primary" data-i18n="saleProducts">Produtos da Venda</h6>
-                            <div id="detailSaleProducts" class="table-responsive">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th data-i18n="product">Produto</th>
-                                            <th data-i18n="quantity">Qtd</th>
-                                            <th data-i18n="unitPrice">Preço Unit.</th>
-                                            <th data-i18n="total">Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="detailSaleProductsList">
-                                        <tr>
-                                            <td colspan="4" class="text-center text-muted" data-i18n="loadingProducts">Carregando produtos...</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                <div class="modal-body p-4">
+                    <!-- ID da venda (hidden) -->
+                    <input type="hidden" id="detailSaleId" value="">
+                    
+                    <!-- Seção 1: INFORMAÇÕES DA VENDA -->
+                    <div class="sale-section mb-4">
+                        <h6 class="section-title text-primary fw-bold mb-3">
+                            <i class="bi bi-info-circle me-2"></i>INFORMAÇÕES DA VENDA
+                        </h6>
+                        <div class="info-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">CLIENTE =</label>
+                                    <span class="form-value" id="detailSaleClient">-</span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">DATA DE VENDA =</label>
+                                    <span class="form-value" id="detailSaleDate">-</span>
+                                </div>
                             </div>
-                            
-                            <h6 class="text-primary mt-3" data-i18n="payments">Pagamentos</h6>
-                            <div id="detailSalePayments" class="table-responsive">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th data-i18n="date">Data</th>
-                                            <th data-i18n="value">Valor</th>
-                                            <th data-i18n="paymentMethod">Forma</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="detailSalePaymentsList">
-                                        <tr>
-                                            <td colspan="3" class="text-center text-muted" data-i18n="loadingPayments">Carregando pagamentos...</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">VALOR TOTAL =</label>
+                                    <span class="form-value fw-bold text-success" id="detailSaleTotal">-</span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">STATUS =</label>
+                                    <span class="form-value" id="detailSaleStatus">-</span>
+                                </div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Seção 2: PRODUTOS DA VENDA -->
+                    <div class="sale-section mb-4">
+                        <h6 class="section-title text-success fw-bold mb-3">
+                            <i class="bi bi-box-seam me-2"></i>PRODUTOS DA VENDA
+                        </h6>
+                        <div class="table-container">
+                            <table class="table table-bordered table-sm">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center">PRODUTO</th>
+                                        <th class="text-center">QUANTIDADE</th>
+                                        <th class="text-center">VALOR</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="detailSaleProductsList">
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted py-3">
+                                            <i class="bi bi-hourglass-split me-2"></i>Carregando produtos...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Seção 3: PAGAMENTOS -->
+                    <div class="sale-section">
+                        <h6 class="section-title text-warning fw-bold mb-3">
+                            <i class="bi bi-credit-card me-2"></i>PAGAMENTOS
+                        </h6>
+                        <div class="table-container">
+                            <table class="table table-bordered table-sm">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center">DATA</th>
+                                        <th class="text-center">VALOR</th>
+                                        <th class="text-center">FORMA DE PAGAMENTO</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="detailSalePaymentsList">
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted py-3">
+                                            <i class="bi bi-hourglass-split me-2"></i>Carregando pagamentos...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="close">Fechar</button>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-i18n="close">
+                        <i class="bi bi-x-circle me-2"></i>Fechar
+                    </button>
                     <button type="button" class="btn btn-primary" id="editSaleFromDetailBtn" onclick="handleEditFromDetail('sale')">
-                        <i class="bi bi-pencil"></i> <span data-i18n="editSale">Editar Venda</span>
+                        <i class="bi bi-pencil me-2"></i><span data-i18n="editSale">Editar Venda</span>
                     </button>
                 </div>
             </div>

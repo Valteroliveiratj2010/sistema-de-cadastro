@@ -1419,31 +1419,82 @@ router.get('/finance/cash-flow', authorizeRole(['admin', 'gerente']), async (req
             return res.status(400).json({ message: 'Formato de data inválido. Use AAAA-MM-DD.' });
         }
 
-        const totalReceipts = await Payment.sum('valor', {
+        // Buscar pagamentos (receitas)
+        const payments = await Payment.findAll({
             where: {
                 dataPagamento: {
                     [Op.between]: [start, end]
                 }
-            }
-        }) || 0;
+            },
+            include: [
+                { 
+                    model: Sale, 
+                    as: 'sale', 
+                    include: [{ model: Client, as: 'client', attributes: ['nome'] }] 
+                }
+            ],
+            order: [['dataPagamento', 'ASC']]
+        });
 
-        const totalPayments = await Purchase.sum('valorTotal', {
+        // Buscar compras (despesas)
+        const purchases = await Purchase.findAll({
             where: {
                 dataCompra: {
                     [Op.between]: [start, end]
                 },
                 status: 'Concluída' 
-            }
-        }) || 0;
+            },
+            include: [
+                { model: Supplier, as: 'supplier', attributes: ['nome'] }
+            ],
+            order: [['dataCompra', 'ASC']]
+        });
 
+        // Calcular totais
+        const totalReceipts = payments.reduce((sum, payment) => sum + parseFloat(payment.valor || 0), 0);
+        const totalPayments = purchases.reduce((sum, purchase) => sum + parseFloat(purchase.valorTotal || 0), 0);
         const netCashFlow = totalReceipts - totalPayments;
+
+        // Criar array de dados detalhados
+        const cashFlowData = [];
+
+        // Adicionar receitas (pagamentos)
+        payments.forEach(payment => {
+            const clientName = payment.sale?.client?.nome || payment.sale?.client?.name || 'Cliente';
+            cashFlowData.push({
+                date: payment.dataPagamento,
+                description: `Recebimento - ${clientName}`,
+                income: parseFloat(payment.valor || 0),
+                expense: 0,
+                type: 'receita',
+                paymentMethod: payment.formaPagamento || 'Dinheiro'
+            });
+        });
+
+        // Adicionar despesas (compras)
+        purchases.forEach(purchase => {
+            const supplierName = purchase.supplier?.nome || purchase.supplier?.name || 'Fornecedor';
+            cashFlowData.push({
+                date: purchase.dataCompra,
+                description: `Compra - ${supplierName}`,
+                income: 0,
+                expense: parseFloat(purchase.valorTotal || 0),
+                type: 'despesa',
+                supplier: supplierName
+            });
+        });
+
+        // Ordenar por data
+        cashFlowData.sort((a, b) => new Date(a.date) - new Date(b.date));
 
         res.json({
             startDate: startDate,
             endDate: endDate,
             totalReceipts: totalReceipts,
             totalPayments: totalPayments,
-            netCashFlow: netCashFlow
+            netCashFlow: netCashFlow,
+            cashFlow: cashFlowData,
+            data: cashFlowData // Para compatibilidade com o frontend
         });
 
     } catch (error) {

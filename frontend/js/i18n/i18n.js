@@ -25,6 +25,11 @@ class I18nManager {
         this.currentLanguage = language;
         localStorage.setItem('language', language);
         
+        // Limpar cache de traduções ao mudar idioma
+        if (this._translationCache) {
+            this._translationCache.clear();
+        }
+        
         // Atualizar atributo lang do HTML
         document.documentElement.lang = language;
         
@@ -53,12 +58,27 @@ class I18nManager {
 
     // Obter tradução
     t(key, params = {}) {
+        // Cache para melhorar performance
+        if (!this._translationCache) {
+            this._translationCache = new Map();
+        }
+        
+        const cacheKey = `${this.currentLanguage}:${key}:${JSON.stringify(params)}`;
+        if (this._translationCache.has(cacheKey)) {
+            return this._translationCache.get(cacheKey);
+        }
+        
         const translation = this.translations[this.currentLanguage]?.[key] || 
                           this.translations['pt']?.[key] || 
                           key;
 
         // Substituir parâmetros
-        return this.interpolate(translation, params);
+        const result = this.interpolate(translation, params);
+        
+        // Armazenar no cache
+        this._translationCache.set(cacheKey, result);
+        
+        return result;
     }
 
     // Interpolar parâmetros na string
@@ -141,7 +161,12 @@ class I18nManager {
 
     // Atualizar todos os elementos com data-i18n
     updateAllElements() {
+        console.log('🔄 Aplicando traduções...');
+        const startTime = performance.now();
+        
         const elements = document.querySelectorAll('[data-i18n]');
+        console.log(`📊 Encontrados ${elements.length} elementos para traduzir`);
+        
         elements.forEach(element => {
             this.updateElement(element);
         });
@@ -177,7 +202,8 @@ class I18nManager {
             window.updateTableStatuses();
         }
 
-        console.log(`✅ ${elements.length} elementos traduzidos para ${this.currentLanguage}`);
+        const endTime = performance.now();
+        console.log(`✅ ${elements.length} elementos traduzidos em ${(endTime - startTime).toFixed(2)}ms para ${this.currentLanguage}`);
     }
 
     // Atualizar anos dinamicamente
@@ -300,6 +326,12 @@ class I18nManager {
         
         const translation = this.t(key, params);
         
+        // Verificar se a tradução é diferente do conteúdo atual
+        const currentContent = element.textContent || element.value || '';
+        if (currentContent.trim() === translation.trim()) {
+            return; // Não atualizar se já está traduzido
+        }
+        
         // Atualizar conteúdo baseado no tipo de elemento
         if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
             element.value = translation;
@@ -384,10 +416,47 @@ class I18nManager {
     isRTL() {
         return false; // Português, Inglês e Espanhol são LTR
     }
+
+    // Aplicar traduções em um elemento específico ou container
+    translateElement(element) {
+        if (!element) return;
+        
+        // Se for um elemento específico
+        if (element.hasAttribute('data-i18n')) {
+            this.updateElement(element);
+            return;
+        }
+        
+        // Se for um container, traduzir todos os elementos filhos
+        const elements = element.querySelectorAll('[data-i18n]');
+        elements.forEach(el => this.updateElement(el));
+        
+        // Traduzir placeholders
+        const inputs = element.querySelectorAll('input[data-i18n-placeholder]');
+        inputs.forEach(input => {
+            const key = input.getAttribute('data-i18n-placeholder');
+            input.placeholder = this.t(key);
+        });
+        
+        // Traduzir títulos
+        const titles = element.querySelectorAll('[data-i18n-title]');
+        titles.forEach(el => {
+            const key = el.getAttribute('data-i18n-title');
+            el.title = this.t(key);
+        });
+    }
+
+    // Função global para aplicar traduções em elementos dinâmicos
+    static translateDynamicContent(container) {
+        if (window.i18n && container) {
+            window.i18n.translateElement(container);
+        }
+    }
 }
 
     // Inicializar sistema i18n quando o DOM estiver pronto
     document.addEventListener('DOMContentLoaded', () => {
+        console.log('🚀 Inicializando sistema i18n...');
         window.i18n = new I18nManager();
         
         // Adicionar seletor de idioma ao sidebar
@@ -397,12 +466,32 @@ class I18nManager {
             languageSelectorContainer.appendChild(languageSelector);
         }
 
-        // Atualizar elementos após um pequeno delay para garantir que todos estejam carregados
+        // Aplicar traduções imediatamente
+        if (window.i18n) {
+            window.i18n.updateAllElements();
+        }
+
+        // Aplicar traduções novamente após um pequeno delay para garantir elementos dinâmicos
         setTimeout(() => {
             if (window.i18n) {
                 window.i18n.updateAllElements();
             }
-        }, 100);
+        }, 50);
+
+        // Aplicar traduções uma terceira vez para garantir elementos carregados dinamicamente
+        setTimeout(() => {
+            if (window.i18n) {
+                window.i18n.updateAllElements();
+            }
+        }, 200);
+    });
+
+    // Também inicializar quando a página estiver completamente carregada
+    window.addEventListener('load', () => {
+        if (window.i18n) {
+            console.log('🔄 Aplicando traduções após carregamento completo...');
+            window.i18n.updateAllElements();
+        }
     });
 
 // Exportar para uso global
