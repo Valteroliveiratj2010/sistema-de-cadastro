@@ -335,6 +335,24 @@
             background-color: rgba(255, 255, 255, 0.1) !important;
         }
     </style>
+
+    <!-- Fix: garantir uma única coluna na sidebar em qualquer altura/viewport -->
+    <style>
+        .sidebar .nav.flex-column {
+            display: flex !important;
+            flex-direction: column !important;
+            flex-wrap: nowrap !important; /* impede criar 2 colunas quando a altura é limitada */
+            align-items: stretch !important;
+        }
+        @media (max-width: 991.98px) {
+            .sidebar {
+                width: 280px !important;
+                max-width: 280px !important;
+                min-width: 280px !important;
+                overflow-x: hidden !important;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -363,8 +381,6 @@
                 <a class="nav-link" href="#" data-section="purchasesSection" data-i18n="purchases"><i class="bi bi-bag me-2"></i>Compras</a>
                 <a class="nav-link mt-auto" href="#" id="logoutButton" data-section="logoutSection" data-i18n="logout"><i
                         class="bi bi-box-arrow-right me-2"></i>Sair</a>
-                <a class="nav-link" href="#" onclick="auth.forceClearCache(); return false;" style="color: #ffc107;"><i
-                        class="bi bi-broom me-2"></i>Limpar Cache</a>
             </nav>
             <div id="languageSelector" class="mt-3"></div>
         </aside>

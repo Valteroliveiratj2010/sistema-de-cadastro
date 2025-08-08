@@ -183,3 +183,56 @@ body #app-container .sidebar,
         min-width: 0 !important;
     }
 } 
+
+/* ===== OVERRIDE FINAL: MOBILE/TABLET (até 991.98px) ===== */
+@media (max-width: 991.98px) {
+    html body #app-container aside.sidebar,
+    body #app-container aside.sidebar,
+    #app-container aside.sidebar,
+    aside.sidebar {
+        width: 280px !important;
+        max-width: 280px !important;
+        min-width: 280px !important;
+        overflow-x: hidden !important;
+    }
+
+    /* Forçar navegação em coluna única sem wrap */
+    html body #app-container aside.sidebar .nav,
+    html body #app-container aside.sidebar .nav.flex-column {
+        display: flex !important;
+        flex-direction: column !important;
+        flex-wrap: nowrap !important;
+        align-items: stretch !important;
+    }
+} 
+
+/* ===== OVERRIDE ULTRA-ESPECÍFICO: sempre uma coluna na sidebar ===== */
+/* Aplica em qualquer largura, com reforço extra para <= 991.98px */
+.sidebar nav.nav.flex-column,
+.sidebar nav.nav[class~="flex-column"],
+#app-container .sidebar nav.nav.flex-column,
+#app-container .sidebar nav.nav[class~="flex-column"] {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+}
+
+/* Links ocupam 100% e alinham ícone+texto na horizontal dentro do link */
+.sidebar nav.nav.flex-column > a.nav-link,
+.sidebar nav.nav[class~="flex-column"] > a.nav-link {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+}
+
+@media (max-width: 991.98px) {
+    .sidebar nav.nav.flex-column,
+    .sidebar nav.nav[class~="flex-column"],
+    #app-container .sidebar nav.nav.flex-column,
+    #app-container .sidebar nav.nav[class~="flex-column"] {
+        display: flex !important;
+        flex-direction: column !important;
+        flex-wrap: nowrap !important;
+    }
+} 
