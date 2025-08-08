@@ -377,6 +377,9 @@
         // Setup event listeners
         setupEventListeners();
         
+        // Initialize dark mode
+        initializeDarkMode();
+        
         // Load initial data
         loadInitialData();
         
@@ -488,7 +491,87 @@
         // Language change events
         document.addEventListener('languageChanged', handleLanguageChange);
         
+        // Dark mode toggle
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', handleDarkModeToggle);
+        }
+        
         console.log('🔧 Todos os event listeners configurados');
+    }
+
+    /**
+     * Handle dark mode toggle
+     */
+    function handleDarkModeToggle(e) {
+        e.preventDefault();
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        
+        if (isDark) {
+            // Desativar dark mode
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+            updateDarkModeButton(false);
+            showToast(getTranslatedValue('lightModeEnabled', 'Modo claro ativado'), 'success');
+        } else {
+            // Ativar dark mode
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            updateDarkModeButton(true);
+            showToast(getTranslatedValue('darkModeEnabled', 'Modo escuro ativado'), 'success');
+        }
+    }
+
+    /**
+     * Update dark mode button
+     */
+    function updateDarkModeButton(isDark) {
+        const button = document.getElementById('darkModeToggle');
+        if (button) {
+            const icon = button.querySelector('i');
+            const text = button.querySelector('span');
+            
+            if (isDark) {
+                icon.className = 'bi bi-sun-fill me-2';
+                text.textContent = getTranslatedValue('lightMode', 'Modo Claro');
+                button.title = getTranslatedValue('switchToLightMode', 'Alternar para modo claro');
+            } else {
+                icon.className = 'bi bi-moon-fill me-2';
+                text.textContent = getTranslatedValue('darkMode', 'Modo Escuro');
+                button.title = getTranslatedValue('switchToDarkMode', 'Alternar para modo escuro');
+            }
+        }
+    }
+
+    /**
+     * Initialize dark mode
+     */
+    function initializeDarkMode() {
+        // Verificar se há tema salvo no localStorage
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        // Aplicar tema baseado na preferência salva ou do sistema
+        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            updateDarkModeButton(true);
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            updateDarkModeButton(false);
+        }
+        
+        // Detectar mudanças na preferência do sistema
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (!localStorage.getItem('theme')) {
+                if (e.matches) {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    updateDarkModeButton(true);
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    updateDarkModeButton(false);
+                }
+            }
+        });
     }
 
     /**
@@ -905,6 +988,9 @@
         // Setup event listeners
         setupEventListeners();
         
+        // Initialize dark mode
+        initializeDarkMode();
+        
         // Load initial data
         loadInitialData();
         
@@ -1016,7 +1102,87 @@
         // Language change events
         document.addEventListener('languageChanged', handleLanguageChange);
         
+        // Dark mode toggle
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', handleDarkModeToggle);
+        }
+        
         console.log('🔧 Todos os event listeners configurados');
+    }
+
+    /**
+     * Handle dark mode toggle
+     */
+    function handleDarkModeToggle(e) {
+        e.preventDefault();
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        
+        if (isDark) {
+            // Desativar dark mode
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+            updateDarkModeButton(false);
+            showToast(getTranslatedValue('lightModeEnabled', 'Modo claro ativado'), 'success');
+        } else {
+            // Ativar dark mode
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            updateDarkModeButton(true);
+            showToast(getTranslatedValue('darkModeEnabled', 'Modo escuro ativado'), 'success');
+        }
+    }
+
+    /**
+     * Update dark mode button
+     */
+    function updateDarkModeButton(isDark) {
+        const button = document.getElementById('darkModeToggle');
+        if (button) {
+            const icon = button.querySelector('i');
+            const text = button.querySelector('span');
+            
+            if (isDark) {
+                icon.className = 'bi bi-sun-fill me-2';
+                text.textContent = getTranslatedValue('lightMode', 'Modo Claro');
+                button.title = getTranslatedValue('switchToLightMode', 'Alternar para modo claro');
+            } else {
+                icon.className = 'bi bi-moon-fill me-2';
+                text.textContent = getTranslatedValue('darkMode', 'Modo Escuro');
+                button.title = getTranslatedValue('switchToDarkMode', 'Alternar para modo escuro');
+            }
+        }
+    }
+
+    /**
+     * Initialize dark mode
+     */
+    function initializeDarkMode() {
+        // Verificar se há tema salvo no localStorage
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        // Aplicar tema baseado na preferência salva ou do sistema
+        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            updateDarkModeButton(true);
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            updateDarkModeButton(false);
+        }
+        
+        // Detectar mudanças na preferência do sistema
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (!localStorage.getItem('theme')) {
+                if (e.matches) {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    updateDarkModeButton(true);
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    updateDarkModeButton(false);
+                }
+            }
+        });
     }
 
     /**
@@ -1955,533 +2121,8 @@
         // Setup event listeners
         setupEventListeners();
         
-        // Load initial data
-        loadInitialData();
-        
-        // Configurar atualização automática dos cards financeiros
-        configurarAtualizacaoAutomatica();
-        
-        console.log('✅ Aplicação inicializada com sucesso');
-    }
-
-    /**
-     * Verificar se o usuário está autenticado
-     */
-    function checkAuthentication() {
-        const token = localStorage.getItem('authToken');
-        const user = localStorage.getItem('user');
-        
-        console.log('🔍 Verificando autenticação...');
-        console.log('Token:', token ? 'Presente' : 'Ausente');
-        console.log('User:', user ? 'Presente' : 'Ausente');
-        
-        if (!token || !user) {
-            console.log('❌ Dados de autenticação ausentes');
-            return false;
-        }
-        
-        try {
-            const userData = JSON.parse(user);
-            console.log('✅ Usuário autenticado:', userData.username);
-            return true;
-        } catch (error) {
-            console.error('❌ Erro ao parsear dados do usuário:', error);
-            return false;
-        }
-    }
-
-    /**
-     * Setup UI components
-     */
-    function setupUI() {
-        // Update user info
-        auth.updateUI();
-        
-        // Show dashboard by default
-        ui.showSection('dashboardSection');
-        
-        // Setup table responsiveness
-        ui.setupTableResponsiveness();
-    }
-
-    /**
-     * Load initial data
-     */
-    async function loadInitialData() {
-        try {
-            const loadingSpinner = ui.showLoadingOverlay('Carregando dados iniciais...');
-            
-            // Load dashboard data
-            await loadDashboardData();
-            
-            ui.hideLoadingOverlay();
-        } catch (error) {
-            console.error('Erro ao carregar dados iniciais:', error);
-            showToast('Erro ao carregar dados iniciais', 'error');
-        }
-    }
-
-    /**
-     * Setup event listeners
-     */
-    function setupEventListeners() {
-        console.log('🔧 setupEventListeners chamado');
-        
-        // Section load events
-        document.addEventListener('sectionLoad', handleSectionLoad);
-        
-        // Modal close events for detail modals
-        const detailModals = [
-            'clientDetailModal',
-            'saleDetailModal', 
-            'purchaseDetailModal',
-            'supplierDetailModal',
-            'userDetailModal'
-        ];
-
-        detailModals.forEach(modalId => {
-            const modal = document.getElementById(modalId);
-            if (modal) {
-                modal.addEventListener('hidden.bs.modal', clearDetailModalData);
-            }
-        });
-        
-        // Form submissions
-        document.addEventListener('submit', handleFormSubmit);
-        
-        // Button clicks
-        document.addEventListener('click', handleButtonClick);
-        console.log('🔧 Event listener de clique configurado');
-        
-        // Search inputs
-        if (typeof Utils !== 'undefined' && Utils.debounce) {
-            document.addEventListener('input', Utils.debounce(handleSearch, 300));
-        } else {
-            document.addEventListener('input', handleSearch);
-        }
-        
-        // Pagination
-        document.addEventListener('click', handlePagination);
-        
-        // Language change events
-        document.addEventListener('languageChanged', handleLanguageChange);
-        
-        console.log('🔧 Todos os event listeners configurados');
-    }
-
-    /**
-     * Handle section load
-     */
-    function handleSectionLoad(event) {
-        const section = event.detail.section;
-        
-        switch (section) {
-            case 'dashboardSection':
-                loadDashboardData();
-                break;
-            case 'clientsSection':
-                loadClients();
-                break;
-            case 'salesSection':
-                loadSales();
-                // Configurar eventos do formulário de venda quando a seção for carregada
-                console.log('🔧 Configurando eventos do formulário de venda na seção...');
-                setupSaleFormEvents();
-                break;
-            case 'productsSection':
-                loadProducts();
-                break;
-            case 'purchasesSection':
-                loadPurchases();
-                break;
-            case 'suppliersSection':
-                loadSuppliers();
-                break;
-            case 'usersSection':
-                loadUsers();
-                break;
-        }
-    }
-
-    /**
-/**
- * Main Application Module
- * Gestor PRO - Sistema de Gestão Empresarial
- * Version: 2.0.0
- */
-
-(() => {
-    'use strict';
-
-    // Application state
-    const state = {
-        currentSection: null,
-        modals: new Map(),
-        charts: new Map(),
-        detailModalData: null, // Armazenar dados do modal de detalhes ativo
-        data: {
-            clients: { page: 1, data: [], total: 0, loaded: false },
-            sales: { page: 1, data: [], total: 0, loaded: false },
-            products: { page: 1, data: [], total: 0, loaded: false },
-            purchases: { page: 1, data: [], total: 0, loaded: false },
-            suppliers: { page: 1, data: [], total: 0, loaded: false },
-            users: { page: 1, data: [], total: 0, loaded: false }
-        }
-    };
-
-    // Expor estado globalmente para i18n.js
-    window.state = state;
-
-    /**
-     * Helper function to show toast notifications
-     */
-    function showToast(message, type = 'info', duration = 5000) {
-        console.log('🔔 showToast chamado:', message, type);
-        
-        if (window.ui && window.ui.showToast) {
-            console.log('🔔 Usando ui.showToast');
-            window.ui.showToast(message, type, duration);
-        } else if (window.Utils && window.Utils.showToast) {
-            console.log('🔔 Usando Utils.showToast');
-            window.Utils.showToast(message, type, duration);
-        } else {
-            console.log('🔔 Usando alert como fallback');
-            alert(`${type.toUpperCase()}: ${message}`);
-        }
-    }
-
-    /**
-     * Helper function to get translated value
-     */
-    function getTranslatedValue(key, fallback) {
-        return window.i18n ? window.i18n.t(key) : fallback;
-    }
-
-    /**
-     * Helper function to get payment method translation
-     */
-    function getTranslatedPaymentMethod(method) {
-        if (!method) return getTranslatedValue('cash', 'Dinheiro');
-        
-        const methodMap = {
-            'Dinheiro': 'cash',
-            'Cartão de Crédito': 'creditCard',
-            'Cartão de Débito': 'debitCard',
-            'PIX': 'pix',
-            'Crediário': 'installment',
-            'Boleto': 'boleto',
-            'Transferência': 'transfer',
-            'Money': 'cash',
-            'Credit Card': 'creditCard',
-            'Debit Card': 'debitCard',
-            'Installment': 'installment',
-            'Bank Slip': 'boleto',
-            'Transfer': 'transfer',
-            'Efectivo': 'cash',
-            'Tarjeta de Crédito': 'creditCard',
-            'Tarjeta de Débito': 'debitCard',
-            'Cuotas': 'installment',
-            'Transferencia': 'transfer'
-        };
-        
-        const translationKey = methodMap[method] || 'cash';
-        return getTranslatedValue(translationKey, method);
-    }
-
-    /**
-     * Helper function to translate status
-     */
-    function getTranslatedStatus(status) {
-        if (!status) return getTranslatedValue('dash', '-');
-        
-        // Mapear status para chaves de tradução
-        const statusMap = {
-            'Pago': 'paid',
-            'Pendente': 'pending',
-            'Concluída': 'completed',
-            'Concluida': 'completed',
-            'Cancelada': 'cancelled',
-            'Cancelado': 'cancelled',
-            'vencido': 'overdue',
-            'Vencido': 'overdue',
-            'Vencida': 'overdue',
-            'Paid': 'paid',
-            'Pending': 'pending',
-            'Completed': 'completed',
-            'Cancelled': 'cancelled',
-            'Pagado': 'paid',
-            'Pendiente': 'pending',
-            'Completado': 'completed',
-            'Cancelado': 'cancelled'
-        };
-        
-        const translationKey = statusMap[status] || status.toLowerCase();
-        return getTranslatedValue(translationKey, status);
-    }
-
-    /**
-     * Update detail modals when language changes
-     */
-    function updateDetailModals() {
-        // Verificar se há algum modal de detalhes aberto
-        const detailModals = [
-            'clientDetailModal',
-            'saleDetailModal', 
-            'purchaseDetailModal',
-            'supplierDetailModal',
-            'userDetailModal'
-        ];
-
-        detailModals.forEach(modalId => {
-            const modal = document.getElementById(modalId);
-            if (modal && modal.classList.contains('show')) {
-                console.log(`🔄 Atualizando modal ${modalId}...`);
-                
-                // Atualizar todos os elementos com getTranslatedValue
-                const elements = modal.querySelectorAll('[id^="detail"]');
-                elements.forEach(element => {
-                    const currentText = element.textContent.trim();
-                    
-                    // Verificar se o elemento é um status (contém 'Status' no ID)
-                    if (element.id && element.id.includes('Status')) {
-                        const newText = getTranslatedStatus(currentText);
-                        if (newText !== currentText) {
-                            element.textContent = newText;
-                            console.log(`✅ Status traduzido: "${currentText}" → "${newText}"`);
-                        }
-                    }
-                    // Verificar se o texto atual é um valor traduzível
-                    else if (currentText === '-' || currentText === 'N/A' || currentText === 'Não informado' || 
-                        currentText === 'Not informed' || currentText === 'No informado') {
-                        
-                        // Determinar qual chave de tradução usar baseado no ID do elemento
-                        let translationKey = 'dash';
-                        if (currentText === 'N/A') {
-                            translationKey = 'notAvailable';
-                        } else if (currentText === 'Não informado' || currentText === 'Not informed' || currentText === 'No informado') {
-                            translationKey = 'notInformed';
-                        }
-                        
-                        const newText = getTranslatedValue(translationKey, currentText);
-                        if (newText !== currentText) {
-                            element.textContent = newText;
-                            console.log(`✅ Traduzido: "${currentText}" → "${newText}"`);
-                        }
-                    }
-                });
-                
-                // Atualizar mensagens de "Nenhum produto encontrado" e "Nenhum pagamento encontrado"
-                const noProductsRow = modal.querySelector('#detailSaleProductsList tr td[colspan="4"]');
-                if (noProductsRow && noProductsRow.textContent.includes('Nenhum produto encontrado')) {
-                    noProductsRow.textContent = getTranslatedValue('noProductsFound', 'Nenhum produto encontrado');
-                }
-                
-                const noPaymentsRow = modal.querySelector('#detailSalePaymentsList tr td[colspan="3"]');
-                if (noPaymentsRow && noPaymentsRow.textContent.includes('Nenhum pagamento encontrado')) {
-                    noPaymentsRow.textContent = getTranslatedValue('noPaymentsFound', 'Nenhum pagamento encontrado');
-                }
-            }
-        });
-    }
-
-    /**
-     * Handle edit from detail modal
-     */
-    async function handleEditFromDetail(type) {
-        console.log('🎯 handleEditFromDetail chamado para:', type);
-        
-        // Obter ID do modal de detalhes
-        let saleId = null;
-        
-        if (type === 'sale') {
-            // Primeiro, tentar buscar do elemento hidden
-            const saleIdElement = document.getElementById('detailSaleId');
-            console.log('🔍 Elemento detailSaleId encontrado:', saleIdElement);
-            
-            if (saleIdElement) {
-                saleId = saleIdElement.value?.trim();
-                console.log('🔍 Valor do elemento detailSaleId:', saleId);
-            }
-            
-            // Se o valor estiver vazio, tentar buscar do dataset do modal
-            if (!saleId) {
-                const modal = document.getElementById('saleDetailModal');
-                if (modal && modal.dataset.saleId) {
-                    saleId = modal.dataset.saleId;
-                    console.log('🔍 ID encontrado no dataset do modal:', saleId);
-                }
-            }
-            
-            // Se ainda não encontrou, tentar buscar de outras formas
-            if (!saleId) {
-                console.error('❌ Elemento detailSaleId não encontrado ou vazio');
-                console.log('🔍 Tentando buscar ID de outras formas...');
-                
-                // Tentar buscar do modal diretamente
-                const modal = document.getElementById('saleDetailModal');
-                if (modal) {
-                    console.log('🔍 Modal encontrado:', modal);
-                    console.log('🔍 Dataset do modal:', modal.dataset);
-                    
-                    // Tentar buscar do atributo data-sale-id
-                    if (modal.dataset.saleId) {
-                        saleId = modal.dataset.saleId;
-                        console.log('🔍 ID encontrado no data-sale-id:', saleId);
-                    }
-                }
-            }
-            
-            // Validar se temos o ID
-            if (!saleId) {
-                console.error('❌ ID da venda não encontrado no modal de detalhes');
-                showToast('Erro: ID da venda não encontrado', 'error');
-                return;
-            }
-            
-            console.log('📊 ID extraído do modal de detalhes:', saleId);
-        }
-        
-        // Fechar modal de detalhes
-        const detailModal = document.getElementById(`${type}DetailModal`);
-        if (detailModal && typeof bootstrap !== 'undefined') {
-            const bootstrapModal = bootstrap.Modal.getInstance(detailModal);
-            if (bootstrapModal) {
-                bootstrapModal.hide();
-            }
-        }
-        
-        // Aguardar e usar o fluxo padrão de edição
-        setTimeout(async () => {
-            console.log('🔄 Usando fluxo padrão de edição...');
-            try {
-                await handleEdit(type, saleId);
-                console.log('✅ Modal de edição aberto com dados da API');
-            } catch (error) {
-                console.error('❌ Erro ao abrir modal de edição:', error);
-                showToast('Erro ao carregar dados para edição', 'error');
-            }
-        }, 300);
-    }
-
-    /**
-     * Configure edit button for sale detail modal
-     */
-    function configureSaleEditButton(data) {
-        const editBtn = document.getElementById('editSaleFromDetailBtn');
-        if (editBtn) {
-            editBtn.onclick = () => {
-                console.log('Botão editar venda clicado');
-                handleEditFromDetail('sale');
-            };
-        }
-    }
-
-    /**
-     * Update all table statuses when language changes
-     */
-    function updateTableStatuses() {
-        console.log('🔄 Atualizando status das tabelas...');
-        
-        // Atualizar status na tabela de vendas
-        const salesTable = document.querySelector('#salesTable tbody');
-        if (salesTable) {
-            const statusBadges = salesTable.querySelectorAll('.badge');
-            statusBadges.forEach(badge => {
-                const currentText = badge.textContent.trim();
-                const newText = getTranslatedStatus(currentText);
-                if (newText !== currentText) {
-                    badge.textContent = newText;
-                    console.log(`✅ Status de venda traduzido: "${currentText}" → "${newText}"`);
-                }
-            });
-        }
-        
-        // Atualizar status na tabela de compras
-        const purchasesTable = document.querySelector('#purchasesTable tbody');
-        if (purchasesTable) {
-            const statusBadges = purchasesTable.querySelectorAll('.badge');
-            statusBadges.forEach(badge => {
-                const currentText = badge.textContent.trim();
-                const newText = getTranslatedStatus(currentText);
-                if (newText !== currentText) {
-                    badge.textContent = newText;
-                    console.log(`✅ Status de compra traduzido: "${currentText}" → "${newText}"`);
-                }
-            });
-        }
-        
-        // Atualizar status na tabela de clientes
-        const clientsTable = document.querySelector('#clientsTable tbody');
-        if (clientsTable) {
-            const statusBadges = clientsTable.querySelectorAll('.badge');
-            statusBadges.forEach(badge => {
-                const currentText = badge.textContent.trim();
-                const newText = getTranslatedStatus(currentText);
-                if (newText !== currentText) {
-                    badge.textContent = newText;
-                    console.log(`✅ Status de cliente traduzido: "${currentText}" → "${newText}"`);
-                }
-            });
-        }
-        
-        // Atualizar status na tabela de usuários
-        const usersTable = document.querySelector('#usersTable tbody');
-        if (usersTable) {
-            const statusBadges = usersTable.querySelectorAll('.badge');
-            statusBadges.forEach(badge => {
-                const currentText = badge.textContent.trim();
-                const newText = getTranslatedStatus(currentText);
-                if (newText !== currentText) {
-                    badge.textContent = newText;
-                    console.log(`✅ Status de usuário traduzido: "${currentText}" → "${newText}"`);
-                }
-            });
-        }
-        
-        // Atualizar status na tabela de produtos (se houver badges de status)
-        const productsTable = document.querySelector('#productsTable tbody');
-        if (productsTable) {
-            const statusBadges = productsTable.querySelectorAll('.badge');
-            statusBadges.forEach(badge => {
-                const currentText = badge.textContent.trim();
-                const newText = getTranslatedStatus(currentText);
-                if (newText !== currentText) {
-                    badge.textContent = newText;
-                    console.log(`✅ Status de produto traduzido: "${currentText}" → "${newText}"`);
-                }
-            });
-        }
-        
-        console.log('✅ Atualização de status das tabelas concluída');
-    }
-
-    /**
-     * Clear detail modal data when modal is closed
-     */
-    function clearDetailModalData() {
-        state.detailModalData = null;
-    }
-
-    /**
-     * Initialize application
-     */
-    function initialize() {
-        console.log('🚀 Inicializando aplicação...');
-        
-        // Verificar autenticação primeiro
-        if (!checkAuthentication()) {
-            console.log('❌ Usuário não autenticado, redirecionando para login...');
-            window.location.href = 'login.html';
-            return;
-        }
-        
-        console.log('✅ Usuário autenticado, continuando inicialização...');
-        
-        // Setup UI
-        setupUI();
-        
-        // Setup event listeners
-        setupEventListeners();
+        // Initialize dark mode
+        initializeDarkMode();
         
         // Load initial data
         loadInitialData();
@@ -2594,593 +2235,160 @@
         // Language change events
         document.addEventListener('languageChanged', handleLanguageChange);
         
+        // Dark mode toggle
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', handleDarkModeToggle);
+        }
+        
         console.log('🔧 Todos os event listeners configurados');
     }
 
     /**
-     * Handle section load
+     * Handle dark mode toggle
      */
-    function handleSectionLoad(event) {
-        const section = event.detail.section;
+    function handleDarkModeToggle(e) {
+        e.preventDefault();
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         
-        switch (section) {
-            case 'dashboardSection':
-                loadDashboardData();
-                break;
-            case 'clientsSection':
-                loadClients();
-                break;
-            case 'salesSection':
-                loadSales();
-                // Configurar eventos do formulário de venda quando a seção for carregada
-                console.log('🔧 Configurando eventos do formulário de venda na seção...');
-                setupSaleFormEvents();
-                break;
-            case 'productsSection':
-                loadProducts();
-                break;
-            case 'purchasesSection':
-                loadPurchases();
-                break;
-            case 'suppliersSection':
-                loadSuppliers();
-                break;
-            case 'usersSection':
-                loadUsers();
-                break;
+        if (isDark) {
+            // Desativar dark mode
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+            updateDarkModeButton(false);
+            showToast(getTranslatedValue('lightModeEnabled', 'Modo claro ativado'), 'success');
+        } else {
+            // Ativar dark mode
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            updateDarkModeButton(true);
+            showToast(getTranslatedValue('darkModeEnabled', 'Modo escuro ativado'), 'success');
         }
     }
 
     /**
-     * Handle form submissions
+     * Update dark mode button
      */
-    async function handleFormSubmit(event) {
-        console.log('🎯 handleFormSubmit chamado!');
-        console.log('📋 Event:', event);
-        console.log('📋 Target:', event.target);
+    function updateDarkModeButton(isDark) {
+        const button = document.getElementById('darkModeToggle');
+        if (button) {
+            const icon = button.querySelector('i');
+            const text = button.querySelector('span');
+            
+            if (isDark) {
+                icon.className = 'bi bi-sun-fill me-2';
+                text.textContent = getTranslatedValue('lightMode', 'Modo Claro');
+                button.title = getTranslatedValue('switchToLightMode', 'Alternar para modo claro');
+            } else {
+                icon.className = 'bi bi-moon-fill me-2';
+                text.textContent = getTranslatedValue('darkMode', 'Modo Escuro');
+                button.title = getTranslatedValue('switchToDarkMode', 'Alternar para modo escuro');
+            }
+        }
+    }
+
+    /**
+     * Initialize dark mode
+     */
+    function initializeDarkMode() {
+        // Verificar se há tema salvo no localStorage
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         
-        const form = event.target;
-        const action = form.dataset.action;
-        
-        console.log('📋 Action:', action);
-        
-        if (!action) {
-            console.log('❌ Nenhuma ação definida no formulário');
-            return;
+        // Aplicar tema baseado na preferência salva ou do sistema
+        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            updateDarkModeButton(true);
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            updateDarkModeButton(false);
         }
         
-        event.preventDefault();
-        
-        try {
-            console.log('📋 Iniciando coleta de dados...');
-            
-            // Coletar dados do formulário
-            const formData = new FormData(form);
-            const data = {};
-            
-            // Converter FormData para objeto
-            for (const [key, value] of formData.entries()) {
-                if (value !== '') {
-                    data[key] = value;
-                }
-            }
-
-            console.log('📊 Dados coletados:', data);
-
-            // Processamento especial para vendas
-            if (action === 'createSale' || action === 'updateSale') {
-                // Coletar produtos da venda
-                const productsList = document.getElementById('saleProductsList');
-                const productElements = productsList.querySelectorAll('[data-product-id]');
-                
-                if (productElements.length === 0) {
-                    showToast('Adicione pelo menos um produto à venda', 'warning');
-                    return;
-                }
-
-                const products = [];
-                productElements.forEach(element => {
-                    const productId = element.dataset.productId;
-                    const text = element.querySelector('small').textContent;
-                    
-                    console.log('🔍 Processando produto:', { productId, text });
-                    
-                    // Extrair quantidade e preço do texto
-                    // Formato esperado: "Qtd: 2 x R$ 50,00"
-                    const quantityMatch = text.match(/Qtd: (\d+)/);
-                    const priceMatch = text.match(/x R\$ ([\d,]+\.?\d*)/);
-                    
-                    console.log('🔍 Matches:', { quantityMatch, priceMatch });
-                    
-                    if (quantityMatch && priceMatch) {
-                        const quantity = parseInt(quantityMatch[1]);
-                        const price = parseFloat(priceMatch[1].replace(',', '.'));
-                        
-                        console.log('✅ Dados extraídos:', { quantity, price });
-                        
-                        products.push({
-                            productId: parseInt(productId),
-                            quantidade: quantity,
-                            precoUnitario: price
-                        });
-                    } else {
-                        console.error('❌ Erro ao extrair dados do produto:', text);
-                        console.log('   Quantity match:', quantityMatch);
-                        console.log('   Price match:', priceMatch);
-                    }
-                });
-
-                console.log('Produtos coletados:', products);
-                data.products = products;
-
-                // Definir data de venda usando função robusta
-                data.dataVenda = Utils.getCurrentDate();
-
-                // Determinar status da venda de forma robusta
-                const paidValue = parseFloat(document.getElementById('salePaidValueInitial').value) || 0;
-                const totalValue = parseFloat(document.getElementById('saleTotalValue').value) || 0;
-                const paymentForm = document.getElementById('paymentForma').value;
-                const statusSelectElement = document.getElementById('saleStatus');
-                
-                // Determinar status
-                let saleStatus = 'Pendente';
-                
-                // 1. Verificar se há um status selecionado no campo
-                if (statusSelectElement && statusSelectElement.value && statusSelectElement.value !== 'Pendente') {
-                    saleStatus = statusSelectElement.value;
-                    console.log('📊 Status selecionado manualmente:', saleStatus);
-                }
-                // 2. Se não há status manual, determinar automaticamente
-                else if (paidValue >= totalValue && totalValue > 0) {
-                    saleStatus = 'Pago';
-                    console.log('📊 Status determinado automaticamente como Pago (pagamento completo)');
-                } else if (paidValue > 0) {
-                    saleStatus = 'Pendente';
-                    console.log('📊 Status determinado automaticamente como Pendente (pagamento parcial)');
+        // Detectar mudanças na preferência do sistema
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (!localStorage.getItem('theme')) {
+                if (e.matches) {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    updateDarkModeButton(true);
                 } else {
-                    saleStatus = 'Pendente';
-                    console.log('📊 Status definido como padrão: Pendente');
-                }
-                
-                // Definir o status no objeto de dados
-                data.status = saleStatus;
-                console.log('📊 Status final da venda:', data.status);
-
-                // Coletar dados do pagamento inicial
-                if (paidValue > 0) {
-                    data.initialPayment = {
-                        valor: paidValue,
-                        formaPagamento: paymentForm,
-                        parcelas: parseInt(document.getElementById('paymentParcelas').value) || 1,
-                        bandeiraCartao: document.getElementById('paymentBandeiraCartao').value || null,
-                        bancoCrediario: document.getElementById('paymentBancoCrediario').value || null
-                    };
-                    console.log('💳 Dados do pagamento inicial:', data.initialPayment);
-                }
-
-                // Adicionar dados do cliente
-                const clientSelect = document.getElementById('saleClient');
-                if (clientSelect && clientSelect.value) {
-                    data.clientId = parseInt(clientSelect.value);
-                    
-                    // Adicionar nome do cliente se disponível
-                    const selectedOption = clientSelect.options[clientSelect.selectedIndex];
-                    if (selectedOption) {
-                        data.clientName = selectedOption.textContent.trim();
-                        console.log('👤 Cliente selecionado:', data.clientId, 'Nome:', data.clientName);
-                    } else {
-                        console.log('👤 Cliente selecionado:', data.clientId);
-                    }
-                }
-
-                // Adicionar valor total da venda
-                if (totalValue > 0) {
-                    data.valorTotal = totalValue;
-                    console.log('💰 Valor total da venda:', data.valorTotal);
-                }
-                
-                // Log final de debug
-                console.log('📊 Dados finais para envio:', JSON.stringify(data, null, 2));
-                console.log('🔍 DEBUG FINAL:');
-                console.log('  - Status final:', data.status);
-                console.log('  - Data da venda:', data.dataVenda);
-                console.log('  - Valor pago:', paidValue);
-                console.log('  - Valor total:', totalValue);
-                console.log('  - Cliente ID:', data.clientId);
-                console.log('  - Produtos:', data.products ? data.products.length : 0);
-            }
-
-            // Processamento especial para compras
-            if (action === 'createPurchase' || action === 'updatePurchase') {
-                // Coletar produtos da compra
-                const productsList = document.getElementById('purchaseProductsList');
-                const productElements = productsList.querySelectorAll('[data-product-id]');
-                
-                if (productElements.length === 0) {
-                    showToast('Adicione pelo menos um produto à compra', 'warning');
-                    return;
-                }
-
-                const products = [];
-                productElements.forEach(element => {
-                    const productId = element.dataset.productId;
-                    const text = element.querySelector('small').textContent;
-                    
-                    // Extrair quantidade e custo do texto
-                    // Formato esperado: "Qtd: 2 x R$ 50,00 = R$ 100,00"
-                    const quantityMatch = text.match(/Qtd: (\d+)/);
-                    const costMatch = text.match(/x R\$ ([\d,]+\.?\d*)/);
-                    
-                    if (quantityMatch && costMatch) {
-                        const quantity = parseInt(quantityMatch[1]);
-                        const cost = parseFloat(costMatch[1].replace(',', '.'));
-                        
-                        products.push({
-                            productId: parseInt(productId),
-                            quantidade: quantity,
-                            precoCustoUnitario: cost
-                        });
-                    } else {
-                        console.error('Erro ao extrair dados do produto da compra:', text);
-                        console.log('   Quantity match:', quantityMatch);
-                        console.log('   Cost match:', costMatch);
-                    }
-                });
-
-                console.log('Produtos da compra coletados:', products);
-                data.products = products;
-
-                // Adicionar data de compra se não fornecida
-                if (!data.dataCompra) {
-                    data.dataCompra = new Date().toISOString().split('T')[0];
-                }
-
-                // Adicionar supplierId se não estiver presente
-                const supplierSelect = document.getElementById('purchaseSupplier');
-                if (supplierSelect && supplierSelect.value) {
-                    data.supplierId = parseInt(supplierSelect.value);
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    updateDarkModeButton(false);
                 }
             }
+        });
+    }
 
-            // Limpar campos vazios
-            Object.keys(data).forEach(key => {
-                if (data[key] === '' || data[key] === null || data[key] === undefined) {
-                    delete data[key];
-                }
-            });
+    /**
+     * Handle section load
+     */
+    function handleSectionLoad(event) {
+        const section = event.detail.section;
+        
+        switch (section) {
+            case 'dashboardSection':
+                loadDashboardData();
+                break;
+            case 'clientsSection':
+                loadClients();
+                break;
+            case 'salesSection':
+                loadSales();
+                // Configurar eventos do formulário de venda quando a seção for carregada
+                console.log('🔧 Configurando eventos do formulário de venda na seção...');
+                setupSaleFormEvents();
+                break;
+            case 'productsSection':
+                loadProducts();
+                break;
+            case 'purchasesSection':
+                loadPurchases();
+                break;
+            case 'suppliersSection':
+                loadSuppliers();
+                break;
+            case 'usersSection':
+                loadUsers();
+                break;
+        }
+    }
 
-            // Remover ID se estiver vazio (para criação)
-            if (data.id === '') {
-                delete data.id;
-            }
-
-            console.log('Dados do formulário:', data);
-
-            // Chamar função apropriada
-            console.log('🔍 Procurando função:', action);
+    /**
+     * Helper function to format currency based on current language
+     */
+    function formatCurrencyByLanguage(value) {
+        if (window.i18n && window.i18n.formatCurrency) {
+            return window.i18n.formatCurrency(value);
+        }
+        
+        // Fallback to Utils.formatCurrency with language-specific currency
+        const currentLanguage = window.i18n ? window.i18n.getCurrentLanguage() : 'pt';
+        const currencyMap = {
+            'pt': 'BRL',
+            'en': 'USD',
+            'es': 'EUR'
+        };
+        const currency = currencyMap[currentLanguage] || 'BRL';
+        
+        try {
+            const localeMap = {
+                'pt': 'pt-BR',
+                'en': 'en-US',
+                'es': 'es-ES'
+            };
+            const locale = localeMap[currentLanguage] || 'pt-BR';
             
-            let result;
-            switch (action) {
-                case 'createClient':
-                    result = await createClient(data);
-                    break;
-                case 'updateClient':
-                    result = await updateClient(data);
-                    break;
-                case 'createSale':
-                    result = await createSale(data);
-                    break;
-                case 'updateSale':
-                    result = await updateSale(data);
-                    break;
-                case 'createProduct':
-                    result = await createProduct(data);
-                    break;
-                case 'updateProduct':
-                    result = await updateProduct(data);
-                    break;
-                case 'createPurchase':
-                    result = await createPurchase(data);
-                    break;
-                case 'updatePurchase':
-                    result = await updatePurchase(data);
-                    break;
-                case 'createSupplier':
-                    result = await createSupplier(data);
-                    break;
-                case 'updateSupplier':
-                    result = await updateSupplier(data);
-                    break;
-                case 'createUser':
-                    result = await createUser(data);
-                    break;
-                case 'updateUser':
-                    result = await updateUser(data);
-                    break;
-                case 'generateSalesReport':
-                    result = await handleSalesReport();
-                    break;
-                case 'generateCashFlowReport':
-                    result = await handleCashFlowReport();
-                    break;
-                case 'exportAccountingReport':
-                    result = await handleAccountingReport();
-                    break;
-                case 'generateSalesPrediction':
-                    result = await handleSalesPrediction();
-                    break;
-                default:
-                    console.error('❌ Ação não reconhecida:', action);
-                    showToast('Ação não reconhecida: ' + action, 'error');
-                    return;
-            }
-            
-            console.log('✅ Função', action, 'executada com sucesso');
-
+            return new Intl.NumberFormat(locale, {
+                style: 'currency',
+                currency: currency
+            }).format(parseFloat(value));
         } catch (error) {
-            console.error('Erro no formulário:', error);
-            if (ui && ui.showToast) {
-                ui.showToast('Erro ao processar formulário', 'error');
-            } else if (Utils && Utils.showToast) {
-                Utils.showToast('Erro ao processar formulário', 'error');
-            } else {
-                alert('Erro ao processar formulário');
-            }
+            console.error('❌ Erro ao formatar moeda:', error);
+            return Utils.formatCurrency(value);
         }
     }
 
-    /**
-     * Handle button clicks
-     */
-    async function handleButtonClick(event) {
-        console.log('🎯 handleButtonClick chamado:', event);
-        console.log('🎯 Target:', event.target);
-        console.log('🎯 Current target:', event.currentTarget);
-        
-        const button = event.target.closest('[data-action]');
-        console.log('🎯 Botão encontrado:', button);
-        
-        if (!button) {
-            console.log('❌ Nenhum botão com data-action encontrado');
-            return;
-        }
-        
-        const action = button.dataset.action;
-        const type = button.dataset.type;
-        const id = button.dataset.id;
-        
-        console.log('🎯 Ação:', action);
-        console.log('🎯 Tipo:', type);
-        console.log('🎯 ID:', id);
-        
-        try {
-            switch (action) {
-                case 'edit':
-                    console.log('🎯 Executando ação EDIT para:', button.dataset.type, id);
-                    await handleEdit(button.dataset.type, id);
-                    break;
-                case 'delete':
-                    await handleDelete(button.dataset.type, id);
-                    break;
-                case 'view':
-                    console.log('🎯 Executando ação VIEW para:', button.dataset.type, id);
-                    await handleView(button.dataset.type, id);
-                    break;
-                case 'export':
-                    await handleExport(button.dataset.type);
-                    break;
-                case 'print':
-                    handlePrint(button.dataset.type);
-                    break;
-            }
-        } catch (error) {
-            console.error('Erro na ação:', error);
-            ui.showToast('Erro ao executar ação', 'error');
-        }
-    }
-
-    /**
-     * Handle search
-     */
-    async function handleSearch(event) {
-        const input = event.target;
-        const searchType = input.dataset.search;
-        const query = input.value.trim();
-        
-        if (!searchType) return;
-        
-        try {
-            switch (searchType) {
-                case 'clients':
-                    await searchClients(query);
-                    break;
-                case 'sales':
-                    await searchSales(query);
-                    break;
-                case 'products':
-                    await searchProducts(query);
-                    break;
-                case 'purchases':
-                    await searchPurchases(query);
-                    break;
-                case 'suppliers':
-                    await searchSuppliers(query);
-                    break;
-                case 'users':
-                    await searchUsers(query);
-                    break;
-            }
-        } catch (error) {
-            console.error('Erro na busca:', error);
-        }
-    }
-
-    /**
-     * Handle pagination
-     */
-    async function handlePagination(event) {
-        const link = event.target.closest('[data-page]');
-        if (!link) return;
-        
-        const page = parseInt(link.dataset.page);
-        const type = link.dataset.type;
-        
-        if (!type || isNaN(page)) return;
-        
-        try {
-            switch (type) {
-                case 'clients':
-                    await loadClients(page);
-                    break;
-                case 'sales':
-                    await loadSales(page);
-                    break;
-                case 'products':
-                    await loadProducts(page);
-                    break;
-                case 'purchases':
-                    await loadPurchases(page);
-                    break;
-                case 'suppliers':
-                    await loadSuppliers(page);
-                    break;
-                case 'users':
-                    await loadUsers(page);
-                    break;
-            }
-        } catch (error) {
-            console.error('Erro na paginação:', error);
-        }
-    }
-
-    /**
-     * Handle language change
-     */
-    function handleLanguageChange(event) {
-        console.log('🌍 Idioma alterado:', event.detail.language);
-        
-        // Atualizar status das tabelas
-        updateTableStatuses();
-        
-        // Atualizar modais de detalhes abertos
-        updateDetailModals();
-        
-        // Atualizar elementos dinâmicos
-        if (window.i18n) {
-            window.i18n.updateAllElements();
-        }
-    }
-
-    // ===== DATA LOADING FUNCTIONS =====
-
-    /**
-     * Extract supplier name from purchase object
-     */
-    function extractSupplierName(purchase) {
-        // Se o fornecedor é um objeto, extrair o nome
-        if (purchase.supplier && typeof purchase.supplier === 'object') {
-            return purchase.supplier.nome || purchase.supplier.name || 'Fornecedor';
-        }
-        
-        // Se o fornecedor é um objeto, extrair o nome
-        if (purchase.fornecedor && typeof purchase.fornecedor === 'object') {
-            return purchase.fornecedor.nome || purchase.fornecedor.name || 'Fornecedor';
-        }
-        
-        // Se é uma string, usar diretamente
-        if (typeof purchase.supplier === 'string') {
-            return purchase.supplier;
-        }
-        
-        if (typeof purchase.fornecedor === 'string') {
-            return purchase.fornecedor;
-        }
-        
-        // Fallbacks
-        return purchase.nomeFornecedor || purchase.supplierName || 'Fornecedor';
-    }
-
-    /**
-     * Load dashboard data
-     */
-    async function loadDashboardData() {
-        try {
-            console.log('🎯 Carregando dados do dashboard...');
-            const response = await api.get('/dashboard/stats');
-            console.log('📊 Resposta da API dashboard:', response);
-            
-            // Verificar se a resposta tem dados válidos (com ou sem propriedade success/data)
-            if (response && (response.success || response.data || typeof response === 'object')) {
-                const data = response.data || response;
-                console.log('📈 Dados do dashboard:', data);
-                
-                // Se não há dados de vendas no dashboard, buscar separadamente
-                if (!data.sales && !data.vendas && !data.salesByMonth) {
-                    console.log('⚠️ Nenhum dado de vendas no dashboard, buscando separadamente...');
-                    try {
-                        const salesResponse = await api.get('/sales', { limit: 1000 });
-                        console.log('📈 Resposta da API vendas:', salesResponse);
-                        
-                        if (salesResponse && (salesResponse.sales || salesResponse.data || Array.isArray(salesResponse))) {
-                            const sales = salesResponse.sales || salesResponse.data || salesResponse;
-                            data.sales = sales;
-                            console.log(`✅ ${sales.length} vendas carregadas separadamente`);
-                        } else {
-                            console.log('⚠️ Nenhuma venda encontrada na API');
-                            data.sales = [];
-                        }
-                    } catch (salesError) {
-                        console.error('❌ Erro ao carregar vendas:', salesError);
-                        data.sales = [];
-                    }
-                }
-                
-                // Buscar dados específicos para os cards que estão faltando
-                await loadDashboardCardsData(data);
-                
-                renderDashboard(data);
-            } else {
-                console.log('❌ Resposta inválida do dashboard:', response);
-                // Tentar carregar apenas vendas
-                try {
-                    const salesResponse = await api.get('/sales', { limit: 1000 });
-                    const sales = salesResponse.sales || salesResponse.data || salesResponse || [];
-                    console.log(`✅ ${sales.length} vendas carregadas como fallback`);
-                    const data = { sales };
-                    await loadDashboardCardsData(data);
-                    renderDashboard(data);
-                } catch (error) {
-                    console.error('❌ Erro ao carregar vendas como fallback:', error);
-                    renderDashboard({});
-                }
-            }
-        } catch (error) {
-            console.error('❌ Erro ao carregar dashboard:', error);
-            // Tentar carregar apenas vendas como último recurso
-            try {
-                const salesResponse = await api.get('/sales', { limit: 1000 });
-                const sales = salesResponse.sales || salesResponse.data || salesResponse || [];
-                console.log(`✅ ${sales.length} vendas carregadas como último recurso`);
-                const data = { sales };
-                await loadDashboardCardsData(data);
-                renderDashboard(data);
-            } catch (salesError) {
-                console.error('❌ Erro ao carregar vendas como último recurso:', salesError);
-                renderDashboard({});
-            }
-        }
-
-        // Carregar notificações de estoque após o dashboard
-        if (window.stockNotificationManager) {
-            console.log('✅ Sistema de notificações encontrado no dashboard');
-            setTimeout(() => {
-                console.log('🔄 Forçando verificação de alertas...');
-                window.stockNotificationManager.forceCheck();
-            }, 1000);
-        } else {
-            console.error('❌ Sistema de notificações não encontrado no dashboard');
-        }
-    }
+    // Initialize the application
+    initialize();
 
     /**
      * Load specific data for dashboard cards
@@ -4829,6 +4037,14 @@
         console.log('   - Tooltip: Azul escuro com transparência');
 
         console.log('📊 Criando configuração do gráfico...');
+        
+        // Detectar modo escuro
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+        
+        // Configurar cores baseadas no modo
+        const textColor = isDarkMode ? '#ffffff' : '#333333';
+        const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(29, 78, 137, 0.08)';
+        
         const chart = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -4868,14 +4084,15 @@
                                 family: 'Inter, sans-serif',
                                 size: 12,
                                 weight: '600'
-                            }
+                            },
+                            color: textColor
                         }
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(29, 78, 137, 0.95)', // var(--primary-color)
+                        backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.9)' : 'rgba(29, 78, 137, 0.95)',
                         titleColor: '#fff',
                         bodyColor: '#fff',
-                        borderColor: '#1D4E89', // var(--primary-color)
+                        borderColor: '#1D4E89',
                         borderWidth: 1,
                         cornerRadius: 8,
                         displayColors: true,
@@ -4893,10 +4110,9 @@
                 scales: {
                     y: {
                         beginAtZero: true,
-                        // Definir máximo baseado nos dados reais
                         suggestedMax: Math.max(...salesCurrentYear, ...salesPreviousYear) * 1.2,
                         grid: {
-                            color: 'rgba(29, 78, 137, 0.08)', // var(--primary-color) com transparência
+                            color: gridColor,
                             drawBorder: false
                         },
                         ticks: {
@@ -4909,7 +4125,8 @@
                             font: {
                                 family: 'Inter, sans-serif',
                                 size: 11
-                            }
+                            },
+                            color: textColor
                         }
                     },
                     x: {
@@ -4921,7 +4138,8 @@
                                 family: 'Inter, sans-serif',
                                 size: 11,
                                 weight: '600'
-                            }
+                            },
+                            color: textColor
                         }
                     }
                 }
@@ -5003,6 +4221,13 @@
         const currentYear = new Date().getFullYear();
         const previousYear = currentYear - 1;
 
+        // Detectar modo escuro
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+        
+        // Configurar cores baseadas no modo
+        const textColor = isDarkMode ? '#ffffff' : '#333333';
+        const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(29, 78, 137, 0.08)';
+
         // Aplicar cores harmoniosas diretamente para gráfico vazio
         const primaryColor = '#1D4E89'; // var(--primary-color) - azul escuro
         const infoColor = '#4A90E2'; // var(--info-color) - azul info
@@ -5051,14 +4276,15 @@
                                 family: 'Inter, sans-serif',
                                 size: 12,
                                 weight: '600'
-                            }
+                            },
+                            color: textColor
                         }
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(29, 78, 137, 0.95)', // var(--primary-color)
+                        backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.9)' : 'rgba(29, 78, 137, 0.95)',
                         titleColor: '#fff',
                         bodyColor: '#fff',
-                        borderColor: '#1D4E89', // var(--primary-color)
+                        borderColor: '#1D4E89',
                         borderWidth: 1,
                         cornerRadius: 8,
                         displayColors: true
@@ -5069,7 +4295,7 @@
                         beginAtZero: true,
                         max: 100,
                         grid: {
-                            color: 'rgba(29, 78, 137, 0.08)', // var(--primary-color) com transparência
+                            color: gridColor,
                             drawBorder: false
                         },
                         ticks: {
@@ -5082,7 +4308,8 @@
                             font: {
                                 family: 'Inter, sans-serif',
                                 size: 11
-                            }
+                            },
+                            color: textColor
                         }
                     },
                     x: {
@@ -5094,7 +4321,8 @@
                                 family: 'Inter, sans-serif',
                                 size: 11,
                                 weight: '600'
-                            }
+                            },
+                            color: textColor
                         }
                     }
                 }
@@ -8009,7 +7237,7 @@
             console.log('🔍 Produto processado:', { nome, totalVendas, valorTotal, originalProduct: product });
             
             // Garantir que o valor seja um número válido
-            const valorFormatado = isNaN(valorTotal) ? 'R$ 0,00' : Utils.formatCurrency(valorTotal);
+            const valorFormatado = isNaN(valorTotal) ? 'R$ 0,00' : formatCurrencyByLanguage(valorTotal);
             
             return `
                 <tr>
@@ -8038,7 +7266,7 @@
         tbody.innerHTML = clients.slice(0, 5).map(client => `
             <tr>
                 <td>${client.nome || 'Cliente'}</td>
-                <td>${Utils.formatCurrency(client.totalCompras || 0)}</td>
+                <td>${formatCurrencyByLanguage(client.totalCompras || 0)}</td>
             </tr>
         `).join('');
     }
@@ -8091,7 +7319,7 @@
                                 ${data.overdueReceivable.map(item => `
                                     <tr>
                                         <td>${item.cliente || 'Cliente'}</td>
-                                        <td>${Utils.formatCurrency(item.valor || 0)}</td>
+                                        <td>${formatCurrencyByLanguage(item.valor || 0)}</td>
                                         <td>${Utils.formatDate(item.vencimento)}</td>
                                     </tr>
                                 `).join('')}
@@ -8120,7 +7348,7 @@
                         <td>${item.id || getTranslatedValue('dash', '-')}</td>
                         <td>${item.fornecedor || 'Fornecedor'}</td>
                         <td>${Utils.formatDate(item.vencimento)}</td>
-                        <td>${Utils.formatCurrency(item.valor || 0)}</td>
+                        <td>${formatCurrencyByLanguage(item.valor || 0)}</td>
                     </tr>
                 `).join('');
                 console.log('✅ Compras vencidas renderizadas com sucesso');
@@ -8153,7 +7381,7 @@
                                 ${data.upcomingReceivable.map(item => `
                                     <tr>
                                         <td>${item.cliente || 'Cliente'}</td>
-                                        <td>${Utils.formatCurrency(item.valor || 0)}</td>
+                                        <td>${formatCurrencyByLanguage(item.valor || 0)}</td>
                                         <td>${Utils.formatDate(item.vencimento)}</td>
                                     </tr>
                                 `).join('')}
@@ -8191,7 +7419,7 @@
                                 ${data.upcomingPayable.map(item => `
                                     <tr>
                                         <td>${item.fornecedor || 'Fornecedor'}</td>
-                                        <td>${Utils.formatCurrency(item.valor || 0)}</td>
+                                        <td>${formatCurrencyByLanguage(item.valor || 0)}</td>
                                         <td>${Utils.formatDate(item.vencimento)}</td>
                                     </tr>
                                 `).join('')}
@@ -8304,7 +7532,7 @@
                 <div class="col-md-3">
                     <div class="card bg-success text-white">
                         <div class="card-body text-center">
-                            <h4 class="card-title">${Utils.formatCurrency(totalValue)}</h4>
+                            <h4 class="card-title">${formatCurrencyByLanguage(totalValue)}</h4>
                             <p class="card-text" data-i18n="totalValue">Valor Total</p>
                         </div>
                     </div>
@@ -8312,7 +7540,7 @@
                 <div class="col-md-3">
                     <div class="card bg-info text-white">
                         <div class="card-body text-center">
-                            <h4 class="card-title">${Utils.formatCurrency(averageValue)}</h4>
+                            <h4 class="card-title">${formatCurrencyByLanguage(averageValue)}</h4>
                             <p class="card-text" data-i18n="averageValue">Valor Médio</p>
                         </div>
                     </div>
@@ -8368,7 +7596,7 @@
                                                 <tr>
                                                     <td>${sale.id}</td>
                                                     <td>${Utils.sanitizeHTML(clientName)}</td>
-                                                    <td>${Utils.formatCurrency(sale.valorTotal)}</td>
+                                                    <td>${formatCurrencyByLanguage(sale.valorTotal)}</td>
                                                     <td><span class="badge bg-${getStatusColor(saleStatus)}">${getTranslatedStatus(saleStatus)}</span></td>
                                                 </tr>
                                             `;
@@ -8408,7 +7636,7 @@
                                         <tr>
                                             <td>${sale.id}</td>
                                             <td>${Utils.sanitizeHTML(clientName)}</td>
-                                            <td>${Utils.formatCurrency(sale.valorTotal)}</td>
+                                            <td>${formatCurrencyByLanguage(sale.valorTotal)}</td>
                                             <td>${Utils.formatDate(saleDate)}</td>
                                             <td><span class="badge bg-${getStatusColor(saleStatus)}">${getTranslatedStatus(saleStatus)}</span></td>
                                             <td>
@@ -8543,7 +7771,7 @@
                 <div class="col-md-4">
                     <div class="card bg-success text-white">
                         <div class="card-body text-center">
-                            <h4 class="card-title">${Utils.formatCurrency(totalIncome)}</h4>
+                            <h4 class="card-title">${formatCurrencyByLanguage(totalIncome)}</h4>
                             <p class="card-text" data-i18n="totalIncome">Receitas</p>
                         </div>
                     </div>
@@ -8551,7 +7779,7 @@
                 <div class="col-md-4">
                     <div class="card bg-danger text-white">
                         <div class="card-body text-center">
-                            <h4 class="card-title">${Utils.formatCurrency(totalExpense)}</h4>
+                            <h4 class="card-title">${formatCurrencyByLanguage(totalExpense)}</h4>
                             <p class="card-text" data-i18n="totalExpense">Despesas</p>
                         </div>
                     </div>
@@ -8559,7 +7787,7 @@
                 <div class="col-md-4">
                     <div class="card bg-${netFlow >= 0 ? 'primary' : 'warning'} text-white">
                         <div class="card-body text-center">
-                            <h4 class="card-title">${Utils.formatCurrency(netFlow)}</h4>
+                            <h4 class="card-title">${formatCurrencyByLanguage(netFlow)}</h4>
                             <p class="card-text" data-i18n="netFlow">Fluxo Líquido</p>
                         </div>
                     </div>
@@ -8592,9 +7820,9 @@
                                         <tr>
                                             <td>${Utils.formatDate(item.date || item.data)}</td>
                                             <td>${Utils.sanitizeHTML(item.description || item.descricao || 'N/A')}</td>
-                                            <td class="text-success">${income > 0 ? Utils.formatCurrency(income) : '-'}</td>
-                                            <td class="text-danger">${expense > 0 ? Utils.formatCurrency(expense) : '-'}</td>
-                                            <td class="fw-bold ${balance >= 0 ? 'text-success' : 'text-danger'}">${Utils.formatCurrency(balance)}</td>
+                                            <td class="text-success">${income > 0 ? formatCurrencyByLanguage(income) : '-'}</td>
+                                            <td class="text-danger">${expense > 0 ? formatCurrencyByLanguage(expense) : '-'}</td>
+                                            <td class="fw-bold ${balance >= 0 ? 'text-success' : 'text-danger'}">${formatCurrencyByLanguage(balance)}</td>
                                         </tr>
                                     `;
                                 }).join('')}
@@ -8778,7 +8006,7 @@
                 <div class="col-md-4">
                     <div class="card bg-info text-white shadow-sm">
                         <div class="card-body text-center">
-                            <h4 class="card-title">${Utils.formatCurrency(totalHistorical)}</h4>
+                            <h4 class="card-title">${formatCurrencyByLanguage(totalHistorical)}</h4>
                             <p class="card-text" data-i18n="historicalSales">Vendas Históricas</p>
                         </div>
                     </div>
@@ -8786,7 +8014,7 @@
                 <div class="col-md-4">
                     <div class="card bg-warning text-white shadow-sm">
                         <div class="card-body text-center">
-                            <h4 class="card-title">${Utils.formatCurrency(totalPredicted)}</h4>
+                            <h4 class="card-title">${formatCurrencyByLanguage(totalPredicted)}</h4>
                             <p class="card-text" data-i18n="predictedSales">Vendas Previstas</p>
                         </div>
                     </div>
@@ -8841,9 +8069,9 @@
                                     return `
                                         <tr>
                                             <td>${prediction.period || prediction.date || prediction.mes || `${getTranslatedValue('period', 'Período')} ${index + 1}`}</td>
-                                            <td class="text-info">${historicalValue > 0 ? Utils.formatCurrency(historicalValue) : '-'}</td>
-                                            <td class="text-warning">${predictedValue > 0 ? Utils.formatCurrency(predictedValue) : '-'}</td>
-                                            <td class="fw-bold ${difference >= 0 ? 'text-success' : 'text-danger'}">${difference >= 0 ? '+' : ''}${Utils.formatCurrency(difference)}</td>
+                                            <td class="text-info">${historicalValue > 0 ? formatCurrencyByLanguage(historicalValue) : '-'}</td>
+                                            <td class="text-warning">${predictedValue > 0 ? formatCurrencyByLanguage(predictedValue) : '-'}</td>
+                                            <td class="fw-bold ${difference >= 0 ? 'text-success' : 'text-danger'}">${difference >= 0 ? '+' : ''}${formatCurrencyByLanguage(difference)}</td>
                                         </tr>
                                     `;
                                 }).join('')}
@@ -8953,6 +8181,14 @@
             state.charts.get('salesPredictionChart').destroy();
         }
 
+        // Detectar modo escuro
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+        
+        // Configurar cores baseadas no modo
+        const textColor = isDarkMode ? '#ffffff' : '#333333';
+        const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+        const backgroundColor = isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)';
+
         // Criar novo gráfico
         const chart = new Chart(ctx, {
             type: 'line',
@@ -8963,12 +8199,12 @@
                         label: getTranslatedValue('historicalSales', 'Vendas Históricas'),
                         data: chartData.historical,
                         borderColor: '#0d6efd',
-                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        backgroundColor: isDarkMode ? 'rgba(13, 110, 253, 0.2)' : 'rgba(13, 110, 253, 0.1)',
                         borderWidth: 3,
                         fill: true,
                         tension: 0.4,
                         pointBackgroundColor: '#0d6efd',
-                        pointBorderColor: '#ffffff',
+                        pointBorderColor: isDarkMode ? '#ffffff' : '#ffffff',
                         pointBorderWidth: 2,
                         pointRadius: 6,
                         pointHoverRadius: 8
@@ -8977,12 +8213,12 @@
                         label: getTranslatedValue('predictedSales', 'Vendas Previstas'),
                         data: chartData.predicted,
                         borderColor: '#ffc107',
-                        backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                        backgroundColor: isDarkMode ? 'rgba(255, 193, 7, 0.2)' : 'rgba(255, 193, 7, 0.1)',
                         borderWidth: 3,
                         fill: true,
                         tension: 0.4,
                         pointBackgroundColor: '#ffc107',
-                        pointBorderColor: '#ffffff',
+                        pointBorderColor: isDarkMode ? '#ffffff' : '#ffffff',
                         pointBorderWidth: 2,
                         pointRadius: 6,
                         pointHoverRadius: 8,
@@ -9002,11 +8238,12 @@
                             font: {
                                 size: 12,
                                 weight: 'bold'
-                            }
+                            },
+                            color: textColor
                         }
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.9)' : 'rgba(0, 0, 0, 0.8)',
                         titleColor: '#ffffff',
                         bodyColor: '#ffffff',
                         borderColor: '#0d6efd',
@@ -9025,25 +8262,27 @@
                 scales: {
                     x: {
                         grid: {
-                            color: 'rgba(0, 0, 0, 0.1)',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            font: {
-                                size: 11
-                            }
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.1)',
+                            color: gridColor,
                             drawBorder: false
                         },
                         ticks: {
                             font: {
                                 size: 11
                             },
+                            color: textColor
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: gridColor,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 11
+                            },
+                            color: textColor,
                             callback: function(value) {
                                 return formatCurrencyByLanguage(value);
                             }
@@ -9375,9 +8614,7 @@
         if (editModal && typeof bootstrap !== 'undefined') {
             const editBootstrapModal = new bootstrap.Modal(editModal);
             editBootstrapModal.show();
-            console.log('✅ Modal de edição aberto');
-        } else {
-            console.error('❌ Modal de edição não encontrado ou Bootstrap não disponível');
+            console.log('✅ Modal de edição aberto com dados mock');
         }
     };
     
@@ -9663,6 +8900,5 @@
     // Initialize the application
     initialize();
 
-})(); // Close third IIFE (line 2112)
 })(); // Close second IIFE (line 534)
 })(); // Close first IIFE (line 6)

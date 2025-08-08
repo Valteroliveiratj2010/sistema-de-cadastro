@@ -14,6 +14,14 @@ const translations = {
         'settings': 'Configurações',
         'logout': 'Sair',
         'appTitle': 'Gestor PRO',
+        
+        // Dark Mode
+        'darkMode': 'Modo Escuro',
+        'lightMode': 'Modo Claro',
+        'darkModeEnabled': 'Modo escuro ativado',
+        'lightModeEnabled': 'Modo claro ativado',
+        'switchToDarkMode': 'Alternar para modo escuro',
+        'switchToLightMode': 'Alternar para modo claro',
 
         // Dashboard
         'totalClients': 'TOTAL DE CLIENTES',
@@ -479,6 +487,14 @@ const translations = {
         'settings': 'Settings',
         'logout': 'Logout',
         'appTitle': 'Gestor PRO',
+        
+        // Dark Mode
+        'darkMode': 'Dark Mode',
+        'lightMode': 'Light Mode',
+        'darkModeEnabled': 'Dark mode enabled',
+        'lightModeEnabled': 'Light mode enabled',
+        'switchToDarkMode': 'Switch to dark mode',
+        'switchToLightMode': 'Switch to light mode',
 
         // Dashboard
         'totalClients': 'TOTAL CLIENTS',
@@ -755,8 +771,6 @@ const translations = {
         'projectionOldest': 'Oldest Projection',
         'projectionNewest': 'Newest Projection',
         'projectionEarliest': 'Earliest Projection',
-
-        // Sales Prediction Analysis - Specific elements
         'salesPredictionTitle': 'Sales Prediction Analysis',
         'salesPredictionDescription': 'Predictive analysis based on historical data to project future sales',
         'salesPredictionLabel': 'Sales Prediction',
@@ -1138,6 +1152,14 @@ const translations = {
         'settings': 'Configuración',
         'logout': 'Cerrar Sesión',
         'appTitle': 'Gestor PRO',
+        
+        // Dark Mode
+        'darkMode': 'Modo Oscuro',
+        'lightMode': 'Modo Claro',
+        'darkModeEnabled': 'Modo oscuro activado',
+        'lightModeEnabled': 'Modo claro activado',
+        'switchToDarkMode': 'Cambiar a modo oscuro',
+        'switchToLightMode': 'Cambiar a modo claro',
 
         // Dashboard
         'totalClients': 'TOTAL DE CLIENTES',
