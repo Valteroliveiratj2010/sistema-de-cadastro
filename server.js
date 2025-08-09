@@ -85,7 +85,25 @@ async function initializeDatabase() {
 }
 
 // Inicializar banco de dados
-initializeDatabase().then(() => {
+initializeDatabase().then(async () => {
+    // Em produção (Render), tentar aplicar migrações antes de iniciar status updater
+    try {
+        if (process.env.NODE_ENV === 'production' && (process.env.DATABASE_URL || process.env.DB_HOST)) {
+            console.log('🛠️ Executando migrações em produção...');
+            const { Umzug, SequelizeStorage } = require('umzug');
+            const umzug = new Umzug({
+                migrations: { glob: path.join(__dirname, 'backend', 'migrations', '*.js') },
+                context: sequelize.getQueryInterface(),
+                storage: new SequelizeStorage({ sequelize }),
+                logger: console,
+            });
+            await umzug.up();
+            console.log('✅ Migrações aplicadas');
+        }
+    } catch (migrateError) {
+        console.warn('⚠️ Falha ao aplicar migrações automaticamente:', migrateError.message);
+    }
+
     // Iniciar atualização automática de status após inicializar o banco
     try {
         const { startAutomaticStatusUpdate } = require('./backend/utils/statusUpdater');

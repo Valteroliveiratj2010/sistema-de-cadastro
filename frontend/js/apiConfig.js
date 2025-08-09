@@ -9,8 +9,8 @@ if (isLocalhost) {
     window.API_BASE_URL = 'http://localhost:3000/api';
     console.log('🌐 Ambiente: DESENVOLVIMENTO LOCAL');
 } else {
-    // Produção (Render) - URL corrigida
-    window.API_BASE_URL = 'https://sistema-de-cadastro-gestor-pro.onrender.com/api';
+    // Produção (Render) - usar o mesmo domínio do app para evitar divergências
+    window.API_BASE_URL = `${window.location.origin}/api`;
     console.log('🌐 Ambiente: PRODUÇÃO');
 }
 
