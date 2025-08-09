@@ -4045,6 +4045,10 @@
         const textColor = isDarkMode ? '#ffffff' : '#333333';
         const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(29, 78, 137, 0.08)';
         
+        // Ajustar cores dos datasets para modo escuro
+        const dataset1Color = isDarkMode ? '#3B82F6' : primaryColor; // Azul mais claro para modo escuro
+        const dataset2Color = isDarkMode ? '#60A5FA' : infoColor; // Azul mais claro para modo escuro
+        
         const chart = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -4052,16 +4056,16 @@
                 datasets: [{
                     label: `${window.i18n ? window.i18n.t('sales') : 'Vendas'} ${previousYear} (${window.i18n ? window.i18n.formatCurrency(0).replace('0,00', '') : 'R$'})`,
                     data: salesPreviousYear,
-                    backgroundColor: primaryColor, // Azul escuro - Primary Color
-                    borderColor: primaryColor,
+                    backgroundColor: dataset1Color,
+                    borderColor: dataset1Color,
                     borderWidth: 2,
                     borderRadius: 8,
                     borderSkipped: false,
                 }, {
                     label: `${window.i18n ? window.i18n.t('sales') : 'Vendas'} ${currentYear} (${window.i18n ? window.i18n.formatCurrency(0).replace('0,00', '') : 'R$'})`,
                     data: salesCurrentYear,
-                    backgroundColor: infoColor, // Azul info - Info Color
-                    borderColor: infoColor,
+                    backgroundColor: dataset2Color,
+                    borderColor: dataset2Color,
                     borderWidth: 2,
                     borderRadius: 8,
                     borderSkipped: false,
@@ -4231,6 +4235,10 @@
         // Aplicar cores harmoniosas diretamente para gráfico vazio
         const primaryColor = '#1D4E89'; // var(--primary-color) - azul escuro
         const infoColor = '#4A90E2'; // var(--info-color) - azul info
+        
+        // Ajustar cores dos datasets para modo escuro
+        const dataset1Color = isDarkMode ? '#3B82F6' : primaryColor; // Azul mais claro para modo escuro
+        const dataset2Color = isDarkMode ? '#60A5FA' : infoColor; // Azul mais claro para modo escuro
 
         const chart = new Chart(ctx, {
             type: 'bar',
@@ -4244,16 +4252,16 @@
                 datasets: [{
                     label: `${window.i18n ? window.i18n.t('sales') : 'Vendas'} ${previousYear} (${window.i18n ? window.i18n.formatCurrency(0).replace('0,00', '') : 'R$'})`,
                     data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    backgroundColor: primaryColor, // Azul escuro - Primary Color
-                    borderColor: primaryColor,
+                    backgroundColor: dataset1Color,
+                    borderColor: dataset1Color,
                     borderWidth: 2,
                     borderRadius: 8,
                     borderSkipped: false
                 }, {
                     label: `${window.i18n ? window.i18n.t('sales') : 'Vendas'} ${currentYear} (${window.i18n ? window.i18n.formatCurrency(0).replace('0,00', '') : 'R$'})`,
                     data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    backgroundColor: infoColor, // Azul info - Info Color
-                    borderColor: infoColor,
+                    backgroundColor: dataset2Color,
+                    borderColor: dataset2Color,
                     borderWidth: 2,
                     borderRadius: 8,
                     borderSkipped: false
@@ -7190,6 +7198,14 @@
             state.charts.get('predictionChart').destroy();
         }
 
+        // Detectar modo escuro
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+        
+        // Configurar cores baseadas no modo
+        const textColor = isDarkMode ? '#ffffff' : '#333333';
+        const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+        const backgroundColor = isDarkMode ? '#3B82F6' : '#2E8B57'; // Azul mais claro para modo escuro
+
         const chart = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -7197,7 +7213,7 @@
                 datasets: [{
                     label: getTranslatedValue('salesPredictionLabel', 'Predição de Vendas'),
                     data: data.map(item => item.predicted),
-                    backgroundColor: '#2E8B57'
+                    backgroundColor: backgroundColor
                 }]
             },
             options: {
@@ -7205,6 +7221,27 @@
                 plugins: {
                     legend: {
                         position: 'top',
+                        labels: {
+                            color: textColor
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        grid: {
+                            color: gridColor
+                        },
+                        ticks: {
+                            color: textColor
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: gridColor
+                        },
+                        ticks: {
+                            color: textColor
+                        }
                     }
                 }
             }

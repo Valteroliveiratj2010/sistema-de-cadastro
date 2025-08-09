@@ -14,7 +14,7 @@ const translations = {
         'settings': 'Configurações',
         'logout': 'Sair',
         'appTitle': 'Gestor PRO',
-        
+
         // Dark Mode
         'darkMode': 'Modo Escuro',
         'lightMode': 'Modo Claro',
@@ -487,7 +487,7 @@ const translations = {
         'settings': 'Settings',
         'logout': 'Logout',
         'appTitle': 'Gestor PRO',
-        
+
         // Dark Mode
         'darkMode': 'Dark Mode',
         'lightMode': 'Light Mode',
@@ -1140,7 +1140,7 @@ const translations = {
 
     'es': {
         // Navegación
-        'dashboard': 'Panel',
+        'dashboard': 'Dashboard',
         'clients': 'Clientes',
         'sales': 'Ventas',
         'products': 'Productos',
@@ -1149,11 +1149,11 @@ const translations = {
         'users': 'Usuarios',
         'reports': 'Reportes',
         'manageReports': 'Gestionar Reportes',
-        'settings': 'Configuración',
+        'settings': 'Configuraciones',
         'logout': 'Cerrar Sesión',
         'appTitle': 'Gestor PRO',
-        
-        // Dark Mode
+
+        // Modo Oscuro
         'darkMode': 'Modo Oscuro',
         'lightMode': 'Modo Claro',
         'darkModeEnabled': 'Modo oscuro activado',
