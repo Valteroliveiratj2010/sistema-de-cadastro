@@ -9,7 +9,7 @@ const toHex = (bytes) => Buffer.from(bytes).toString('hex');
 
 
 // Importar os modelos
-const { Client, Sale, Payment, User, Product, SaleProduct, Supplier, Purchase, PurchaseProduct, sequelize } = require('../database'); 
+const { Client, Sale, Payment, User, Product, SaleProduct, Supplier, Purchase, PurchaseProduct, ActivityLog, sequelize } = require('../database'); 
 
 // Importar os middlewares
 const authMiddleware = require('../middleware/authMiddleware'); 
@@ -17,6 +17,9 @@ const authorizeRole = require('../middleware/authorizationMiddleware');
 
 // Importar o controller do dashboard
 const dashboardController = require('../controllers/dashboardController'); 
+
+// Importar o middleware de logging
+const { activityLogger, logManualActivity } = require('../middleware/activityLogger');
 
 const router = express.Router();
 
@@ -285,7 +288,8 @@ router.get('/clients/export-csv', authorizeRole(['admin', 'gerente', 'vendedor']
     }
 });
 
-router.get('/clients', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
+// ROTA PARA BUSCAR CLIENTES (COM LOGGING)
+router.get('/clients', authorizeRole(['admin', 'gerente', 'vendedor']), activityLogger('view_clients', 'client'), async (req, res) => {
     const { page = 1, limit = 10, q = '' } = req.query;
     const offset = (page - 1) * limit;
     
@@ -333,10 +337,24 @@ router.get('/clients/:id', authorizeRole(['admin', 'gerente', 'vendedor']), asyn
     }
 });
 
-router.post('/clients', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
+// CRIAR CLIENTE (COM LOGGING)
+router.post('/clients', authorizeRole(['admin', 'gerente', 'vendedor']), activityLogger('create_client', 'client'), async (req, res) => {
     try {
-        const clientData = { ...req.body, userId: req.user.id };
-        
+        const { userId: requestedUserId, ...rest } = req.body;
+
+        // Por padrão, o dono é quem cria
+        let ownerUserId = req.user.id;
+
+        // Admin/Gerente podem atribuir explicitamente um responsável
+        if ((req.user.role === 'admin' || req.user.role === 'gerente') && requestedUserId) {
+            const owner = await User.findByPk(requestedUserId, { attributes: ['id', 'username', 'role'] });
+            if (!owner) {
+                return res.status(400).json({ success: false, message: 'Usuário responsável (userId) não encontrado.' });
+            }
+            ownerUserId = owner.id;
+        }
+
+        const clientData = { ...rest, userId: ownerUserId };
         const client = await Client.create(clientData);
         res.status(201).json({ success: true, data: client, message: 'Cliente criado com sucesso!' });
     } catch (error) { 
@@ -345,7 +363,8 @@ router.post('/clients', authorizeRole(['admin', 'gerente', 'vendedor']), async (
     }
 });
 
-router.put('/clients/:id', authorizeRole(['admin', 'gerente', 'vendedor']), async (req, res) => {
+// ATUALIZAR CLIENTE (COM LOGGING)
+router.put('/clients/:id', authorizeRole(['admin', 'gerente', 'vendedor']), activityLogger('update_client', 'client'), async (req, res) => {
     try {
         const id = req.params.id;
         let whereClause = { id };
@@ -368,7 +387,8 @@ router.put('/clients/:id', authorizeRole(['admin', 'gerente', 'vendedor']), asyn
     }
 });
 
-router.delete('/clients/:id', authorizeRole(['admin', 'gerente']), async (req, res) => {
+// DELETAR CLIENTE (COM LOGGING)
+router.delete('/clients/:id', authorizeRole(['admin', 'gerente']), activityLogger('delete_client', 'client'), async (req, res) => {
     try {
         const deleted = await Client.destroy({ where: { id: req.params.id } });
         if (deleted) {
@@ -1129,6 +1149,227 @@ router.delete('/users/:id', authorizeRole(['admin']), async (req, res) => {
     }
 });
 
+// --- ROTAS DEDICADAS: GERENTES E VENDEDORES (APENAS ADMIN) ---
+
+// LISTAR GERENTES
+router.get('/users/gerentes', authorizeRole(['admin']), async (req, res) => {
+    const { page = 1, limit = 10, q = '' } = req.query;
+    const offset = (page - 1) * limit;
+
+    let whereClause = { role: 'gerente' };
+    if (q) {
+        whereClause = {
+            role: 'gerente',
+            [Op.or]: [
+                { username: { [Op.like]: `%${q}%` } },
+                { email: { [Op.like]: `%${q}%` } }
+            ]
+        };
+    }
+
+    try {
+        const { count, rows } = await User.findAndCountAll({
+            where: whereClause,
+            attributes: ['id', 'username', 'email', 'role', 'createdAt', 'updatedAt'],
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            order: [['username', 'ASC']]
+        });
+        res.json({ total: count, data: rows });
+    } catch (error) {
+        console.error('❌ ERRO AO BUSCAR GERENTES:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// LISTAR VENDEDORES
+router.get('/users/vendedores', authorizeRole(['admin']), async (req, res) => {
+    const { page = 1, limit = 10, q = '' } = req.query;
+    const offset = (page - 1) * limit;
+
+    let whereClause = { role: 'vendedor' };
+    if (q) {
+        whereClause = {
+            role: 'vendedor',
+            [Op.or]: [
+                { username: { [Op.like]: `%${q}%` } },
+                { email: { [Op.like]: `%${q}%` } }
+            ]
+        };
+    }
+
+    try {
+        const { count, rows } = await User.findAndCountAll({
+            where: whereClause,
+            attributes: ['id', 'username', 'email', 'role', 'createdAt', 'updatedAt'],
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            order: [['username', 'ASC']]
+        });
+        res.json({ total: count, data: rows });
+    } catch (error) {
+        console.error('❌ ERRO AO BUSCAR VENDEDORES:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// CRIAR GERENTE
+router.post('/users/gerentes', authorizeRole(['admin']), async (req, res) => {
+    const { username, email, password } = req.body;
+    try {
+        if (!password) {
+            return res.status(400).json({ message: 'A senha é obrigatória para criar um novo utilizador.' });
+        }
+        const user = await User.create({ username, email, password, role: 'gerente' });
+        res.status(201).json({ id: user.id, username: user.username, email: user.email, role: user.role });
+    } catch (error) {
+        console.error('❌ ERRO AO CRIAR GERENTE:', error);
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(400).json({ message: 'Nome de usuário ou email já em uso.' });
+        }
+        res.status(400).json({ message: error.message || 'Erro ao criar gerente.' });
+    }
+});
+
+// CRIAR VENDEDOR
+router.post('/users/vendedores', authorizeRole(['admin']), async (req, res) => {
+    const { username, email, password } = req.body;
+    try {
+        if (!password) {
+            return res.status(400).json({ message: 'A senha é obrigatória para criar um novo utilizador.' });
+        }
+        const user = await User.create({ username, email, password, role: 'vendedor' });
+        res.status(201).json({ id: user.id, username: user.username, email: user.email, role: user.role });
+    } catch (error) {
+        console.error('❌ ERRO AO CRIAR VENDEDOR:', error);
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(400).json({ message: 'Nome de usuário ou email já em uso.' });
+        }
+        res.status(400).json({ message: error.message || 'Erro ao criar vendedor.' });
+    }
+});
+
+// OBTÉM UM GERENTE POR ID
+router.get('/users/gerentes/:id', authorizeRole(['admin']), async (req, res) => {
+    try {
+        const user = await User.findByPk(req.params.id, {
+            attributes: ['id', 'username', 'email', 'role', 'createdAt', 'updatedAt']
+        });
+        if (!user || user.role !== 'gerente') {
+            return res.status(404).json({ message: 'Gerente não encontrado' });
+        }
+        res.json(user);
+    } catch (error) {
+        console.error('❌ ERRO AO BUSCAR GERENTE:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// ATUALIZA UM GERENTE
+router.put('/users/gerentes/:id', authorizeRole(['admin']), async (req, res) => {
+    const { username, email, password, role } = req.body;
+    try {
+        const user = await User.findByPk(req.params.id);
+        if (!user || user.role !== 'gerente') {
+            return res.status(404).json({ message: 'Gerente não encontrado' });
+        }
+        if (role && role !== 'gerente') {
+            return res.status(400).json({ message: 'Role inválida para esta rota. Use o CRUD geral para alterar a role.' });
+        }
+        if (username) user.username = username;
+        if (email) user.email = email;
+        user.role = 'gerente';
+        if (password) user.password = password; // hook fará o hash
+
+        await user.save();
+        res.json({ id: user.id, username: user.username, email: user.email, role: user.role });
+    } catch (error) {
+        console.error('❌ ERRO AO ATUALIZAR GERENTE:', error);
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(400).json({ message: 'Nome de usuário ou email já em uso.' });
+        }
+        res.status(400).json({ message: error.message || 'Erro ao atualizar gerente.' });
+    }
+});
+
+// REMOVE UM GERENTE
+router.delete('/users/gerentes/:id', authorizeRole(['admin']), async (req, res) => {
+    try {
+        if (String(req.params.id) === String(req.user.id)) {
+            return res.status(403).json({ message: 'Você não pode excluir sua própria conta.' });
+        }
+        const user = await User.findByPk(req.params.id);
+        if (!user || user.role !== 'gerente') {
+            return res.status(404).json({ message: 'Gerente não encontrado' });
+        }
+        await User.destroy({ where: { id: req.params.id, role: 'gerente' } });
+        res.status(204).send();
+    } catch (error) {
+        console.error('❌ ERRO AO DELETAR GERENTE:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// OBTÉM UM VENDEDOR POR ID
+router.get('/users/vendedores/:id', authorizeRole(['admin']), async (req, res) => {
+    try {
+        const user = await User.findByPk(req.params.id, {
+            attributes: ['id', 'username', 'email', 'role', 'createdAt', 'updatedAt']
+        });
+        if (!user || user.role !== 'vendedor') {
+            return res.status(404).json({ message: 'Vendedor não encontrado' });
+        }
+        res.json(user);
+    } catch (error) {
+        console.error('❌ ERRO AO BUSCAR VENDEDOR:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// ATUALIZA UM VENDEDOR
+router.put('/users/vendedores/:id', authorizeRole(['admin']), async (req, res) => {
+    const { username, email, password, role } = req.body;
+    try {
+        const user = await User.findByPk(req.params.id);
+        if (!user || user.role !== 'vendedor') {
+            return res.status(404).json({ message: 'Vendedor não encontrado' });
+        }
+        if (role && role !== 'vendedor') {
+            return res.status(400).json({ message: 'Role inválida para esta rota. Use o CRUD geral para alterar a role.' });
+        }
+        if (username) user.username = username;
+        if (email) user.email = email;
+        user.role = 'vendedor';
+        if (password) user.password = password; // hook fará o hash
+
+        await user.save();
+        res.json({ id: user.id, username: user.username, email: user.email, role: user.role });
+    } catch (error) {
+        console.error('❌ ERRO AO ATUALIZAR VENDEDOR:', error);
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(400).json({ message: 'Nome de usuário ou email já em uso.' });
+        }
+        res.status(400).json({ message: error.message || 'Erro ao atualizar vendedor.' });
+    }
+});
+
+// REMOVE UM VENDEDOR
+router.delete('/users/vendedores/:id', authorizeRole(['admin']), async (req, res) => {
+    try {
+        if (String(req.params.id) === String(req.user.id)) {
+            return res.status(403).json({ message: 'Você não pode excluir sua própria conta.' });
+        }
+        const user = await User.findByPk(req.params.id);
+        if (!user || user.role !== 'vendedor') {
+            return res.status(404).json({ message: 'Vendedor não encontrado' });
+        }
+        await User.destroy({ where: { id: req.params.id, role: 'vendedor' } });
+        res.status(204).send();
+    } catch (error) {
+        console.error('❌ ERRO AO DELETAR VENDEDOR:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
 
 // --- ROTAS DE FORNECEDORES (APENAS ADMIN E GERENTE) ---
 router.get('/suppliers', authorizeRole(['admin', 'gerente']), async (req, res) => {
@@ -2065,5 +2306,112 @@ router.get('/dashboard/top-suppliers', authorizeRole(['admin', 'gerente', 'vende
     }
 });
 
+// ROTA PARA VISUALIZAR LOGS DE ATIVIDADE (APENAS ADMIN E GERENTE)
+router.get('/activity-logs', authorizeRole(['admin', 'gerente']), activityLogger('view_activity_logs'), async (req, res) => {
+    try {
+        const { page = 1, limit = 50, userId, action, entityType, status, startDate, endDate } = req.query;
+        
+        // Construir where clause
+        const whereClause = {};
+        
+        if (userId) whereClause.userId = userId;
+        if (action) whereClause.action = action;
+        if (entityType) whereClause.entityType = entityType;
+        if (status) whereClause.status = status;
+        
+        // Filtros de data
+        if (startDate || endDate) {
+            whereClause.createdAt = {};
+            if (startDate) whereClause.createdAt[Op.gte] = new Date(startDate);
+            if (endDate) whereClause.createdAt[Op.lte] = new Date(endDate);
+        }
+        
+        const offset = (page - 1) * limit;
+        
+        const result = await ActivityLog.findAndCountAll({
+            where: whereClause,
+            include: [
+                {
+                    model: User,
+                    as: 'user',
+                    attributes: ['username', 'email', 'role']
+                }
+            ],
+            order: [['createdAt', 'DESC']],
+            limit: parseInt(limit),
+            offset: parseInt(offset)
+        });
+        
+        res.json({
+            total: result.count,
+            data: result.rows,
+            page: parseInt(page),
+            totalPages: Math.ceil(result.count / limit)
+        });
+        
+    } catch (error) {
+        console.error('❌ ERRO AO BUSCAR LOGS DE ATIVIDADE:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// ROTA PARA ESTATÍSTICAS DE ATIVIDADE (APENAS ADMIN E GERENTE)
+router.get('/activity-stats', authorizeRole(['admin', 'gerente']), activityLogger('view_activity_stats'), async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        
+        // Construir where clause para datas
+        const whereClause = {};
+        if (startDate || endDate) {
+            whereClause.createdAt = {};
+            if (startDate) whereClause.createdAt[Op.gte] = new Date(startDate);
+            if (endDate) whereClause.createdAt[Op.lte] = new Date(endDate);
+        }
+        
+        // Estatísticas por ação
+        const actionStats = await ActivityLog.findAll({
+            where: whereClause,
+            attributes: [
+                'action',
+                [fn('COUNT', col('id')), 'count']
+            ],
+            group: ['action'],
+            order: [[fn('COUNT', col('id')), 'DESC']]
+        });
+        
+        // Estatísticas por usuário
+        const userStats = await ActivityLog.findAll({
+            where: whereClause,
+            attributes: [
+                'userId',
+                'username',
+                [fn('COUNT', col('id')), 'count']
+            ],
+            group: ['userId', 'username'],
+            order: [[fn('COUNT', col('id')), 'DESC']],
+            limit: 10
+        });
+        
+        // Estatísticas por status
+        const statusStats = await ActivityLog.findAll({
+            where: whereClause,
+            attributes: [
+                'status',
+                [fn('COUNT', col('id')), 'count']
+            ],
+            group: ['status']
+        });
+        
+        res.json({
+            actionStats,
+            userStats,
+            statusStats
+        });
+        
+    } catch (error) {
+        console.error('❌ ERRO AO BUSCAR ESTATÍSTICAS DE ATIVIDADE:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
 
 module.exports = router;

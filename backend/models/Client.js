@@ -20,6 +20,10 @@ module.exports = (sequelize) => {
         telefone: {
             type: DataTypes.STRING,
             allowNull: true
+        },
+        userId: {
+            type: DataTypes.INTEGER,
+            allowNull: true
         }
     }, {
         tableName: 'Clients', // Garante o nome exato da tabela no DB
@@ -30,6 +34,8 @@ module.exports = (sequelize) => {
     Client.associate = (models) => {
         // Um cliente pode ter muitas vendas
         Client.hasMany(models.Sale, { foreignKey: 'clientId', as: 'sales' });
+        // Cada cliente pode pertencer a um usuário (vendedor) responsável
+        Client.belongsTo(models.User, { foreignKey: 'userId', as: 'owner' });
     };
 
     return Client;
